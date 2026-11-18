@@ -104,15 +104,6 @@ canvas#c:active{cursor:grabbing}
 @keyframes tin{from{opacity:0;transform:translateY(-12px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes tout{to{opacity:0;transform:translateY(-8px)}}
 
-/* ---------- Explode labels ---------- */
-#tags{position:fixed;inset:0;pointer-events:none}
-.tag{position:absolute;left:0;top:0;display:flex;align-items:center;gap:8px;white-space:nowrap;opacity:0;will-change:transform,opacity}
-.tag i{width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 3px rgba(233,184,102,.25),0 0 14px rgba(233,184,102,.6)}
-.tag .ln{width:34px;height:1px;background:linear-gradient(90deg,var(--gold),rgba(233,184,102,.2))}
-.tag .card{padding:6px 11px 7px;border-radius:10px;background:rgba(9,17,29,.74);border:1px solid rgba(233,184,102,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.tag .card span{display:block;font-family:var(--serif);font-size:14px;color:var(--ink)}
-.tag .card em{display:block;font-style:normal;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-top:1px}
-
 #hint{position:fixed;left:24px;bottom:30px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);pointer-events:none;line-height:1.9}
 #hint b{color:var(--ink-dim);font-weight:600}
 
@@ -195,7 +186,6 @@ canvas#c:active{cursor:grabbing}
 <canvas id="c" tabindex="0" aria-label="3D view of a sailboat at sea"></canvas>
 <div class="vignette"></div>
 <div class="grain"></div>
-<div id="tags"></div>
 
 <header id="title" class="panel" role="button" tabindex="0" aria-expanded="true" aria-controls="titleMore" title="Hide voyage details">
   <div class="top">
@@ -240,7 +230,7 @@ canvas#c:active{cursor:grabbing}
 <button id="perf" class="panel" title="Graphics quality (Q) — click to change"><i id="fpsDot"></i><span id="fpsTxt">-- fps</span><em id="qTxt">Auto</em></button>
 <div id="crewCard" class="panel" hidden><label id="ccName">The Captain</label><p id="ccTask">Taking the helm</p><small id="ccHint">Click again to wave</small></div>
 
-<div id="hint"><b>Drag</b> to orbit &nbsp;&middot;&nbsp; <b>Scroll</b> to zoom &nbsp;&middot;&nbsp; <b>Click</b> the crew<br><b>D W F C E</b> shortcuts &nbsp;&middot;&nbsp; <b>M</b> sound &nbsp;&middot;&nbsp; <b>Q</b> quality</div>
+<div id="hint"><b>Drag</b> to orbit &nbsp;&middot;&nbsp; <b>Scroll</b> to zoom &nbsp;&middot;&nbsp; <b>Click</b> the crew<br><b>D W F C K</b> shortcuts &nbsp;&middot;&nbsp; <b>M</b> sound &nbsp;&middot;&nbsp; <b>Q</b> quality</div>
 
 <nav id="bar" class="panel" aria-label="Controls">
   <button class="btn" id="bDay" aria-keyshortcuts="D">
@@ -264,10 +254,10 @@ canvas#c:active{cursor:grabbing}
     <span class="tx"><span class="lbl">Camera</span><span class="sub" id="subCam">Orbit</span></span>
     <kbd>C</kbd>
   </button>
-  <button class="btn" id="bExplode" aria-keyshortcuts="E">
-    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4" opacity=".75"/><path d="M4 17l8 4 8-4" opacity=".5"/></svg></span>
-    <span class="tx"><span class="lbl">Explode</span><span class="sub" id="subExplode">Assembled</span></span>
-    <kbd>E</kbd>
+  <button class="btn" id="bKraken" aria-keyshortcuts="K">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 19.5c2.2 0 3-1.6 3-4.2C5.5 11 7 6.5 9 4.5c.6 3 .1 6.5-.4 9.8"/><path d="M15.4 14.3c-.5-3.3-1-6.8-.4-9.8 2 2 3.5 6.5 3.5 10.8 0 2.6.8 4.2 3 4.2"/><path d="M12 15V3.5"/><circle cx="7" cy="9" r=".6" fill="currentColor"/><circle cx="17" cy="9" r=".6" fill="currentColor"/><path d="M2 21.5c1.7-.9 3.3-.9 5 0s3.3.9 5 0 3.3-.9 5 0 3.3.9 5 0"/></svg></span>
+    <span class="tx"><span class="lbl">Kraken</span><span class="sub" id="subKraken">Summon the deep</span></span>
+    <kbd>K</kbd>
   </button>
 </nav>
 
@@ -290,7 +280,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
    Utilities · Renderer · World state · Sky · Lights · Clouds · Rain · Lightning · Ocean · Particles
    Mesh helpers · Sea life (fish, dolphins) · The boat (hull, deck, cabin, mast, sails, gear)
    Characters · Character animation · Behaviour (tasks) · Procedural audio · Fishing lines
-   Boat motion & explode · Environment (weather, clock) · Systems registry, where the newer features
+   Boat motion · Environment (weather, clock) · Systems registry, where the newer features
    live as self-contained system(name, update) blocks: sky layers, fog banks, weather details, gulls,
    whale, turtle, jellyfish, destinations & logbook, crew life, camera modes, clickable crew,
    performance · HUD · Input · Main loop */
@@ -374,7 +364,6 @@ const world = {
   offset: 0, speed: 2.5, distance: 0,
   waveAmp: 0.32, steep: 0.35,
   fishCount: 0,
-  explode: false, explodeT: 0,
   flash: 0,
   time: 0,
 };
@@ -2745,7 +2734,7 @@ function updateRods(dt, t) {
 }
 
 /* =====================================================================
-   Boat motion, explode, labels
+   Boat motion
    ===================================================================== */
 /* Floating-body physics: ten buoyancy points along the hull push up wherever they are under the
    surface, so the boat heaves, pitches and rolls on its own, overshoots and slams in steep seas, surfs
@@ -2822,41 +2811,6 @@ function updateBoat(dt, t) {
   boat.rotation.set(PH.roll + Math.sin(t * 47) * sh, PH.yaw + Math.sin(t * 0.07) * 0.05, PH.pitch + Math.sin(t * 53) * sh);
   bs.heave = PH.y + 0.14 * BOAT_S; bs.pitch = PH.pitch; bs.roll = PH.roll;
 }
-const ease = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-let explodeLin = 0;
-const layerKeys = Object.keys(LAYERS);
-layerKeys.forEach((k, i) => {
-  const L = LAYERS[k], el = document.createElement('div');
-  el.className = 'tag';
-  el.innerHTML = `<i></i><span class="ln"></span><div class="card"><span>${L.name}</span><em>Layer ${i + 1} &middot; ${k === 'crew' ? 'Crew of 2' : L.parts + ' parts'}</em></div>`;
-  $('tags').appendChild(el); L.el = el;
-});
-function updateExplode(dt, t) {
-  explodeLin = clamp(explodeLin + (world.explode ? dt : -dt) / 1.25, 0, 1);
-  world.explodeT = ease(explodeLin);
-  layerKeys.forEach((k, i) => {
-    const L = LAYERS[k];
-    const f = ease(clamp(explodeLin * 1.35 - i * 0.05, 0, 1));
-    L.f = f;
-    L.g.position.copy(L.offset).multiplyScalar(f);
-    L.g.position.y += Math.sin(t * 1.1 + L.seed) * 0.09 * f;
-    L.g.rotation.set(Math.sin(t * 0.6 + L.seed) * 0.02 * f, Math.sin(t * 0.4 + L.seed) * 0.04 * f, Math.cos(t * 0.5 + L.seed) * 0.02 * f);
-  });
-  rig.sheet.visible = rig.jibSheet.visible = true;
-  // labels
-  const hw = innerWidth / 2, hh = innerHeight / 2;
-  for (const k of layerKeys) {
-    const L = LAYERS[k];
-    const op = clamp((L.f - 0.55) / 0.45, 0, 1);
-    if (op <= 0) { if (L.el.style.opacity !== '0') L.el.style.opacity = '0'; continue; }
-    if (k === 'crew') { cap.rig.j.neck.getWorldPosition(_v1); _v1.y += 0.7; }
-    else L.g.localToWorld(_v1.copy(L.anchor));
-    _v1.project(camera);
-    if (_v1.z > 1) { L.el.style.opacity = '0'; continue; }
-    L.el.style.opacity = op.toFixed(3);
-    L.el.style.transform = `translate(${(_v1.x * hw + hw - 4.5).toFixed(1)}px, ${(-_v1.y * hh + hh - 4.5).toFixed(1)}px) translateY(-50%) translateY(4.5px)`;
-  }
-}
 
 /* =====================================================================
    Environment: weather + day/night
@@ -2887,8 +2841,10 @@ function advanceClock(h) {
 }
 function onNightChange() {
   sfx.bell();
-  if (!cap.fishing && (world.isNight || !cap.sleeping)) { interrupt(cap); resetProps(); }
-  if (world.isNight || !dog.sleeping) interrupt(dog);
+  if (!KR.active) {   // nobody goes to bed (or wakes for the day) while the kraken is up
+    if (!cap.fishing && (world.isNight || !cap.sleeping)) { interrupt(cap); resetProps(); }
+    if (world.isNight || !dog.sleeping) interrupt(dog);
+  }
   toast(world.isNight ? 'Night falls &mdash; the lanterns are lit' : `Dawn breaks &mdash; <b>Day ${world.dayNum}</b>`);
 }
 const clockStr = h => `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor((h % 1) * 60)).padStart(2, '0')}`;
@@ -3095,7 +3051,7 @@ system('weatherDetails', (dt, t) => {
   }
   // heavy seas break over the bow
   bowCooldown -= dt;
-  if (w.waves > 0.9 && bowCooldown <= 0 && !world.explode) {
+  if (w.waves > 0.9 && bowCooldown <= 0) {
     boat.localToWorld(_dp.set(3.9, hullTop(tOf(3.9)) + 0.05, 0));
     const h = waveHeight(_dp.x, _dp.z);
     if (h > _dp.y - 0.45) {
@@ -3184,7 +3140,7 @@ system('gulls', (dt, t) => {
       g.timer -= dt;
       if (g.timer < 0) {
         const free = PERCHES.map((p, j) => j).filter(j => !gulls.some(o => o.perch === j));
-        if (free.length && Math.random() < 0.55 && !world.explode) { g.mode = 'perch'; g.perch = pick(free); g.timer = rand(9, 22); }
+        if (free.length && Math.random() < 0.55) { g.mode = 'perch'; g.perch = pick(free); g.timer = rand(9, 22); }
         else { g.timer = rand(12, 30); g.r = rand(5, 11); g.h = rand(8.5, 13); }
       }
     } else if (g.mode === 'perch') {
@@ -3193,7 +3149,7 @@ system('gulls', (dt, t) => {
         LAYERS[P.layer].g.localToWorld(_gt.copy(P.p()).addScaledVector(_gUp, 1 / BOAT_S));
         const dist = g.pos.distanceTo(_gt);
         if (dist < 4) { speed = Math.max(0.5, dist * 1.8); k = 5; }
-        if (dist < 0.15 && !world.explode) {
+        if (dist < 0.15) {
           // land: parent the gull to the boat part it stands on so it rides every pitch and roll
           g.sitting = true; g.vel.set(0, 0, 0);
           LAYERS[P.layer].g.add(g.m);
@@ -3201,7 +3157,7 @@ system('gulls', (dt, t) => {
         }
       } else {
         g.timer -= dt;
-        if (g.timer < 0 || world.explode) { unperch(g); g.mode = 'circle'; g.perch = -1; g.timer = rand(15, 30); }
+        if (g.timer < 0) { unperch(g); g.mode = 'circle'; g.perch = -1; g.timer = rand(15, 30); }
       }
     } else if (g.mode === 'leave') {
       _gt.copy(g.pos).addScaledVector(g.leaveDir, 20); _gt.y = 30; speed = 7;
@@ -3890,12 +3846,8 @@ function updateCamera(dt, t) {
   if (camMode === 0) {
     camLabel = 'Orbit';
     if (!interacting && t - lastInteract > 6) controls.autoRotate = true;
-    controls.target.y = damp(controls.target.y, lerp(3.2, 7.6, world.explodeT) + bs.heave * 0.5, 2, dt);
+    controls.target.y = damp(controls.target.y, 3.2 + bs.heave * 0.5, 2, dt);
     controls.target.x = damp(controls.target.x, boat.position.x * 0.6, 1.5, dt); controls.target.z = damp(controls.target.z, boat.position.z * 0.6, 1.5, dt);
-    if (world.explode && !interacting) {
-      const dist = camera.position.distanceTo(controls.target);
-      if (dist < 32) camera.position.sub(controls.target).multiplyScalar(1 + dt * 0.9).add(controls.target);
-    }
     controls.update();
   } else if (camMode === 1) {
     camLabel = 'Deck View';
@@ -4123,7 +4075,7 @@ function makeKrakenHead() {
   return g;
 }
 KR.head = makeKrakenHead(); KR.head.visible = false; scene.add(KR.head);
-function spawnKraken() {
+function spawnKraken(summoned) {
   if (KR.active) return;
   const ang = rand(0, TAU);
   Object.assign(KR, { active: true, t: 0, ang, hx: Math.cos(ang) * 30, hz: Math.sin(ang) * 30, bubbles: 0 });
@@ -4141,8 +4093,9 @@ function spawnKraken() {
   sfx.kraken(); world.shake = Math.max(world.shake || 0, 0.5);
   toast('Something enormous stirs beneath the waves…');
   setTimeout(() => { if (KR.active) toast('<b>THE KRAKEN</b> rises from the deep!'); }, 2300);
-  if (!cap.sleeping) { interrupt(cap); resetProps(); cap.task = capScared(); }
-  if (!dog.sleeping) { interrupt(dog); dog.task = dogScared(); }
+  // a summoned kraken is loud enough to wake a sleeping crew
+  if (summoned || !cap.sleeping) { interrupt(cap); resetProps(); cap.task = capScared(); }
+  if (summoned || !dog.sleeping) { interrupt(dog); dog.task = dogScared(); }
 }
 const _km = new THREE.Matrix4(), _kq = new THREE.Quaternion(), _kv = V3(), _ks = V3();
 function poseTentacle(T, t, rise, slam) {
@@ -4177,7 +4130,7 @@ system('kraken', (dt, t) => {
   if (!KR.active) {
     if (t > KR.next) {
       KR.next = t + rand(170, 330);
-      if (world.day > 0.75 && !world.isNight && world.w.waves < 1.7 && !cap.fishing && !world.explode) spawnKraken();
+      if (world.day > 0.75 && !world.isNight && world.w.waves < 1.7 && !cap.fishing) spawnKraken();
     }
     return;
   }
@@ -4319,13 +4272,13 @@ function updateHUD(dt) {
   setText('subDay', world.todAnim ? (world.isNight ? 'Dusk falling…' : 'Dawn rising…') : phaseOf(world.tod));
   setText('subWeather', W.name);
   setText('subFish', cap.fishing ? 'Line in the water…' : 'Cast a line · 20%');
-  setText('subExplode', world.explode ? 'Exploded view' : 'Assembled');
+  setText('subKraken', !KR.active ? 'Summon the deep' : KR.t < 17.5 ? 'Risen!' : 'Sinking back…');
   setText('subCam', camLabel);
   $('bCam').classList.toggle('on', camMode !== 0);
   pips.forEach((p, i) => p.classList.toggle('lit', i <= world.weatherIdx));
   $('bDay').classList.toggle('on', world.isNight);
   $('bFish').classList.toggle('on', !!cap.fishing);
-  $('bExplode').classList.toggle('on', world.explode);
+  $('bKraken').classList.toggle('on', KR.active);
 }
 
 /* =====================================================================
@@ -4338,9 +4291,13 @@ function toggleDay() {
   world.todAnim = { t: 0, span, cur: 0, target };
 }
 function cycleWeather() { world.lastWeatherPress = world.time; setWeather(world.weatherIdx + 1); }
-function toggleExplode() { world.explode = !world.explode; }
+function summonKraken() {
+  if (KR.active) { toast(KR.t < 17.5 ? 'The kraken is already here!' : 'The kraken is sinking back into the deep…'); return; }
+  KR.next = world.time + rand(170, 330);     // no surprise visit straight after a summoned one
+  spawnKraken(true);
+}
 function pressFx(id) { const b = $(id); b.classList.add('pressed'); setTimeout(() => b.classList.remove('pressed'), 140); }
-const ACTIONS = { d: ['bDay', toggleDay], w: ['bWeather', cycleWeather], f: ['bFish', fishButton], c: ['bCam', () => setCamMode(camMode + 1)], e: ['bExplode', toggleExplode] };
+const ACTIONS = { d: ['bDay', toggleDay], w: ['bWeather', cycleWeather], f: ['bFish', fishButton], c: ['bCam', () => setCamMode(camMode + 1)], k: ['bKraken', summonKraken] };
 for (const k in ACTIONS) $(ACTIONS[k][0]).addEventListener('click', () => { sfx.init(); ACTIONS[k][1](); });
 function toggleSound() { sfx.init(); const on = sfx.toggle(); $('sound').classList.toggle('muted', !on); toast(on ? 'Sound on' : 'Sound off'); }
 $('sound').addEventListener('click', toggleSound);
@@ -4379,7 +4336,6 @@ function frame() {
   runTask(cap, dt); runTask(dog, dt);
   updateMover(cap, dt, 6); updateMover(dog, dt, 7.5);
   poseCaptain(cap, t, dt); poseDog(dog, t, dt);
-  updateExplode(dt, t);
   boat.updateMatrixWorld(true);
   updateRods(dt, t);
   updateJumpers(dt);
@@ -4397,7 +4353,7 @@ function frame() {
   if (!started) { started = true; setTimeout(() => { $('intro').classList.add('gone'); setTimeout(() => toast('Welcome aboard the <b>Wanderer</b>'), 1100); }, 500); }
 }
 renderer.setAnimationLoop(frame);
-window.__atsea = { spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, toggleExplode, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
+window.__atsea = { spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
   PERCHES, tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
 </script>
 </body>
