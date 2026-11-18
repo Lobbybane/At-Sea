@@ -14,7 +14,7 @@ Open `index.html` in a modern browser (it loads three.js from unpkg, so it needs
 | Weather | `W` | Cycles Clear Skies → Partly Cloudy → Full Clouds → Dark Rain Clouds → Raining → Storming → Heavy Storm |
 | Fish | `F` | The captain casts a line (20% chance of a catch, which goes in the bucket) |
 | Camera | `C` | Orbit → Deck View (drag to look around) → Sea Life (follows dolphins, whales, turtles…) → Cinematic |
-| Explode | `E` | Splits the boat into labelled floating layers; press again to reassemble |
+| Kraken | `K` | Summons the kraken: tentacles rise around the boat and the captain and Ghost take cover (it also turns up on its own during the day) |
 | Sound | `M` | Toggle the procedural audio |
 | Quality | `Q` | Auto / High / Medium / Low graphics (the FPS chip shows the current rate) |
 
