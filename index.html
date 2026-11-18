@@ -191,6 +191,26 @@ body.yard #log{opacity:0;visibility:hidden}
 @media (max-width:820px){#yard{left:10px;right:10px;top:auto;bottom:10px;width:auto;height:min(64vh,580px)} body.yard #bar,body.yard #tools{opacity:0;visibility:hidden}}
 .say{position:fixed;left:0;top:0;translate:-50% -100%;max-width:230px;padding:8px 12px 9px;border-radius:14px;background:rgba(250,244,230,.95);color:#2a1f14;font:500 13.5px/1.3 var(--serif);pointer-events:none;z-index:5;box-shadow:0 8px 20px rgba(0,0,0,.25);animation:cardin .3s cubic-bezier(.2,.9,.25,1.2) both}
 .say::after{content:"";position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:inherit;translate:-50% 0;rotate:45deg;border-radius:2px}
+.needs{display:flex;align-items:center;gap:6px;margin-top:6px}
+.needs em{font-style:normal;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:700}
+.needs span{flex:1;height:4px;border-radius:2px;background:rgba(246,236,217,.12);overflow:hidden}
+.needs i{display:block;height:100%;width:70%;background:linear-gradient(90deg,#d98a4a,#e9b866);border-radius:2px;transition:width .6s}
+.needs span.e i{background:linear-gradient(90deg,#4f9ab8,#7cc6d9)}
+.needs i.low{background:#e6735c}
+#choice{position:fixed;left:50%;bottom:122px;translate:-50% 0;width:min(580px,calc(100% - 24px));padding:14px 16px 12px;z-index:7;animation:tin .4s cubic-bezier(.2,.9,.25,1.2) both}
+#choice[hidden]{display:none}
+#choice .ct{font-family:var(--serif);font-size:15.5px;color:var(--ink)}
+#choice .ct b{color:var(--gold);letter-spacing:.08em;font-weight:600}
+.copts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+#choice button{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:11px 12px;border-radius:12px;border:1px solid var(--edge);background:rgba(246,236,217,.06);color:var(--ink);cursor:pointer;text-align:left;font:inherit;transition:border-color .2s,background .2s,transform .15s}
+#choice button:hover:not(:disabled){border-color:var(--gold);background:rgba(233,184,102,.13);transform:translateY(-1px)}
+#choice button:disabled{opacity:.42;cursor:not-allowed}
+#choice button b{font-family:var(--serif);font-size:15px;font-weight:500}
+#choice button small{font-size:11px;color:var(--ink-dim)}
+#choice .k{position:absolute;right:9px;top:9px;font:600 10px/1 var(--sans);color:var(--ink-faint);border:1px solid var(--edge);border-radius:4px;padding:2px 5px}
+.ctime{height:2px;background:rgba(246,236,217,.12);border-radius:2px;margin-top:11px;overflow:hidden}
+.ctime i{display:block;height:100%;background:var(--gold);transform-origin:left}
+@media (max-width:620px){.copts{grid-template-columns:1fr}#choice{bottom:96px}#choice .k{display:none}}
 #crewCard{position:fixed;left:0;top:0;translate:-50% -100%;min-width:180px;max-width:240px;padding:10px 14px 11px;border-radius:14px;pointer-events:none;z-index:6;transform-origin:50% 100%;animation:cardin .35s cubic-bezier(.2,.9,.25,1.2) both}
 @keyframes cardin{from{opacity:0;scale:.9}to{opacity:1;scale:1}}
 #crewCard label{display:block;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);font-weight:700}
@@ -272,11 +292,11 @@ body.yard #log{opacity:0;visibility:hidden}
   <div class="head">Ship's Log <i id="logTime">—</i></div>
   <div class="logrow">
     <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#e9b866" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10h14l-1.5-3h-11z"/><path d="M8 10v1a4 4 0 0 0 8 0v-1"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div>
-    <div><label>The Captain</label><p id="capTask">Taking the helm</p></div>
+    <div><label>The Captain</label><p id="capTask">Taking the helm</p><div class="needs" title="How fed and rested the captain is"><em>Fed</em><span><i id="capFood"></i></span><em>Rest</em><span class="e"><i id="capRest"></i></span></div></div>
   </div>
   <div class="logrow">
     <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#7cc6d9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l3 5M19 4l-3 5"/><path d="M6 9.5C6 6.5 8.7 5 12 5s6 1.5 6 4.5V14c0 3-2.7 6-6 6s-6-3-6-6z"/><circle cx="9.5" cy="12" r=".6" fill="#7cc6d9"/><circle cx="14.5" cy="12" r=".6" fill="#7cc6d9"/><path d="M11 16h2l-1 1z"/></svg></div>
-    <div><label>Ghost &middot; Husky</label><p id="dogTask">Watching the waves</p></div>
+    <div><label>Ghost &middot; Husky</label><p id="dogTask">Watching the waves</p><div class="needs" title="How fed and rested Ghost is"><em>Fed</em><span><i id="dogFood"></i></span><em>Rest</em><span class="e"><i id="dogRest"></i></span></div></div>
   </div>
   <div class="entry"><label>Latest log entry</label><p id="logEntry">Cast off at first light. Fair winds and a following sea.</p></div>
 </aside>
@@ -299,6 +319,15 @@ body.yard #log{opacity:0;visibility:hidden}
 </aside>
 <div id="peek" hidden><div class="frame"></div><div class="pbar panel"><button id="pkPrev" aria-label="Previous window">&#8249;</button><span id="pkName">Porthole</span><button id="pkNext" aria-label="Next window">&#8250;</button><button id="pkBack">Back on deck</button></div></div>
 <div id="says"></div>
+<div id="choice" class="panel" hidden role="dialog" aria-label="The kraken rises">
+  <p class="ct"><b>The kraken rises!</b> What should the captain do?</p>
+  <div class="copts">
+    <button data-c="fish" id="cFish"><span class="k">1</span><b>Offer it a fish</b><small id="cFishSub">From the bucket</small></button>
+    <button data-c="horn"><span class="k">2</span><b>Sound the foghorn</b><small>Scare it back down</small></button>
+    <button data-c="hide"><span class="k">3</span><b>Hide!</b><small>Take cover and watch</small></button>
+  </div>
+  <div class="ctime"><i id="cTimer"></i></div>
+</div>
 <div id="crewCard" class="panel" hidden><label id="ccName">The Captain</label><p id="ccTask">Taking the helm</p><small id="ccHint">Click again to wave</small></div>
 
 <div id="hint"><b>Drag</b> to orbit &nbsp;&middot;&nbsp; <b>Scroll</b> to zoom &nbsp;&middot;&nbsp; <b>Click</b> the crew<br><b>D W F C K</b> shortcuts &nbsp;&middot;&nbsp; <b>B</b> shipwright &nbsp;&middot;&nbsp; <b>M</b> sound &nbsp;&middot;&nbsp; <b>Q</b> quality</div>
@@ -2136,6 +2165,8 @@ function poseCaptain(c, t, dt) {
       break;
     case 'throwBack': R.r('armR', -2.7, 0, 0.1); R.r('elbowR', -0.8); R.r('spine', -0.15, 0.3, 0); R.r('armL', -1.0, 0, -0.2); break;
     case 'throwFwd': R.r('armR', -1.2, 0, 0.1); R.r('elbowR', -0.1); R.r('spine', 0.2, -0.2, 0); R.r('armL', 0.2, 0, 0.3); break;
+    case 'cook': R.r('spine', 0.12, 0, 0); R.r('armL', -1.1, 0, -0.15); R.r('elbowL', -0.45); R.r('armR', -0.9 + Math.sin(t * 6) * 0.15, 0, 0.25 + Math.cos(t * 6) * 0.12); R.r('elbowR', -0.9); R.r('neck', 0.35, 0, 0); break;
+    case 'horn': { const p2 = Math.abs(Math.sin(t * 9)); R.r('armR', -1.3, 0, 0.1); R.r('elbowR', -0.5 - p2 * 0.3); R.r('spine', 0.12, 0, 0); R.r('neck', -0.1, 0, 0); mouth = 0.4; break; }
     case 'wave': { const w2 = Math.sin(t * 10) * 0.35; R.r('armR', -2.6, 0, 0.3 + w2); R.r('elbowR', -0.5); R.r('neck', -0.1, 0, 0); mouth = 0.3; break; }
     case 'scold': R.r('armL', 0, 0, 0.55); R.r('elbowL', -1.9); R.r('armR', -1.2, 0, 0.1); R.r('elbowR', -0.6 + Math.sin(t * 8) * 0.25); R.r('neck', 0.1, 0, Math.sin(t * 4) * 0.12); mouth = 0.2 + Math.abs(Math.sin(t * 9)) * 0.4; break;
     case 'scared': {
@@ -2169,11 +2200,12 @@ function poseCaptain(c, t, dt) {
       R.r('neck', -0.12, 0.45, 0); if (c.sleeping) eyes = 0.1;
       break;
     }
-    case 'sleep': case 'sit': {
+    case 'sleep': case 'sit': case 'sitEat': {
       R.p('hips', 0, 0.14, 0.05);
       R.r('legL', -1.45, 0, 0.1); R.r('legR', -1.42, 0, -0.1); R.r('kneeL', 0.15); R.r('kneeR', 0.25);
       R.r('spine', -0.3, 0, 0); R.r('armL', -0.45, 0, -0.1); R.r('armR', -0.45, 0, 0.1); R.r('elbowL', -1.0); R.r('elbowR', -1.0);
       if (P === 'sleep') { R.r('neck', 0.42 + Math.sin(t * 0.9) * 0.03, 0, 0.25); eyes = 0.15; } else R.r('neck', 0.05, 0, 0);
+      if (P === 'sitEat') { const s2 = Math.max(0, Math.sin(t * 2.6)); R.r('armR', -1.2 - s2 * 0.3, 0, 0.3); R.r('elbowR', -1.6 - s2 * 0.25); R.r('armL', -0.75, 0, -0.1); R.r('elbowL', -1.05); mouth = s2 * 0.55; }
       break;
     }
   }
@@ -2239,7 +2271,7 @@ function poseCaptain(c, t, dt) {
   for (const b of c.brows) b.position.y = damp(b.position.y, 0.256 + brow * 0.025 - (P === 'scold' ? 0.012 : 0), 10, dt);
   for (const p of c.pupils) p.position.x = damp(p.position.x, lookYaw * c.lookW * 0.007, 8, dt);
   // the pipe, and the odd puff of smoke
-  const pipeOK = !(c.props.mug.visible || c.props.harmonica.visible || P === 'scared' || P === 'cower' || P === 'sleep' || P === 'bunk' || P === 'stretch' || P === 'wave');
+  const pipeOK = !(c.props.mug.visible || c.props.harmonica.visible || (c.props.plate && c.props.plate.visible) || P === 'horn' || P === 'scared' || P === 'cower' || P === 'sleep' || P === 'bunk' || P === 'stretch' || P === 'wave');
   c.pipe.visible = pipeOK;
   c.smokeT -= dt;
   if (pipeOK && c.smokeT <= 0) {
@@ -2691,6 +2723,8 @@ cap.next = function () {
   if (world.isNight) return asInside(capNight());
   const wantCoat = world.w.rain > 0.22;
   if (wantCoat !== cap.coatOn) return taskCoat(wantCoat);
+  if (cap.needs.food < 0.33 && !KR.active && !shoreBlocked()) return asInside(taskGalley());
+  if (cap.needs.energy < 0.22 && !KR.active) return taskDeckNap();
   const d = pendingDest();
   if (d) { d.claimed = true; return d.kind === 'bottle' ? taskBottle(d) : taskSpotDest(d); }
   const st = world.w.waves, storm = st > 1.1;
@@ -2776,7 +2810,7 @@ function* dogNap() {
   dog.pose = 'lie'; yield* wait(1.5);
   dog.pose = 'sleep'; dogSay(world.w.cover < 0.5 ? 'Napping in the sun' : 'Taking a little nap'); dog.sleeping = true;
   yield* wait(rand(7, 11));
-  dog.sleeping = false; dog.pose = 'stand'; yield* wait(0.5);
+  dog.sleeping = false; dog.pose = 'stand'; feed(dog, 0, 0.35); yield* wait(0.5);
 }
 function* dogFollow() {
   dogSay('Following the captain');
@@ -2871,8 +2905,9 @@ dog.next = function () {
   dog.pose = 'stand';
   if (world.isNight) return asInside(dogNight());
   const st = world.w.waves;
-  const opts = [[dogWatch, 2.2], [dogSniff, 1.8], [dogFollow, 1.6], [dogSpin, 0.6], [dogNap, st > 1.15 ? 0 : world.w.cover < 0.9 ? 1.2 : 0.4],
-    [dogBeg, world.fishCount > 0 ? 1.0 : 0], [dogHide, st > 1.15 ? 4 : 0],
+  const tired = dog.needs.energy < 0.3 ? 4 : 1, hungry = dog.needs.food < 0.35;
+  const opts = [[dogWatch, 2.2], [dogSniff, 1.8], [dogFollow, 1.6], [dogSpin, dog.needs.energy > 0.5 ? 0.6 : 0], [dogNap, st > 1.15 ? 0 : (world.w.cover < 0.9 ? 1.2 : 0.4) * tired],
+    [dogBeg, world.fishCount > 0 || hungry ? (hungry ? 2.5 : 1.0) : 0], [dogHide, st > 1.15 ? 4 : 0],
     [dogSteal, world.fishCount > 0 && !cap.fishing && Math.hypot(cap.pos.x - gear.bucketPos.x, cap.pos.y - gear.bucketPos.z) > 2.5 ? 0.45 : 0]].filter(o => o[0] !== lastDogTask && o[1] > 0);
   let tot = opts.reduce((a, o) => a + o[1], 0), r = Math.random() * tot;
   for (const o of opts) { r -= o[1]; if (r <= 0) { lastDogTask = o[0]; return o[0](); } }
@@ -4427,7 +4462,7 @@ KR.head = makeKrakenHead(); KR.head.visible = false; scene.add(KR.head);
 function spawnKraken(summoned) {
   if (KR.active) return;
   const ang = rand(0, TAU);
-  Object.assign(KR, { active: true, t: 0, ang, hx: Math.cos(ang) * 30, hz: Math.sin(ang) * 30, bubbles: 0 });
+  Object.assign(KR, { active: true, t: 0, ang, hx: Math.cos(ang) * 30, hz: Math.sin(ang) * 30, bubbles: 0, rate: 1, shown: false, gift: false }); choice.picked = null;
   KR.tents.forEach((T, i) => {
     const a = ang + (i - 3) * rand(0.24, 0.32) + rand(-0.08, 0.08);
     const ext = Math.abs(Math.cos(a)) * 6.4 + Math.abs(Math.sin(a)) * 2.3;   // how far the boat reaches that way
@@ -4483,7 +4518,7 @@ system('kraken', (dt, t) => {
     }
     return;
   }
-  const k = KR.t += dt;
+  const k = KR.t += dt * (KR.rate || 1);
   // churning water above it before anything breaks the surface
   if (k < 4 && Math.random() < dt * 30) { const T = pick(KR.tents); emit(T.bx + rand(-1.5, 1.5), 0, T.bz + rand(-1.5, 1.5), rand(-0.5, 0.5), 0, rand(-0.5, 0.5), rand(1.5, 2.5), rand(0.4, 0.8), true); }
   let si = 0;
@@ -4662,6 +4697,7 @@ function* capNight() {
     cap.pose = 'sleep'; cap.sleeping = true; capSay('Dozing off on deck');
     yield* waitUntil(() => !world.isNight); cap.sleeping = false; cap.pose = 'stretch'; yield* wait(1.4); return;
   }
+  if (cap.needs.food < 0.6) yield* nightSupper();
   // wind down: write up the log, warm up by the stove, or read in his bunk
   const act = cabin.lastAct = pick(['log', 'stove', 'read'].filter(a => a !== cabin.lastAct));
   if (act === 'log') {
@@ -4720,6 +4756,11 @@ function* dogNight() {
     yield* walkTo(dog, -2.6, -0.92); yield* face(dog, Math.PI / 2 + 0.2);
     dog.pose = 'sleep'; dog.sleeping = true; yield* waitUntil(() => !world.isNight || (!cap.fishing && cap.inside));
     dog.sleeping = false; dog.pose = 'stand'; return;
+  }
+  if (dog.needs.food < 0.6) {
+    dogSay('Crunching his supper by the stove');
+    yield* glide(dog, -0.76, -0.49, CABIN.floor, 0.8); yield* face(dog, -Math.PI / 2, 0.6);
+    dog.pose = 'eat'; yield* wait(5); feed(dog, 0.8); dog.pose = 'stand';
   }
   dogSay('Trotting to his bed by the stove');
   yield* glide(dog, ...IN.bedFront, CABIN.floor, 0.8);
@@ -5946,6 +5987,230 @@ system('harbour', (dt, t) => {
 });
 
 /* =====================================================================
+   Crew needs — hunger and energy. Hungry crew cook a meal in the galley and eat together;
+   tired crew nap; a night in the bunk (or in Ghost's bed) restores them.
+   ===================================================================== */
+cap.needs = { food: 0.72, energy: 0.85 }; dog.needs = { food: 0.7, energy: 0.9 };
+system('needs', dt => {
+  for (const c of [cap, dog]) {
+    const N = c.needs, busy = c.moving > 0.3 || ['bail', 'coil', 'trim', 'reel', 'excited', 'dig', 'bark'].includes(c.pose);
+    N.food = clamp(N.food - dt / (c === dog ? 330 : 380), 0, 1);
+    N.energy = clamp(N.energy + (c.sleeping ? dt / 40 : -dt / (busy ? 260 : 520)), 0, 1);
+  }
+});
+// meal props: a skillet for the stove, a plate to eat from, and Ghost's bowl set out on deck
+{
+  const pan = new THREE.Group(); pan.visible = false; cap.rig.j.handL.add(pan); pan.position.set(0, -0.08, 0.16);
+  mk(new THREE.CylinderGeometry(0.11, 0.09, 0.035, 12), MAT.iron, pan, 0, 0, 0.12);
+  mk(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 5), MAT.black, pan, 0, 0, 0, Math.PI / 2, 0, 0);
+  const pf = makeFish(0xc96a2b, 0xf1d9b4, 0.32); pf.rotation.set(Math.PI / 2, 0, 0); pf.position.set(0, 0.03, 0.12); pan.add(pf);
+  cap.props.pan = pan;
+  const plate = new THREE.Group(); plate.visible = false; cap.rig.j.handL.add(plate); plate.position.set(0, -0.06, 0.1);
+  mk(new THREE.CylinderGeometry(0.13, 0.1, 0.02, 14), std(0xf1ede4, { roughness: 0.4 }), plate, 0, 0, 0.05);
+  const fish2 = makeFish(0xc96a2b, 0xf1d9b4, 0.3); fish2.rotation.set(Math.PI / 2, 0, 0.4); fish2.position.set(0, 0.03, 0.05); plate.add(fish2);
+  mk(new THREE.SphereGeometry(0.03, 6, 4), std(0x6aa84f), plate, 0.06, 0.025, 0.08);
+  mk(new RoundedBoxGeometry(0.07, 0.04, 0.05, 2, 0.015), std(0xc98a44), plate, -0.05, 0.03, 0.09);
+  cap.props.plate = plate;
+}
+const deckBowl = new THREE.Group(); deckBowl.position.set(-2.38, deckY(-2.38), -0.74); deckBowl.visible = false; Lgear.add(deckBowl);
+mk(new THREE.CylinderGeometry(0.075, 0.06, 0.05, 12), std(0x2b6fd6, { roughness: 0.4 }), deckBowl, 0, 0.025, 0);
+mk(new THREE.CylinderGeometry(0.062, 0.062, 0.01, 12), std(0x8a5a2e), deckBowl, 0, 0.045, 0);
+const MEALS = {
+  fish: ['Frying up a fish from the bucket', 'Fried fish and bread — a sailor’s supper'],
+  bread: ['Warming the baker’s bread with butter', 'Warm bread and butter on deck'],
+  veg: ['Stewing carrots in the galley', 'A hot carrot stew'],
+  stores: ['Heating ship’s beans and biscuits', 'Beans and biscuits, hot from the galley'],
+};
+function takeMeal() {
+  if (world.fishCount > 0) { world.fishCount--; gear.bucketFish.forEach((f, i) => f.visible = i < world.fishCount); return 'fish'; }
+  if (world.pantry.bread > 0) { world.pantry.bread--; return 'bread'; }
+  if (world.pantry.veg > 0) { world.pantry.veg--; return 'veg'; }
+  return 'stores';
+}
+function* cookInGalley(meal) {
+  capSay(MEALS[meal][0]);
+  yield* glide(cap, ...IN.stove, CABIN.floor, 0.7); yield* faceTo(cap, -1.25, -0.38, 0.8);
+  cap.pose = 'crouch'; cabin.stoke = 1.6; yield* wait(1.4);
+  cap.pose = 'cook'; cap.props.pan.visible = true;
+  try {
+    for (let k = 0; k < 7; k += DT) {
+      cabin.stoke = Math.max(cabin.stoke, 1);
+      if (Math.random() < DT * 3) { Lcabin.localToWorld(_v1.set(-1.25, CABIN.dy + CABIN.h + 0.45, -0.36)); emit(_v1.x, _v1.y, _v1.z, rand(-0.1, 0.1), rand(0.5, 0.8), rand(-0.1, 0.1), rand(2.5, 3.5), rand(0.12, 0.2), 'rise', [0.86, 0.86, 0.88]); }
+      if (Math.random() < DT * 6) { cap.props.pan.getWorldPosition(_v1); emit(_v1.x, _v1.y + 0.05, _v1.z, rand(-0.04, 0.04), rand(0.2, 0.4), rand(-0.04, 0.04), rand(0.8, 1.2), rand(0.04, 0.07), 'rise', [0.9, 0.9, 0.9]); }
+      yield;
+    }
+  } finally { cap.props.pan.visible = false; }
+  cap.pose = 'idle'; cap.props.plate.visible = true;
+}
+function* taskGalley() {
+  const meal = takeMeal();
+  capSay('Getting hungry — time to cook');
+  if (!dog.busy && !dog.sleeping && !dog.ashore) dogCommand(dogWaitDinner());
+  try {
+    if (!(yield* enterCabin(cap))) { cap.props.plate.visible = false; return; }
+    yield* cookInGalley(meal);
+    capSay('Bringing supper up on deck');
+    yield* exitCabin(cap);
+    yield* walkTo(cap, -1.95, -0.5); yield* face(cap, -Math.PI / 2 - 0.4);
+    cap.pose = 'crouch'; yield* wait(0.6); deckBowl.visible = true; dinner.bowl = true; cap.pose = 'sit'; yield* wait(0.5);
+    cap.seated = true; cap.pose = 'sitEat'; capSay(MEALS[meal][1]);
+    yield* wait(rand(8, 10));
+    feed(cap, 0.85); dinner.done = true;
+    cap.props.plate.visible = false; cap.pose = 'sit'; capSay('Full and happy'); yield* wait(1.5);
+  } finally { cap.props.plate.visible = false; cap.seated = false; dinner.bowl = false; deckBowl.visible = false; }
+  cap.pose = 'stretch'; yield* wait(1.2); cap.pose = 'idle';
+}
+const dinner = { bowl: false, done: false };
+function* dogWaitDinner() {
+  dog.busy = true; dinner.done = false;
+  try {
+    dogSay('Smells supper cooking!');
+    yield* walkTo(dog, -2.7, -0.72); yield* face(dog, Math.PI / 2 + 0.1);
+    dog.pose = 'sit';
+    yield* waitUntil(() => dinner.bowl || dinner.done, 45);
+    if (dinner.bowl) {
+      dog.pose = 'excited'; yield* wait(0.8);
+      dog.pose = 'eat'; dogSay('Wolfing down his dinner');
+      yield* waitUntil(() => !dinner.bowl, 14);
+      feed(dog, 0.85); dog.pose = 'happy'; dogSay('Licking his chops'); yield* wait(1.5);
+    }
+  } finally { dog.busy = false; }
+  dog.pose = 'stand';
+}
+// supper below decks before bed: cook, eat at the chart table; Ghost eats at his bowls
+function* nightSupper() {
+  const meal = takeMeal();
+  yield* cookInGalley(meal);
+  dinner.indoor = true;
+  try {
+    capSay(MEALS[meal][1] + ' by lamplight');
+    yield* glide(cap, 0.1, 0.12, CABIN.floor, 0.7); yield* face(cap, Math.PI, 0.8);
+    yield* glide(cap, ...IN.stool, CABIN.floor, 0.5, false);
+    cap.seated = true; cap.seatH = 0.47; cap.pose = 'chairEat';
+    yield* wait(rand(7, 9)); feed(cap, 0.85);
+    cap.props.plate.visible = false; cap.seated = false; cap.pose = 'idle';
+    yield* glide(cap, 0.1, 0.12, CABIN.floor, 0.5, false);
+  } finally { dinner.indoor = false; cap.props.plate.visible = false; cap.seated = false; }
+}
+function* taskDeckNap() {
+  const s = pick([[1.35, 0.42, Math.PI + 0.3], [-1.95, -0.5, -Math.PI / 2], [2.2, 0.05, -Math.PI / 2]]);
+  capSay('Feeling sleepy — a quick nap');
+  yield* walkTo(cap, s[0], s[1]); yield* face(cap, s[2]);
+  cap.pose = 'sit'; yield* wait(1);
+  cap.pose = 'sleep'; cap.sleeping = true; capSay('Dozing in the sunshine');
+  try { yield* wait(rand(10, 14)); } finally { cap.sleeping = false; }
+  feed(cap, 0, 0.45);
+  cap.pose = 'stretch'; capSay('Refreshed after forty winks'); yield* wait(1.6); cap.pose = 'idle';
+}
+
+/* =====================================================================
+   Kraken encounters — the player decides: offer it a fish, sound the foghorn, or hide
+   ===================================================================== */
+// a brass foghorn on the helm pedestal
+const foghorn = new THREE.Group(); foghorn.position.set(-2.25, deckY(-2.25) + 0.9, -0.16); foghorn.rotation.y = -Math.PI / 2 - 0.5; Lgear.add(foghorn);
+{
+  const bell = new THREE.CylinderGeometry(0.11, 0.025, 0.32, 12, 1, true); bell.rotateX(Math.PI / 2); bell.translate(0, 0, 0.16);
+  mk(bell, new THREE.MeshStandardMaterial({ color: 0xcaa04a, roughness: 0.32, metalness: 0.85, side: THREE.DoubleSide }), foghorn, 0, 0.04, 0);
+  mk(new THREE.SphereGeometry(0.05, 8, 6), std(0xb5382c, { roughness: 0.6 }), foghorn, 0, 0.04, -0.06);
+  mk(new THREE.CylinderGeometry(0.018, 0.022, 0.08, 6), MAT.brass, foghorn, 0, -0.02, 0);
+}
+const choice = { open: false, t: 0, picked: null };
+function openKrakenChoice() {
+  const fish = world.fishCount > 0, bread = world.pantry.bread > 0;
+  $('cFish').disabled = !(fish || bread);
+  $('cFishSub').textContent = fish ? `${world.fishCount} in the bucket` : bread ? 'Toss it the baker’s bread' : 'Nothing to spare';
+  $('choice').hidden = false; choice.open = true; choice.t = 9; choice.picked = null;
+  $('choice').style.animation = 'none'; void $('choice').offsetWidth; $('choice').style.animation = '';
+}
+function closeKrakenChoice() { $('choice').hidden = true; choice.open = false; }
+function pickKraken(c) {
+  if (!choice.open || !KR.active) return;
+  if (c === 'fish' && $('cFish').disabled) return;
+  closeKrakenChoice(); choice.picked = c; sfx.init();
+  if (c === 'hide') { toast('Everyone take cover!'); return; }
+  interrupt(cap); resetProps();
+  cap.task = c === 'fish' ? capFeedKraken() : capFoghorn();
+  if (c === 'horn' && !dog.ashore) dogCommand(dogBarkKraken());
+}
+for (const b of document.querySelectorAll('#choice [data-c]')) b.addEventListener('click', () => pickKraken(b.dataset.c));
+system('krakenChoice', dt => {
+  if (KR.active && !choice.open && !choice.picked && KR.t > 2.6 && KR.t < 12 && !KR.shown) { KR.shown = true; openKrakenChoice(); }
+  if (!choice.open) return;
+  choice.t -= dt;
+  $('cTimer').style.transform = `scaleX(${clamp(choice.t / 9, 0, 1)})`;
+  if (choice.t <= 0 || !KR.active || KR.t > 15) { closeKrakenChoice(); choice.picked = 'hide'; }
+});
+const flyFish = makeFish(0x3f6f8f, 0xd8e2e6, 0.85); flyFish.visible = false; scene.add(flyFish);
+const _ff0 = V3(), _ff1 = V3();
+function* capFeedKraken() {
+  cap.scared = false;
+  const bread = world.fishCount <= 0;
+  capSay(bread ? 'Grabbing the bread for the beast' : 'Fetching a fish from the bucket');
+  if (bread) world.pantry.bread--;
+  else {
+    yield* walkTo(cap, gear.bucketPos.x + 0.48, gear.bucketPos.z, 1.5); yield* faceTo(cap, gear.bucketPos.x, gear.bucketPos.z, 0.5);
+    cap.pose = 'crouch'; yield* wait(0.6);
+    world.fishCount--; gear.bucketFish.forEach((f, i) => f.visible = i < world.fishCount);
+  }
+  cap.props.plate.visible = false;
+  const hand = cap.rig.j.handR; hand.add(flyFish); flyFish.visible = true; flyFish.position.set(0, -0.12, 0.05); flyFish.rotation.set(0, 0, Math.PI / 2); flyFish.scale.setScalar(bread ? 0.001 : 0.85);
+  // to the rail facing the kraken
+  const sd = Math.sin(KR.ang) >= 0 ? 1 : -1, rx = clamp(Math.cos(KR.ang) * 2.4, -2.6, 2.6);
+  capSay('Offering it a tasty fish…');
+  yield* walkTo(cap, rx, sd * (deckHalf(rx) - 0.3), 1.3); yield* faceTo(cap, KR.hx / BOAT_S, KR.hz / BOAT_S, 0.6);
+  cap.pose = 'throwBack'; yield* wait(0.55); cap.pose = 'throwFwd'; sfx.whoosh();
+  flyFish.getWorldPosition(_ff0); scene.add(flyFish); flyFish.scale.setScalar(bread ? 0.6 : 0.85);
+  _ff1.set(KR.hx * 0.55, 0, KR.hz * 0.55);
+  for (let k = 0; k < 1.3; k += DT) { const f = k / 1.3; flyFish.position.lerpVectors(_ff0, _ff1, f); flyFish.position.y += Math.sin(f * Math.PI) * 5; flyFish.rotation.z += DT * 12; yield; }
+  flyFish.visible = false; splash(_ff1.x, _ff1.z, 1.2);
+  // the nearest tentacle snaps it up
+  let best = KR.tents[0], bd = 1e9; for (const T of KR.tents) { const d = Math.hypot(T.bx - _ff1.x, T.bz - _ff1.z); if (d < bd) { bd = d; best = T; } }
+  best.slamAt = KR.t + 0.1; best.slamSide = Math.random() < 0.5 ? -1 : 1; best.slammed = false;
+  yield* wait(1.4);
+  toast('The kraken gulps down the offering… and seems pleased');
+  cap.pose = 'cheer'; capSay('It took the fish!'); yield* wait(1.6);
+  KR.t = Math.max(KR.t, 17.2); KR.rate = 1.3; KR.gift = Math.random() < 0.55;
+  cap.pose = 'idle'; yield* waitUntil(() => !KR.active || KR.t > 21, 12);
+  if (!KR.seen) { KR.seen = true; discover('The Kraken', 'A KRAKEN rose beside us. I tossed it a fish and it went on its way, calm as you like.'); }
+  else addLog('Fed the kraken a fish. We are on good terms, it seems.');
+  if (KR.gift) {
+    world.treasure = (world.treasure || 0) + 1; deckChest.visible = true; addDeckChestObstacle(); flashStat('sGold'); sfx.chime();
+    toast('A tentacle leaves a <b>barnacled chest</b> on the deck — a gift from the deep!');
+    addLog('As it sank, the kraken set a chest of old gold on our deck. A thank-you, I suppose.');
+    cap.pose = 'cheer'; capSay('A gift from the kraken!'); yield* wait(1.8);
+  }
+  cap.pose = 'idle';
+}
+function* capFoghorn() {
+  capSay('Running for the foghorn!');
+  yield* walkTo(cap, -2.6, -0.3, 1.6); yield* faceTo(cap, foghorn.position.x, foghorn.position.z, 0.5);
+  for (let i = 0; i < 3; i++) {
+    cap.pose = 'reach'; yield* wait(0.25);
+    cap.pose = 'horn'; sfx.horn(); world.shake = Math.max(world.shake || 0, 0.35);
+    capSay(i < 2 ? 'BWAAAAMP!' : 'BWAAAAAAAMP!!');
+    yield* wait(1.3);
+  }
+  KR.t = Math.max(KR.t, 17.5); KR.rate = 2.2;
+  toast('The foghorn booms across the water — the kraken flinches and dives!');
+  for (const T of KR.tents) if (Math.random() < 0.6) { T.slamAt = KR.t + rand(0, 0.4); T.slammed = false; }
+  cap.pose = 'cheer'; capSay('And stay down there!'); yield* wait(1.8);
+  if (!KR.seen) { KR.seen = true; discover('The Kraken', 'A KRAKEN rose beside us. Three blasts on the foghorn sent it diving for the deep.'); }
+  else addLog('Saw the kraken off with the foghorn again.');
+  cap.pose = 'idle';
+}
+function* dogBarkKraken() {
+  dog.busy = true;
+  try {
+    yield* faceTo(dog, KR.hx / BOAT_S, KR.hz / BOAT_S, 0.5);
+    dog.pose = 'bark'; dogSay('Barking along with the foghorn!');
+    for (let i = 0; i < 6; i++) { dog.barkT = 0.3; sfx.bark(); yield* wait(rand(0.45, 0.7)); }
+    yield* waitUntil(() => !KR.active || KR.t > 21, 10);
+    dog.pose = 'happy'; dogSay('Very proud of himself'); yield* wait(1.6);
+  } finally { dog.busy = false; }
+  dog.pose = 'stand';
+}
+
+/* =====================================================================
    HUD
    ===================================================================== */
 function toast(html) {
@@ -5970,6 +6235,11 @@ function updateHUD(dt) {
   setText('sSea', sea);
   setText('sDist', `${(world.offset / 60).toFixed(1)} nm`);
   setText('sFish', `${world.fishCount} fish`);
+  for (const [c, f, r] of [[cap, 'capFood', 'capRest'], [dog, 'dogFood', 'dogRest']]) {
+    const fe = $(f), re = $(r);
+    fe.style.width = `${Math.round(c.needs.food * 100)}%`; re.style.width = `${Math.round(c.needs.energy * 100)}%`;
+    fe.classList.toggle('low', c.needs.food < 0.3); re.classList.toggle('low', c.needs.energy < 0.25);
+  }
   setText('sGold', world.treasure ? `${world.treasure} chest${world.treasure > 1 ? 's' : ''}` : 'None yet');
   setText('logTime', `Day ${world.dayNum} · ${clockStr(world.tod)}`);
   setText('subDay', world.todAnim ? (world.isNight ? 'Dusk falling…' : 'Dawn rising…') : phaseOf(world.tod));
@@ -6021,6 +6291,7 @@ addEventListener('keydown', e => {
   if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === 'Escape' && !$('yard').hidden) { openYard(false); return; }
   const k = e.key.toLowerCase();
+  if (choice.open && (k === '1' || k === '2' || k === '3')) { pickKraken(['fish', 'horn', 'hide'][+k - 1]); e.preventDefault(); return; }
   if (peek.on && (k === 'escape' || k === 'arrowleft' || k === 'arrowright')) { if (k === 'escape') exitPeek(); else stepPeek(k === 'arrowleft' ? -1 : 1); e.preventDefault(); return; }
   if (ACTIONS[k]) { sfx.init(); pressFx(ACTIONS[k][0]); ACTIONS[k][1](); e.preventDefault(); }
   else if (k === 'm') toggleSound();
@@ -6065,7 +6336,7 @@ function tick(dt) {
   updateHUD(dt);
 }
 renderer.setAnimationLoop(frame);
-window.__atsea = { ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
+window.__atsea = { choice, pickKraken, taskGalley, ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
   PERCHES, tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
 </script>
 </body>
