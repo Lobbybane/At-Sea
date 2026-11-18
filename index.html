@@ -284,6 +284,7 @@ body.yard #log{opacity:0;visibility:hidden}
     <div><label>Catch</label><b id="sFish">0 fish</b></div>
     <div><label>Discoveries</label><b id="sFinds">0 found</b></div>
     <div><label>Treasure</label><b id="sGold">None yet</b></div>
+    <div><label>Season</label><b id="sSeason">Spring</b></div>
   </div>
   </div></div>
 </header>
@@ -680,7 +681,8 @@ for (let i = 0; i < RAIN_N; i++) {
 }
 function updateRain(dt) {
   const amt = world.w.rain;
-  rainMat.opacity = clamp(amt * 0.55, 0, 0.5) * (0.75 + world.day * 0.25);
+  rainMat.opacity = (world.snow ? clamp(amt * 1.1, 0, 0.85) : clamp(amt * 0.55, 0, 0.5)) * (0.75 + world.day * 0.25);
+  rainMat.color.set(world.snow ? 0xf4f8ff : 0xb7c6d8);
   rain.visible = amt > 0.01;
   if (!rain.visible) return;
   const count = Math.floor(RAIN_N * clamp(amt, 0, 1) * (world.rainScale ?? 1));
@@ -689,8 +691,8 @@ function updateRain(dt) {
   const wx = -world.w.wind * 0.22 - world.speed, wz = world.w.wind * 0.06;
   for (let i = 0; i < count; i++) {
     const j = i * 4;
-    let x = rainDrops[j], y = rainDrops[j + 1], z = rainDrops[j + 2]; const sp = rainDrops[j + 3];
-    y -= sp * dt; x += wx * dt; z += wz * dt;
+    let x = rainDrops[j], y = rainDrops[j + 1], z = rainDrops[j + 2]; const sp = rainDrops[j + 3] * (world.snow ? 0.07 : 1);
+    y -= sp * dt; x += wx * (world.snow ? 0.45 : 1) * dt + (world.snow ? Math.sin(world.time * 1.3 + i) * 0.7 * dt : 0); z += wz * dt;
     if (y < -1.5) { y = rand(26, 36); x = rand(-RAIN_BOX, RAIN_BOX); z = rand(-RAIN_BOX, RAIN_BOX); }
     if (x < -RAIN_BOX) x += RAIN_BOX * 2; if (z > RAIN_BOX) z -= RAIN_BOX * 2;
     rainDrops[j] = x; rainDrops[j + 1] = y; rainDrops[j + 2] = z;
@@ -712,8 +714,8 @@ const bolt = new THREE.LineSegments(boltGeo, boltMat);
 bolt.frustumCulled = false; bolt.visible = false;
 scene.add(bolt);
 let boltLife = 0;
-function strike() {
-  const a = rand(0, TAU), d = rand(70, 230);
+function strike(near) {
+  const a = rand(0, TAU), d = near ? rand(16, 30) : rand(70, 230);
   const x0 = Math.cos(a) * d, z0 = Math.sin(a) * d;
   const pos = boltGeo.attributes.position.array;
   let n = 0;
@@ -732,9 +734,10 @@ function strike() {
   boltLife = 0.38; bolt.visible = true;
   world.flash = 1;
   sfx.thunder(d);
+  if (near) nearStrike(x0, z0);
 }
 function updateLightning(dt) {
-  if (world.w.bolt > 0.01 && Math.random() < world.w.bolt * dt) strike();
+  if (world.w.bolt > 0.01 && Math.random() < world.w.bolt * dt * (world.snow ? 0.3 : 1)) strike(world.w.bolt > 0.3 && Math.random() < 0.22);
   if (boltLife > 0) {
     boltLife -= dt;
     boltMat.opacity = boltLife > 0 ? (0.6 + 0.4 * Math.sin(boltLife * 90)) : 0;
@@ -1675,8 +1678,8 @@ function updateSails(dt, t) {
   const wind = sstep(4, 46, world.w.wind);
   const storm = sstep(1.0, 1.8, world.w.waves);
   const belly = 0.32 + wind * 0.35;
-  const furl = rig.furl || 0;
-  _A.set(0.02, 0.08, 0); _B.set(-3.75, 0.1, 0); _Cc.set(0.02, (MAST_TOP - BOOM_Y - 0.45) * (1 - furl * 0.86), 0);
+  const furl = rig.furl || 0; rig.reef = damp(rig.reef || 0, sstep(26, 44, world.w.wind) * 0.4, 0.5, dt);
+  _A.set(0.02, 0.08, 0); _B.set(-3.75 * (1 - rig.reef * 0.2), 0.1, 0); _Cc.set(0.02, (MAST_TOP - BOOM_Y - 0.45) * (1 - furl * 0.86) * (1 - rig.reef), 0);
   shapeSail(rig.main, _A, _B, _Cc, belly * (1 - furl * 0.8), 0.015 + storm * 0.07, t);
   const js = Math.sin(rig.sailAngle) * 1.0;
   _A.set(5.05, hullTop(1) + 0.4, 0); _B.set(lerp(1.75, 4.2, furl), lerp(deckY(1.75) + 0.65, hullTop(1) + 0.5, furl), (js + 0.12 * Math.sign(js || 1)) * (1 - furl)); _Cc.set(lerp(MAST_X + 0.12, 4.3, furl), lerp(MAST_TOP - 0.6, hullTop(1) + 1.2, furl), 0);
@@ -3036,6 +3039,7 @@ const sfx = (() => {
       tone('sawtooth', 62, 34, 4.2, 0.2, 0, ['lowpass', 240, 3]); tone('sawtooth', 47, 29, 3.6, 0.14, 0.8, ['lowpass', 180, 3]);
       tone('sine', 92, 55, 3.2, 0.12, 1.6); burst(5, 'lowpass', 110, 0.8, 0.35, 0.6);
     },
+    ghost() { for (const f of [196, 207.6, 293.7, 311.1]) tone('sine', f, f * 0.94, 4.5, 0.035, rand(0, 0.4), ['lowpass', 900, 1]); },
     whimper() { tone('sine', 1150, 820, 0.35, 0.045); tone('sine', 1000, 760, 0.3, 0.035, 0.38); },
     gull() { tone('sine', 1800, 1100, 0.35, 0.03, 0, ['bandpass', 1600, 3]); tone('sine', 1900, 1200, 0.3, 0.025, 0.42, ['bandpass', 1600, 3]); },
   };
@@ -3189,8 +3193,8 @@ const sunDir = V3(), moonDir = V3(), lightDir = V3();
 function setWeather(i, auto = false) {
   world.weatherIdx = (i + WEATHER.length) % WEATHER.length;
   const W = WEATHER[world.weatherIdx];
-  if (auto) toast(`The weather is turning &mdash; <b>${W.name}</b>`);
-  else toast(`Weather: <b>${W.name}</b>`);
+  if (auto) toast(`The weather is turning &mdash; <b>${weatherName()}</b>`);
+  else toast(`Weather: <b>${weatherName()}</b>`);
   if (W.bolt > 0 && !auto && Math.random() < 0.7) setTimeout(strike, 1200);
   flashStat('sWeather');
 }
@@ -3226,7 +3230,7 @@ function updateEnv(dt, t) {
   if (t > world.nextAutoWeather) {
     world.nextAutoWeather = t + rand(75, 140);
     if (t - world.lastWeatherPress > 60) {
-      const i = world.weatherIdx, up = i === 0 ? 1 : i === 6 ? 0 : (Math.random() < (i >= 4 ? 0.3 : 0.6) ? 1 : 0);
+      const i = world.weatherIdx, up = i === 0 ? 1 : i === 6 ? 0 : (Math.random() < clamp((i >= 4 ? 0.3 : 0.6) + season().bias, 0.05, 0.95) ? 1 : 0);
       setWeather(i + (up ? 1 : -1), true);
     }
   }
@@ -3813,7 +3817,10 @@ const DEST_KINDS = {
   lighthouse: { name: 'Lighthouse Island', make: makeLighthouseIsland, z: [80, 130], note: 'Sighted a lighthouse island. Red-and-white tower, keeper\'s cottage on the rise.', say: 'Land ho! A lighthouse island', w: 1.2 },
   palms: { name: 'Palm Island', make: makePalmIsland, z: [60, 110], note: 'A little island of palms off the bow. Sand white as sailcloth.', say: 'Land ho! An island with palm trees', w: 1.1 },
   wreck: { name: 'Old Shipwreck', make: makeWreck, z: [32, 50], note: 'Passed an old wreck on a sandbar. Mast still standing, sail in rags.', say: 'A shipwreck on the sandbar!', w: 1 },
-  ship: { name: 'Passing Schooner', make: makeSchooner, z: [36, 55], note: 'Hailed a two-masted schooner bound the other way. Her crew waved back.', say: 'A ship on the horizon!', w: 1.1 },
+  pirate: { name: 'Pirate Ship', make: makePirateShip, z: [17, 25], note: 'A pirate ship crossed our path! They roared with laughter and fired a cannon salute. Friendly sort of pirates.', say: 'Pirates on the horizon!', w: 0.75, ship: true, crew: [['pirate', 'pirate', 'pirate'], [[-6.5, 3.75, 0.8], [1.2, 2.2, 1.4], [4.5, 2.2, -1.2]]] },
+  trawler: { name: 'Fishing Trawler', make: makeTrawler, z: [15, 22], note: 'Passed a fishing trawler hauling her nets, gulls wheeling all around her. The crew waved their caps.', say: 'A fishing trawler!', w: 0.9, ship: true, crew: [['fisher', 'fisher'], [[-2.4, 1.72, 0.9], [0.3, 1.72, -1.0]]] },
+  ghostship: { name: 'Ghost Ship', make: makeGhostShip, z: [18, 26], note: 'In the dead of night a pale ship glided past through the mist. No sound, no wake. Ghost howled at it until it was gone.', say: 'A… ship? Glowing in the dark…', w: 1.6, ship: true, night: true, crew: [['greeter', 'weaver'], [[-1.5, 1.93, 1.0], [3.5, 1.93, -0.8]]], ghost: true },
+  ship: { name: 'Passing Schooner', make: makeSchooner, ship: true, crew: [['greeter', 'kid', 'baker'], [[-3.5, 1.93, 0.9], [1.5, 1.93, -0.9], [4.5, 1.93, 0.6]]], z: [18, 26], note: 'Hailed a two-masted schooner bound the other way. Her crew waved back.', say: 'A ship on the horizon!', w: 1.1 },
   village: { name: 'Harbour island', make: null, z: [31, 31], note: '', say: 'Land ho! An island with houses and a jetty', w: 1.5 },
   bottle: { name: 'Message in a Bottle', make: makeBottle, z: [2.6, 3.2], note: '', say: 'Something glinting in the water…', w: 0.9 },
 };
@@ -3832,10 +3839,11 @@ function spawnDest(kind) {
   if (kind === 'village') { I = makeVillage(++villageSeed); const busy = dests.find(d => d.x > 150 && d.kind !== 'bottle'); if (busy) side = -busy.side; I.side = side; }
   const m = I ? I.m : K.make();
   const d = { kind, K, m, x: kind === 'bottle' ? 34 : 360, z: side * rand(...K.z), side, spotted: false, done: false, t: 0 };
-  if (kind === 'ship') { d.x = 300; d.vx = -rand(2.5, 4); }
+  if (K.ship) { d.x = 300; d.vx = -rand(0.6, 1.4); }
   m.position.set(d.x, 0, d.z);
   if (kind !== 'bottle') m.rotation.y = rand(0, TAU);
-  if (kind === 'ship') m.rotation.y = Math.PI;
+  if (K.ship) m.rotation.y = Math.PI;
+  if (K.crew) crewOnShip(d, K.crew[0], K.crew[1].map(([x, y, z]) => [x, y, z]), K.ghost);
   if (I) { d.I = I; d.z = side * ISL.Zc; m.position.z = d.z; m.rotation.y = side > 0 ? 0 : Math.PI; d.name = I.name; d.note = `Sighted ${I.name}, a little island with a jetty and cottages.`; }
   else { const near = dests.find(o => o.I && Math.abs(o.x - d.x) < 140 && o.side === side); if (near) { d.side = side = -side; d.z = -d.z; m.position.z = d.z; } }
   scene.add(m); dests.push(d);
@@ -3845,7 +3853,7 @@ system('destinations', (dt, t) => {
   if (t > nextDest) {
     nextDest = t + rand(75, 140);
     const active = new Set(dests.map(d => d.kind));
-    const kinds = Object.keys(DEST_KINDS).filter(k => !active.has(k) && !(k === 'bottle' && (world.w.waves > 1.2 || world.isNight)));
+    const kinds = Object.keys(DEST_KINDS).filter(k => !active.has(k) && !(k === 'bottle' && (world.w.waves > 1.2 || world.isNight)) && (!DEST_KINDS[k].night || world.isNight) && !(DEST_KINDS[k].ship && dests.some(o => o.K.ship)));
     if (kinds.length) {
       const unseen = kinds.filter(k => !world.discoveries.some(d => d.name === DEST_KINDS[k].name));
       const pool = unseen.length && Math.random() < 0.75 ? unseen : kinds;
@@ -3867,12 +3875,12 @@ system('destinations', (dt, t) => {
     } else {
       d.x -= (world.speed + (d.vx ? -d.vx : 0)) * dt;
       d.m.position.x = d.x;
-      if (d.kind === 'ship') {
+      if (d.K.ship && !d.m.userData.ghost) {
         const h = waveHeight(d.x, d.z);
         d.m.position.y = damp(d.m.position.y, h - 0.6, 2, dt);
         d.m.rotation.z = Math.sin(t * 0.8) * 0.04; d.m.rotation.x = Math.sin(t * 0.6) * 0.03;
-        d.m.userData.lampMat.emissiveIntensity = (1 - world.day) * 3;
-        d.m.userData.flag.rotation.y = Math.sin(t * 5) * 0.3;
+        if (d.m.userData.lampMat) d.m.userData.lampMat.emissiveIntensity = (1 - world.day) * 3;
+        if (d.m.userData.flag) d.m.userData.flag.rotation.y = Math.sin(t * 5) * 0.3;
       }
       if (d.kind === 'lighthouse') {
         const u = d.m.userData, n = Math.max(1 - world.day, world.w.dark * 0.7);
@@ -4195,6 +4203,13 @@ function setCamMode(i) {
 }
 function seaLifeTarget(out) {
   if (KR.active) { out.copy(KR.head.position); out.y = Math.max(out.y + 3, 3); return 'The Kraken'; }
+  if (typeof SERP !== 'undefined') {
+    if (SERP.active) { out.copy(SERP.head.position); out.y = Math.max(out.y, 1); return 'Sea Serpent'; }
+    const orca = life.orcas.find(o => o.m.visible); if (orca) { out.copy(orca.m.position); out.y = Math.max(out.y, 0); return 'Orcas'; }
+    if (life.mantaOn) { out.copy(life.manta.m.position); out.y = Math.max(out.y, 0.3); return 'Manta Ray'; }
+    const ot = life.otters.find(o => o.m.visible && o.x > -20); if (ot) { out.copy(ot.m.position); return 'Sea Otters'; }
+    const sh = dests.find(d => d.K.ship && Math.abs(d.x) < 70); if (sh) { out.copy(sh.m.position); out.y = 4; return sh.K.name; }
+  }
   const dol = jumpers.filter(j => j.active && j.kind === 'dolphin');
   if (dol.length) { out.set(0, 0, 0); dol.forEach(j => out.add(j.mesh.position)); out.divideScalar(dol.length); return 'Dolphins'; }
   if (whale.active) { out.copy(whale.m.position); out.y = Math.max(out.y, 0); return 'Whale'; }
@@ -5253,6 +5268,7 @@ function makeHouse(rnd, st) {
   const p = st.thatch ? 0.72 : 0.6, run = d / 2 + 0.38, ridge = y0 + h + (d / 2) * Math.tan(p), L = run / Math.cos(p) + 0.05;
   for (const s of [-1, 1]) B(w + 0.75, st.thatch ? 0.3 : 0.15, L, roofM, 0, ridge - run / 2 * Math.tan(p) + 0.06, s * run / 2, s * p, 0, 0);
   B(w + 0.8, 0.14, 0.24, st.thatch ? roofM : trimM, 0, ridge + 0.1, 0);
+  if (st.snow) { const snowM = std(0xf6f8fb, { roughness: 1 }); for (const s of [-1, 1]) B(w + 0.85, 0.12, L * 0.92, snowM, 0, ridge - run / 2 * Math.tan(p) + 0.17, s * run / 2, s * p, 0, 0); B(w + 0.9, 0.18, 0.4, snowM, 0, ridge + 0.2, 0); }
   const gab = new THREE.Shape(); gab.moveTo(-d / 2, 0); gab.lineTo(d / 2, 0); gab.lineTo(0, (d / 2) * Math.tan(p)); gab.lineTo(-d / 2, 0);
   const gg = new THREE.ExtrudeGeometry(gab, { depth: 0.1, bevelEnabled: false });
   for (const s of [-1, 1]) { const m = mk(gg, wallM, g, s * (w / 2 - 0.05) - (s > 0 ? 0.1 : 0) + 0.05, y0 + h, 0, 0, Math.PI / 2, 0); m.position.x = s * w / 2 + (s > 0 ? -0.1 : 0); }
@@ -5313,7 +5329,7 @@ const pick2 = (rnd, arr) => arr[(rnd() * arr.length) | 0];
 
 /* ---------- villagers: simple jointed rigs in the same style as the crew ---------- */
 const VNAMES = { f: ['Marta', 'Nell', 'Ivy', 'Rosa', 'Wren', 'Juniper', 'Pearl', 'Hattie', 'Mabel', 'Opal'], m: ['Tom', 'Ezra', 'Bodie', 'Silas', 'Gus', 'Otis', 'Abe', 'Finn', 'Hugo', 'Milo'], k: ['Pip', 'Tilly', 'Bean', 'Scout', 'Kit', 'Poppy'] };
-const ROLE_TITLE = { fisher: 'Fisher', baker: 'Baker', gardener: 'Gardener', elder: 'Old', kid: 'Little', weaver: 'Netmaker', greeter: 'Harbourmaster' };
+const ROLE_TITLE = { pirate: 'Pirate', fisher: 'Fisher', baker: 'Baker', gardener: 'Gardener', elder: 'Old', kid: 'Little', weaver: 'Netmaker', greeter: 'Harbourmaster' };
 function makeVillager(rnd, role) {
   const R = new Rig(), root = new THREE.Group(), kid = role === 'kid', fem = rnd() < 0.5;
   const skin = std(pick2(rnd, [0xf1c9a5, 0xe0a47a, 0xc68a5e, 0x9a6440, 0x6e4529, 0xf5d6bd])), hairC = std(pick2(rnd, role === 'elder' ? [0xdcdcdc, 0xbdbdbd, 0xf0ece4] : [0x2a1c12, 0x5a3a1e, 0x8a5a2a, 0xc98a3a, 0x1b1b1b, 0xa34a22]));
@@ -5349,11 +5365,13 @@ function makeVillager(rnd, role) {
   if (style === 'bob') mk(rb(0.3, 0.2, 0.3), hairC, neck, 0, 0.27, -0.01);
   if (style === 'curly') for (let k = 0; k < 6; k++) mk(new THREE.IcosahedronGeometry(0.055, 0), hairC, neck, Math.cos(k) * 0.1, 0.38, Math.sin(k) * 0.1);
   if (!fem && !kid && rnd() < 0.4) mk(rb(0.22, 0.12, 0.08), hairC, neck, 0, 0.08, 0.12);
-  const hat = pick2(rnd, role === 'fisher' ? ['sou'] : role === 'gardener' ? ['straw'] : role === 'greeter' ? ['cap'] : role === 'baker' ? ['chef'] : ['none', 'none', 'straw', 'bandana']);
+  const hat = pick2(rnd, role === 'pirate' ? ['tricorn', 'bandana', 'tricorn'] : role === 'fisher' ? ['sou'] : role === 'gardener' ? ['straw'] : role === 'greeter' ? ['cap'] : role === 'baker' ? ['chef'] : ['none', 'none', 'straw', 'bandana']);
   if (hat === 'straw') { mk(new THREE.CylinderGeometry(0.3, 0.3, 0.025, 14), std(0xe3c27a), neck, 0, 0.38, 0); mk(new THREE.CylinderGeometry(0.15, 0.16, 0.12, 12), std(0xe3c27a), neck, 0, 0.44, 0); mk(new THREE.CylinderGeometry(0.161, 0.161, 0.03, 12), std(0xb5382c), neck, 0, 0.405, 0); }
   if (hat === 'sou') { mk(new THREE.CylinderGeometry(0.17, 0.27, 0.16, 12), std(0xe9ad1c), neck, 0, 0.42, -0.02); }
   if (hat === 'cap') { mk(new THREE.CylinderGeometry(0.15, 0.14, 0.1, 12), std(0x24405f), neck, 0, 0.4, 0); mk(new THREE.BoxGeometry(0.2, 0.02, 0.12), dark, neck, 0, 0.36, 0.14); }
   if (hat === 'chef') { mk(new THREE.CylinderGeometry(0.15, 0.13, 0.22, 12), white, neck, 0, 0.47, 0); mk(new THREE.SphereGeometry(0.17, 10, 6), white, neck, 0, 0.6, 0); }
+  if (hat === 'tricorn') { const tc = new THREE.CylinderGeometry(0.3, 0.3, 0.1, 3); mk(tc, dark, neck, 0, 0.4, 0.02, 0, Math.PI, 0); mk(new THREE.CylinderGeometry(0.15, 0.16, 0.12, 10), dark, neck, 0, 0.45, 0); }
+  if (role === 'pirate' && rnd() < 0.5) mk(new THREE.BoxGeometry(0.07, 0.07, 0.02), dark, neck, -0.06, 0.23, 0.14);
   if (hat === 'bandana') mk(rb(0.3, 0.08, 0.3, 0.4), std(pick2(rnd, [0xb5382c, 0x2b6fd6, 0xe9c46a])), neck, 0, 0.36, 0);
   for (const s of [1, -1]) {
     const arm = limb(R, s > 0 ? 'armL' : 'armR', spine, s * 0.25, 0.47, 0);
@@ -5419,13 +5437,13 @@ const DIALOGUE = {
 };
 const GIFT = { fisher: 'fish', baker: 'bread', gardener: 'veg' };
 function makeVillage(seed) {
-  const rnd = mulberry(seed * 9973 + 17), I = { seed: (seed % 100) * 0.37 + 1, name: ISLAND_NAMES[seed % ISLAND_NAMES.length], obst: [], nodes: {}, villagers: [], talked: new Set(), houses: [] };
+  const SP = season(), rnd = mulberry(seed * 9973 + 17), I = { tree: SP.tree, winter: !!SP.snow, seed: (seed % 100) * 0.37 + 1, name: ISLAND_NAMES[seed % ISLAND_NAMES.length], obst: [], nodes: {}, villagers: [], talked: new Set(), houses: [] };
   const m = new THREE.Group(); I.m = m; const S = new THREE.Group(); m.add(S);   // S holds static scenery (merged later)
   // terrain: polar grid displaced by islandH, flat-shaded sand and grass
   {
     const RING = 22, SEG = 56, rmax = ISL.R2 + 5, pos = [], col = [], P = [];
     for (let i = 0; i <= RING; i++) { P[i] = []; const r = Math.pow(i / RING, 0.85) * rmax; for (let j = 0; j < SEG; j++) { const a = j / SEG * TAU, x = Math.cos(a) * r, z = Math.sin(a) * r; P[i][j] = V3(x, islandGround(I, x, z), z); } }
-    const sandC = C(0xdcc893), wetC = C(0xb7a473), grassC = C(0x6a9a42), grass2 = C(0x5a8a38), rockC = C(0x7a7366);
+    const sandC = C(SP.sand), wetC = C(0xb7a473), grassC = C(SP.grass[0]), grass2 = C(SP.grass[1]), rockC = C(0x7a7366);
     const face = (a, b, c) => {
       pos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
       const y = (a.y + b.y + c.y) / 3, r = Math.hypot((a.x + b.x + c.x) / 3, (a.z + b.z + c.z) / 3);
@@ -5477,7 +5495,7 @@ function makeVillage(seed) {
   const flowers = [0xe94f6f, 0xf2c94c, 0x9b6bd6, 0xff8a5a, 0xffffff];
   const signs = ['BAKERY', 'NETS', 'POST'];
   spots.forEach(([x, z], i) => {
-    const st = { w: 4.4 + rnd() * 1.2, d: 3.7 + rnd() * 0.7, h: 2.7 + rnd() * 0.4, wall: pick2(rnd, PAL.wall), roof: pick2(rnd, PAL.roof), trim: pick2(rnd, PAL.trim), shutter: pick2(rnd, PAL.shutter), door: pick2(rnd, [0x8e2a26, 0x2f5d4a, 0x3d5a7a, 0x6b4226, 0xe2b43c]), thatch: rnd() < 0.3, porch: rnd() < 0.5, doorX: (rnd() - 0.5) * 0.8, flowers, sign: i === 0 ? signs[0] : rnd() < 0.3 ? signs[1 + (rnd() * 2 | 0)] : null };
+    const st = { snow: I.winter, w: 4.4 + rnd() * 1.2, d: 3.7 + rnd() * 0.7, h: 2.7 + rnd() * 0.4, wall: pick2(rnd, PAL.wall), roof: pick2(rnd, PAL.roof), trim: pick2(rnd, PAL.trim), shutter: pick2(rnd, PAL.shutter), door: pick2(rnd, [0x8e2a26, 0x2f5d4a, 0x3d5a7a, 0x6b4226, 0xe2b43c]), thatch: rnd() < 0.3, porch: rnd() < 0.5, doorX: (rnd() - 0.5) * 0.8, flowers, sign: i === 0 ? signs[0] : rnd() < 0.3 ? signs[1 + (rnd() * 2 | 0)] : null };
     const H = makeHouse(rnd, st), y = islandH(I, x, z);
     H.g.position.set(x, y, z); H.g.rotation.y = Math.atan2(N.plaza[0] - x, N.plaza[1] - z); m.add(H.g);
     H.g.updateMatrix(); const door = H.door.clone().applyMatrix4(H.g.matrix);
@@ -5485,10 +5503,10 @@ function makeVillage(seed) {
     I.obst.push({ c: [x, z], r: Math.hypot(st.w, st.d) / 2 + 0.5 });
   });
   // palms (or pines in the cooler months), the crooked old palm by the chest, the hammock pair
-  const tree = (x, z, h, crooked) => { const p = makePalm(h); p.position.set(x, islandH(I, x, z) - 0.1, z); p.scale.setScalar(0.62); if (crooked) p.rotation.z = 0.25; m.add(p); I.obst.push({ c: [x, z], r: 0.55 }); return p; };
+  const tree = (x, z, h, crooked, palm) => { const p = palm ? makePalm(h) : makeTree(h, I.tree); p.position.set(x, islandH(I, x, z) - 0.1, z); p.scale.setScalar(0.62); if (crooked) p.rotation.z = 0.25; m.add(p); I.obst.push({ c: [x, z], r: 0.55 }); return p; };
   for (const [x, z] of [[-12.5, 5.5], [11.5, 8.5], [-3.5, 11.5], [13.2, -1.5], [4, 12], [-13.5, -4.8]]) if (rnd() < 0.85) tree(x, z, 7 + rnd() * 3);
-  tree(-10.7, -2.6, 8, true);
-  const hA = [9.2, -11.6], hB = [12.4, -7.8]; tree(...hA, 7.5); tree(...hB, 7.2);
+  tree(-10.7, -2.6, 8, true, true);
+  const hA = [9.2, -11.6], hB = [12.4, -7.8]; tree(...hA, 7.5, false, true); tree(...hB, 7.2, false, true);
   // hammock slung between them
   {
     const pts = []; const yA = islandH(I, ...hA) + 1.45, yB = islandH(I, ...hB) + 1.45;
@@ -6211,6 +6229,523 @@ function* dogBarkKraken() {
 }
 
 /* =====================================================================
+   Seasons — spring, summer, autumn and winter turn every two days (or stay on the one you pick):
+   sky and sea tints, snow instead of rain, ice floes, seasonal trees on the islands, a winter scarf
+   ===================================================================== */
+const SEASONS = [
+  { name: 'Spring', sky: C(0xcfeede), skyK: 0.1, sea: C(0x1a6a70), seaK: 0.2, sun: C(0xfff2dc), fog: 1.05, bias: 0.0, tree: 'blossom', grass: [0x79b24c, 0x6aa242], sand: 0xdcc893 },
+  { name: 'Summer', sky: C(0x6fbcff), skyK: 0.12, sea: C(0x0a7290), seaK: 0.22, sun: C(0xfff0c4), fog: 0.85, bias: -0.15, tree: 'palm', grass: [0x6a9a42, 0x5a8a38], sand: 0xe6d29a },
+  { name: 'Autumn', sky: C(0xf0c49a), skyK: 0.14, sea: C(0x2e5a5c), seaK: 0.22, sun: C(0xffc488), fog: 1.25, bias: 0.12, tree: 'autumn', grass: [0x9a8f3e, 0x8a7d36], sand: 0xd8c08a },
+  { name: 'Winter', sky: C(0xdbe7f3), skyK: 0.22, sea: C(0x284a5f), seaK: 0.32, sun: C(0xe6efff), fog: 1.45, bias: 0.15, tree: 'pine', grass: [0xf1f5f9, 0xe2e9f0], sand: 0xd7dad6, snow: true },
+];
+world.seasonMode = 'auto';
+const seasonIdx = () => world.seasonMode === 'auto' ? Math.floor((world.dayNum - 1) / 2) % 4 : ['spring', 'summer', 'autumn', 'winter'].indexOf(world.seasonMode);
+const season = () => SEASONS[seasonIdx()];
+const winterK = { v: 0 };
+const seasonTint = { sky: C(0xffffff), sea: C(0xffffff), sun: C(0xffffff), skyK: 0, seaK: 0, fog: 1 };
+const SNOW_NAMES = { 'Dark Rain Clouds': 'Snow Clouds', Raining: 'Snowing', Storming: 'Blizzard', 'Heavy Storm': 'Heavy Blizzard' };
+const weatherName = () => { const n = WEATHER[world.weatherIdx].name; return season().snow ? SNOW_NAMES[n] || n : n; };
+// a woollen scarf for the captain in winter
+const scarf = new THREE.Group(); cap.rig.j.spine.add(scarf); scarf.visible = false;
+{
+  const red = std(0xb5382c, { roughness: 1 }), stripe = std(0xf1ede4, { roughness: 1 });
+  mk(new THREE.TorusGeometry(0.15, 0.05, 6, 14), red, scarf, 0, 0.56, 0.0, Math.PI / 2, 0, 0);
+  mk(new THREE.BoxGeometry(0.1, 0.32, 0.04), red, scarf, 0.07, 0.38, 0.15, 0.15, 0, 0.12);
+  mk(new THREE.BoxGeometry(0.102, 0.03, 0.042), stripe, scarf, 0.07, 0.3, 0.157, 0.15, 0, 0.12);
+}
+// snow on the cabin roof
+const roofSnow = mk(new RoundedBoxGeometry(CABIN.x1 - CABIN.x0 + 0.24, 0.05, CABIN.w * 2 + 0.24, 2, 0.02), std(0xf6f8fb, { roughness: 1 }), Lcabin, (CABIN.x0 + CABIN.x1) / 2, CABIN.dy + CABIN.h + 0.17, 0);
+roofSnow.visible = false; roofSnow.castShadow = false;
+// drifting ice floes
+const floes = [];
+{
+  const iceM = std(0xeef5fb, { roughness: 0.6 }), iceS = std(0xbcd6e6, { roughness: 0.4 });
+  for (let i = 0; i < 16; i++) {
+    const sh = new THREE.Shape(), n = 7, r = rand(1.2, 3.6);
+    for (let k = 0; k < n; k++) { const a = k / n * TAU, rr = r * rand(0.65, 1.1); sh[k ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr); }
+    const g = new THREE.ExtrudeGeometry(sh, { depth: rand(0.25, 0.5), bevelEnabled: true, bevelSize: 0.12, bevelThickness: 0.08, bevelSegments: 1 }); g.rotateX(-Math.PI / 2);
+    const m = new THREE.Group(); mk(g, iceM, m, 0, -0.2, 0); mk(new THREE.CylinderGeometry(r * 0.9, r, 0.1, 7), iceS, m, 0, -0.32, 0);
+    m.visible = false; scene.add(m);
+    floes.push({ m, x: rand(-140, 140), z: (Math.random() < 0.5 ? -1 : 1) * rand(9, 70), rot: rand(0, TAU), spin: rand(-0.05, 0.05) });
+  }
+}
+// seasonal trees for the islands
+function makeTree(h, kind) {
+  if (kind === 'palm') return makePalm(h);
+  const g = new THREE.Group(), bark = std(kind === 'pine' ? 0x5a3d26 : 0x6b4a32);
+  if (kind === 'pine') {
+    beam(V3(0, 0, 0), V3(0, h * 0.35, 0), 0.32, bark, g, 6, 0.22);
+    const needles = std(0x2f5a3a), snow = std(0xf4f7fa, { roughness: 1 });
+    for (let k = 0; k < 4; k++) { const r = 2.4 - k * 0.5, y = h * 0.25 + k * h * 0.17; mk(new THREE.ConeGeometry(r, h * 0.3, 8), needles, g, 0, y + h * 0.15, 0); mk(new THREE.ConeGeometry(r * 0.72, h * 0.12, 8), snow, g, 0, y + h * 0.27, 0); }
+    return g;
+  }
+  beam(V3(0, 0, 0), V3(0.2, h * 0.55, 0.1), 0.34, bark, g, 6, 0.2);
+  beam(V3(0.1, h * 0.4, 0), V3(-1.1, h * 0.7, 0.6), 0.14, bark, g, 5, 0.08);
+  beam(V3(0.1, h * 0.45, 0), V3(1.2, h * 0.72, -0.5), 0.14, bark, g, 5, 0.08);
+  const cols = kind === 'blossom' ? [0xf7b7c8, 0xf3a0b8, 0xfcd3de] : [0xd9662a, 0xe8a23a, 0xb8401e, 0xf0c24a];
+  for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; mk(new THREE.IcosahedronGeometry(rand(1.3, 1.9), 0), std(pick(cols), { roughness: 0.9 }), g, Math.cos(a) * 1.2, h * 0.75 + rand(-0.4, 0.8), Math.sin(a) * 1.2); }
+  mk(new THREE.IcosahedronGeometry(1.7, 0), std(pick(cols)), g, 0, h * 0.95, 0);
+  return g;
+}
+let lastSeason = -1;
+system('seasons', (dt, t) => {
+  const si = seasonIdx(), S = SEASONS[si];
+  if (si !== lastSeason) {
+    if (lastSeason >= 0) { toast(`<b>${S.name}</b> has come to the sea`); addLog(['Spring is here: soft light and blossom on the islands.', 'Summer: long warm days, calm blue water.', 'Autumn has arrived. The wind has a bite and the island trees have turned gold.', 'Winter. Snow on the deck this morning, and ice drifting on the swell.'][si]); flashStat('sSeason'); }
+    lastSeason = si;
+  }
+  seasonTint.sky.lerp(S.sky, 1 - Math.exp(-dt * 0.5)); seasonTint.sea.lerp(S.sea, 1 - Math.exp(-dt * 0.5)); seasonTint.sun.lerp(S.sun, 1 - Math.exp(-dt * 0.5));
+  seasonTint.skyK = damp(seasonTint.skyK, S.skyK, 0.5, dt); seasonTint.seaK = damp(seasonTint.seaK, S.seaK, 0.5, dt); seasonTint.fog = damp(seasonTint.fog, S.fog, 0.5, dt);
+  const d = world.day;
+  skyU.uTop.value.lerp(seasonTint.sky, seasonTint.skyK * d); skyU.uHorizon.value.lerp(seasonTint.sky, seasonTint.skyK * 0.6 * d);
+  oceanU.uDeep.value.lerp(seasonTint.sea, seasonTint.seaK * (0.4 + 0.6 * d)); oceanU.uCrest.value.lerp(seasonTint.sea, seasonTint.seaK * 0.5 * d);
+  sun.color.lerp(seasonTint.sun, 0.5); scene.fog.density *= seasonTint.fog;
+  winterK.v = damp(winterK.v, S.snow ? 1 : 0, 0.4, dt);
+  world.snow = S.snow;
+  roofSnow.visible = winterK.v > 0.5; scarf.visible = winterK.v > 0.5 && !cap.inBunk;
+  // ice floes drift by in winter
+  for (const f of floes) {
+    f.x -= world.speed * dt; f.rot += f.spin * dt;
+    if (f.x < -150) { f.x = rand(140, 180); f.z = (Math.random() < 0.5 ? -1 : 1) * rand(9, 70); }
+    f.m.visible = winterK.v > 0.02 && Math.abs(f.z) > 6;
+    if (!f.m.visible) continue;
+    f.m.position.set(f.x, waveHeight(f.x, f.z) + 0.1 - (1 - winterK.v) * 1.2, f.z); f.m.rotation.set(Math.sin(t * 0.7 + f.rot) * 0.03, f.rot, Math.cos(t * 0.6 + f.rot) * 0.03);
+  }
+  // frosty breath in winter
+  if (winterK.v > 0.5 && Math.random() < dt * 0.9) for (const [c, j, k] of [[cap, cap.rig.j.neck, 0.15], [dog, dog.rig.j.head, 0.2]]) { if (c.hopping) continue; j.getWorldPosition(_v1); emit(_v1.x, _v1.y + k * 0.5, _v1.z, rand(-0.1, 0.1), rand(0.1, 0.25), rand(-0.1, 0.1), rand(0.8, 1.3), rand(0.05, 0.09), 'rise', [0.95, 0.97, 1]); }
+});
+
+/* =====================================================================
+   Sky events — moon phases, rainbows, shooting stars, the aurora, glowing plankton
+   ===================================================================== */
+// the moon becomes a camera-facing disc that shows its phase (a full cycle every eight days)
+const moonTex = canvasTex(128, 128, () => {});
+moon.geometry.dispose(); moon.geometry = new THREE.PlaneGeometry(40, 40);
+moon.material.map = moonTex; moon.material.color.set(0xffffff); moon.material.needsUpdate = true;
+const MOON_NAMES = ['new moon', 'waxing crescent', 'first quarter moon', 'waxing gibbous moon', 'full moon', 'waning gibbous moon', 'last quarter moon', 'waning crescent'];
+let moonDrawn = -1;
+function drawMoon(i) {
+  const p = i / 8, c = moonTex.image.getContext('2d'), R = 58;
+  c.clearRect(0, 0, 128, 128); c.save(); c.translate(64, 64);
+  c.fillStyle = 'rgba(150,165,205,.14)'; c.beginPath(); c.arc(0, 0, R, 0, TAU); c.fill();
+  if (p > 0.5) c.scale(-1, 1);   // waning: lit on the other side
+  const q = p > 0.5 ? 1 - p : p, k = Math.cos(q * TAU);   // 1 = new, -1 = full
+  if (q > 0.01) {
+    c.beginPath(); c.moveTo(0, -R); c.arc(0, 0, R, -Math.PI / 2, Math.PI / 2, false);
+    c.ellipse(0, 0, R * Math.abs(k), R, 0, Math.PI / 2, -Math.PI / 2, k > 0);
+    c.closePath(); c.fillStyle = '#eef2fb'; c.fill();
+    c.globalCompositeOperation = 'source-atop'; c.fillStyle = 'rgba(120,132,165,.28)';
+    for (const [x, y, r] of [[-18, -14, 11], [14, 18, 8], [22, -20, 6], [-6, 26, 7], [30, 6, 5]]) { c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); }
+  }
+  c.restore(); moonTex.needsUpdate = true;
+}
+const moonPhase = () => (world.dayNum + 3) % 8;
+// rainbow, opposite the sun after a shower
+const rainbow = new THREE.Mesh(new THREE.PlaneGeometry(1500, 750), new THREE.ShaderMaterial({
+  uniforms: { uA: { value: 0 } }, transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform float uA; varying vec2 vUv;
+    vec3 hue(float h){ return clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0); }
+    void main(){ vec2 p = (vUv - vec2(0.5, 0.0)) * vec2(2.0, 1.0); float r = length(p);
+      float band = smoothstep(0.79, 0.81, r) * smoothstep(0.95, 0.93, r), t = (r - 0.8) / 0.14;
+      float second = smoothstep(1.0, 1.01, r) * smoothstep(1.08, 1.06, r) * 0.35;
+      vec3 c = hue(0.78 - t * 0.78) * band + hue(t * 0.78) * second;
+      gl_FragColor = vec4(c, (band + second) * uA * 0.42 * smoothstep(0.0, 0.18, p.y)); }`,
+}));
+rainbow.renderOrder = -6; rainbow.frustumCulled = false; rainbow.visible = false; scene.add(rainbow);
+// shooting stars: stretched sprites streaking across the dark sky
+const streakTex = canvasTex(256, 16, (c, w, h) => { const g = c.createLinearGradient(0, 0, w, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.85, 'rgba(220,235,255,.7)'); g.addColorStop(1, 'rgba(255,255,255,1)'); c.fillStyle = g; c.fillRect(0, h * 0.3, w, h * 0.4); });
+const streaks = [0, 1].map(() => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: streakTex, transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending })); s.visible = false; s.renderOrder = -7; scene.add(s); return { s, t: 9 }; });
+// aurora curtains
+const aurora = new THREE.Group(); scene.add(aurora);
+const auroraMat = new THREE.ShaderMaterial({
+  uniforms: { uT: { value: 0 }, uA: { value: 0 } }, transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  vertexShader: `uniform float uT; varying vec2 vUv; void main(){ vUv = uv; vec3 p = position; p.z += sin(uv.x * 11.0 + uT * 0.5) * 22.0 + sin(uv.x * 4.0 - uT * 0.23) * 40.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0); }`,
+  fragmentShader: `uniform float uT, uA; varying vec2 vUv;
+    void main(){ float band = smoothstep(0.0, 0.18, vUv.y) * smoothstep(1.0, 0.42, vUv.y);
+      float rays = 0.5 + 0.5 * sin(vUv.x * 95.0 + sin(vUv.x * 7.0 + uT * 0.8) * 5.0 + uT * 1.4);
+      float fade = smoothstep(0.0, 0.18, vUv.x) * smoothstep(1.0, 0.82, vUv.x);
+      vec3 c = mix(vec3(0.12, 1.0, 0.5), vec3(0.7, 0.32, 1.0), smoothstep(0.4, 1.0, vUv.y));
+      gl_FragColor = vec4(c, band * (0.35 + 0.65 * rays) * fade * uA * 0.5); }`,
+});
+for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(new THREE.PlaneGeometry(900, 240, 80, 1), auroraMat); m.position.set((k - 1) * 380, 230 + k * 40, -620 - k * 60); m.rotation.y = (k - 1) * 0.35; m.frustumCulled = false; m.renderOrder = -7; aurora.add(m); }
+aurora.visible = false;
+const sky2 = { rainbowA: 0, rainbowT: 0, wasRain: false, nextStar: 8, auroraNight: false, wasNight: false, nextBloom: 40, blooms: [] };
+system('skyEvents', (dt, t) => {
+  const n = 1 - world.day, w = world.w;
+  // moon
+  const ph = moonPhase(); if (ph !== moonDrawn) { drawMoon(ph); moonDrawn = ph; }
+  moon.quaternion.copy(camera.quaternion);
+  if (ph === 0) moon.material.opacity *= 0.25;
+  // nightfall: decide on the aurora, note the moon in the log
+  if (world.isNight !== sky2.wasNight) {
+    sky2.wasNight = world.isNight;
+    if (world.isNight) {
+      const si = seasonIdx(); sky2.auroraNight = Math.random() < [0.2, 0.12, 0.35, 0.75][si];
+      if (Math.random() < 0.5) addLog(`A ${MOON_NAMES[ph]} tonight${sky2.auroraNight ? ', and the northern lights dancing' : ''}.`);
+    }
+  }
+  // aurora
+  const aOn = sky2.auroraNight && n > 0.6 && w.cover < 0.7 ? 1 : 0;
+  auroraMat.uniforms.uA.value = damp(auroraMat.uniforms.uA.value, aOn * n * (1 - w.cover), 0.4, dt); auroraMat.uniforms.uT.value = t;
+  aurora.visible = auroraMat.uniforms.uA.value > 0.01; aurora.position.copy(camera.position);
+  if (aOn && !sky2.auroraSeen && auroraMat.uniforms.uA.value > 0.4) { sky2.auroraSeen = true; discover('Northern Lights', 'Green and violet curtains of light rippled over the sky all night. Ghost could not stop staring.'); }
+  // rainbow after the rain stops, with the sun up and behind you
+  if (w.rain > 0.3) sky2.wasRain = true;
+  if (sky2.wasRain && w.rain < 0.08 && world.day > 0.6 && sunDir.y > 0.05 && sunDir.y < 0.75) { sky2.wasRain = false; sky2.rainbowT = rand(60, 90) * (seasonIdx() === 0 ? 1.4 : 1); if (!sky2.rainbowSeen) { sky2.rainbowSeen = true; discover('Rainbow', 'The rain cleared and a double rainbow arched over the sea behind us.'); } else toast('A rainbow over the sea!'); }
+  sky2.rainbowT = Math.max(0, sky2.rainbowT - dt);
+  rainbow.material.uniforms.uA.value = damp(rainbow.material.uniforms.uA.value, sky2.rainbowT > 0 ? world.day * (1 - w.cover * 0.5) : 0, 0.5, dt);
+  rainbow.visible = rainbow.material.uniforms.uA.value > 0.01;
+  if (rainbow.visible) { _v1.set(-sunDir.x, 0, -sunDir.z).normalize(); rainbow.position.copy(camera.position).addScaledVector(_v1, 850); rainbow.position.y = camera.position.y - 60; rainbow.lookAt(camera.position.x, rainbow.position.y, camera.position.z); }
+  // shooting stars
+  if (n > 0.75 && w.cover < 0.5 && t > sky2.nextStar) {
+    sky2.nextStar = t + rand(6, 18);
+    const S = streaks.find(s => s.t > 1); if (S) {
+      const az = rand(0, TAU), el = rand(0.35, 0.95), dir = V3(Math.cos(el) * Math.cos(az), Math.sin(el), Math.cos(el) * Math.sin(az));
+      S.p0 = dir.multiplyScalar(820); S.v = V3(rand(-1, 1), rand(-0.6, -0.15), rand(-1, 1)).normalize().multiplyScalar(rand(260, 420)); S.t = 0; S.dur = rand(0.6, 1.1);
+      if (Math.random() < 0.15) toast('A shooting star — make a wish!');
+    }
+  }
+  for (const S of streaks) {
+    S.t += dt; S.s.visible = S.t < S.dur;
+    if (!S.s.visible) continue;
+    const f = S.t / S.dur, head = _v1.copy(S.p0).addScaledVector(S.v, S.t).add(camera.position), tail = _v2.copy(head).addScaledVector(S.v, -0.32);
+    S.s.position.lerpVectors(head, tail, 0.5);
+    const a = head.clone().project(camera), b = tail.clone().project(camera);
+    S.s.material.rotation = Math.atan2((a.y - b.y) * innerHeight, (a.x - b.x) * innerWidth);
+    S.s.scale.set(head.distanceTo(tail), 2.2, 1); S.s.material.opacity = Math.sin(f * Math.PI) * n;
+  }
+  // glowing plankton blooms on dark nights
+  if (n > 0.8 && w.waves < 1.3 && t > sky2.nextBloom) {
+    sky2.nextBloom = t + rand(50, 110);
+    sky2.blooms.push({ x: rand(12, 30), z: (Math.random() < 0.5 ? -1 : 1) * rand(4, 14), r: rand(2.5, 4.5), t: 0, dur: rand(14, 22) });
+    if (!sky2.bloomSeen) { sky2.bloomSeen = true; discover('Glowing Plankton', 'The water around us lit up blue-green wherever it moved. Bioluminescent plankton — like sailing through stars.'); }
+  }
+  for (let i = sky2.blooms.length - 1; i >= 0; i--) {
+    const B = sky2.blooms[i]; B.t += dt; B.x -= world.speed * dt;
+    if (B.t > B.dur) { sky2.blooms.splice(i, 1); continue; }
+    const k = Math.sin(B.t / B.dur * Math.PI);
+    for (let q = 0; q < 30 * dt * k; q++) { const a = rand(0, TAU), r = Math.sqrt(Math.random()) * B.r; emit(B.x + Math.cos(a) * r, 0, B.z + Math.sin(a) * r, -world.speed * 0.95, 0, rand(-0.1, 0.1), rand(1.2, 2.4), rand(0.08, 0.16), true, Math.random() < 0.5 ? GLOW : [0.35, 2.6, 1.6]); }
+  }
+});
+
+/* =====================================================================
+   Passing ships with crews — the captain hails them from the rail and they wave back
+   ===================================================================== */
+function shipHull(L, H, col, stripe, deckCol) {
+  const g = new THREE.Group(), sh = new THREE.Shape();
+  sh.moveTo(-L / 2, H * 0.55); sh.lineTo(L / 2 + 0.6, H * 0.68); sh.quadraticCurveTo(L / 2 - 0.4, -H * 0.2, L / 2 - 2, -H * 0.45); sh.lineTo(-L / 2 + 1.2, -H * 0.45); sh.quadraticCurveTo(-L / 2, -H * 0.3, -L / 2, H * 0.55);
+  const hg = new THREE.ExtrudeGeometry(sh, { depth: H * 1.2, bevelEnabled: true, bevelSize: 0.45, bevelThickness: 0.45, bevelSegments: 1 }); hg.translate(0, 0, -H * 0.6);
+  mk(hg, std(col), g);
+  mk(new THREE.BoxGeometry(L + 0.4, 0.22, H * 1.2 + 0.95), std(stripe), g, 0.3, H * 0.3, 0);
+  mk(new THREE.BoxGeometry(L - 0.4, 0.14, H * 1.2 + 0.7), std(deckCol), g, 0.2, H * 0.6, 0);
+  return g;
+}
+function crewOnShip(d, roles, spots, ghost) {
+  const rnd = mulberry((Math.random() * 1e6) | 0);
+  d.crew = roles.map((role, i) => {
+    const v = makeVillager(rnd, role); const [x, y, z] = spots[i];
+    v.root.position.set(x, y, z); v.root.rotation.y = z > 0 ? 0 : Math.PI; v.heading = v.root.rotation.y; v.fixed = true;
+    if (ghost) v.root.traverse(o => { if (o.isMesh) { o.material = GHOSTLY; o.castShadow = false; } });
+    d.m.add(v.root); return v;
+  });
+}
+const GHOSTLY = new THREE.MeshStandardMaterial({ color: 0xa8f0d4, emissive: 0x38b890, emissiveIntensity: 0.7, transparent: true, opacity: 0.45, depthWrite: false, roughness: 0.6 });
+function makePirateShip() {
+  const g = shipHull(17, 3.4, 0x1d1a18, 0x8e2a26, 0x5a3d24);
+  const dk = 2.15, wood = std(0x5a3d24), black = std(0x141414), red = std(0x8e2a26);
+  mk(new THREE.BoxGeometry(4.2, 1.5, 4.6), std(0x2a2420), g, -6.5, dk + 0.7, 0);
+  mk(new THREE.BoxGeometry(4.4, 0.18, 4.8), red, g, -6.5, dk + 1.5, 0);
+  for (const s of [-1, 1]) for (let k = 0; k < 6; k++) {
+    mk(new THREE.BoxGeometry(0.55, 0.5, 0.1), black, g, -4.5 + k * 1.9, 1.15, s * 2.6);
+    mk(new THREE.CylinderGeometry(0.13, 0.16, 0.9, 8), black, g, -4.5 + k * 1.9, 1.15, s * 2.95, Math.PI / 2, 0, 0);
+  }
+  const sailTex = canvasTex(256, 256, (c, w, h) => { c.fillStyle = '#1c1c1e'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(255,255,255,.08)'; for (let i = 1; i < 6; i++) { c.beginPath(); c.moveTo(i * w / 6, 0); c.lineTo(i * w / 6, h); c.stroke(); } emblem(c, 'skull', w / 2, h / 2, 70, '#f1ede4', '#1c1c1e'); });
+  const sailM = new THREE.MeshStandardMaterial({ map: sailTex, side: THREE.DoubleSide, roughness: 0.95, flatShading: true });
+  for (const [mx, hh] of [[3.5, 14], [-1.5, 16]]) {
+    mk(new THREE.CylinderGeometry(0.17, 0.24, hh, 8), wood, g, mx, dk + hh / 2, 0);
+    for (let k = 0; k < 2; k++) {
+      const w2 = 6 - k * 1.6, y = dk + 4.6 + k * 4.8, sg = new THREE.PlaneGeometry(w2, 4.2, 4, 3), sp = sg.attributes.position;
+      for (let i = 0; i < sp.count; i++) sp.setZ(i, (1 - Math.pow(sp.getX(i) / (w2 / 2), 2)) * 0.7);
+      sg.computeVertexNormals(); mk(sg, sailM, g, mx + 0.3, y, 0, 0, Math.PI / 2, 0);
+      mk(new THREE.CylinderGeometry(0.07, 0.07, w2 + 0.4, 5), wood, g, mx + 0.25, y + 2.1, 0, Math.PI / 2, 0, 0);
+    }
+  }
+  beam(V3(8.8, dk, 0), V3(13, dk + 1.8, 0), 0.18, wood, g);
+  const flagTex = canvasTex(128, 80, (c, w, h) => { c.fillStyle = '#151515'; c.fillRect(0, 0, w, h); emblem(c, 'skull', w / 2, h / 2, 28, '#f1ede4', '#151515'); });
+  const flag = mk(new THREE.PlaneGeometry(1.8, 1.1), new THREE.MeshStandardMaterial({ map: flagTex, side: THREE.DoubleSide }), g, -2.4, dk + 16.6, 0);
+  const lampMat = new THREE.MeshStandardMaterial({ color: 0xfff0c0, emissive: 0xffb050, emissiveIntensity: 0 });
+  for (const z of [-1.8, 1.8]) mk(new THREE.BoxGeometry(0.35, 0.5, 0.35), lampMat, g, -8.6, dk + 2.2, z);
+  g.userData = { lampMat, flag, cannon: V3(1.2, 1.15, 3.3) };
+  return g;
+}
+function makeTrawler() {
+  const g = shipHull(12, 2.6, 0x2b5e8a, 0xf1ede4, 0x8a8a84);
+  const dk = 1.65, white = std(0xf1ede4), dark = std(0x26323e), orange = std(0xf07a2a), steel = std(0x9aa3ab, { metalness: 0.5, roughness: 0.4 });
+  mk(new THREE.BoxGeometry(12.4, 0.35, 3.3), std(0x9c2f25), g, 0.2, -0.6, 0);
+  mk(new THREE.BoxGeometry(3.0, 2.3, 2.6), white, g, 2.2, dk + 1.15, 0);
+  mk(new THREE.BoxGeometry(3.3, 0.18, 2.9), std(0x2b5e8a), g, 2.2, dk + 2.35, 0);
+  for (const s of [-1, 1]) for (let k = 0; k < 3; k++) mk(new THREE.PlaneGeometry(0.6, 0.55), dark, g, 1.3 + k * 0.9, dk + 1.6, s * 1.31, 0, s > 0 ? 0 : Math.PI, 0);
+  mk(new THREE.PlaneGeometry(2.2, 0.6), dark, g, 3.71, dk + 1.6, 0, 0, Math.PI / 2, 0);
+  mk(new THREE.CylinderGeometry(0.08, 0.1, 3, 6), steel, g, 2.0, dk + 3.8, 0);
+  mk(new THREE.BoxGeometry(1.2, 0.12, 0.25), steel, g, 2.0, dk + 4.6, 0, 0, 0.5, 0);
+  for (const s of [-1, 1]) beam(V3(-4.6, dk, s * 1.3), V3(-4.6, dk + 3.4, s * 1.1), 0.11, orange, g, 6);
+  beam(V3(-4.6, dk + 3.4, -1.15), V3(-4.6, dk + 3.4, 1.15), 0.1, orange, g, 6);
+  mk(new THREE.CylinderGeometry(0.55, 0.55, 2.0, 12), std(0x3f6a3a), g, -3.4, dk + 0.6, 0, Math.PI / 2, 0, 0);
+  for (const s of [-1, 1]) { beam(V3(0.5, dk + 2.8, 0), V3(0.5, dk + 0.9, s * 6.2), 0.07, steel, g, 5); mk(new THREE.PlaneGeometry(2.4, 1.6, 4, 3), new THREE.MeshStandardMaterial({ color: 0x5a6a5a, wireframe: true }), g, 0.5, dk - 0.3, s * 5.6, 0.3 * s, 0, 0); }
+  for (let k = 0; k < 4; k++) mk(new THREE.SphereGeometry(0.22, 8, 6), orange, g, -1.5 + k * 0.6, dk + 0.25, 1.2 - (k % 2) * 0.3);
+  for (let k = 0; k < 3; k++) mk(new THREE.BoxGeometry(0.7, 0.4, 0.5), std(0x6a8aa8), g, -1.6, dk + 0.2 + k * 0.4, -0.9);
+  const lampMat = new THREE.MeshStandardMaterial({ color: 0xfff0c0, emissive: 0xffb050, emissiveIntensity: 0 });
+  mk(new THREE.BoxGeometry(0.3, 0.3, 0.3), lampMat, g, 2.0, dk + 5.3, 0);
+  const flag = mk(new THREE.PlaneGeometry(0.9, 0.55), std(0x2b6fd6, { side: THREE.DoubleSide }), g, -5.6, dk + 2.2, 0);
+  // gulls wheel over the trawler hoping for scraps
+  const birds = [];
+  for (let k = 0; k < 6; k++) { const b = makeGull(); b.scale.setScalar(1.2); g.add(b); birds.push({ m: b, a: k, r: rand(3, 6), h: rand(6, 9), sp: rand(0.6, 1.0) }); }
+  g.userData = { lampMat, flag, birds };
+  return g;
+}
+function makeGhostShip() {
+  const g = makeSchooner();
+  g.traverse(o => { if (o.isMesh) { o.material = GHOSTLY; o.castShadow = false; } });
+  const lampMat = new THREE.MeshStandardMaterial({ color: 0x9dffd0, emissive: 0x4dff9a, emissiveIntensity: 2.5 });
+  for (const x of [-6.5, 7, 0.5]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.5, 0.35), lampMat); l.position.set(x, 2.5, 0); g.add(l); }
+  const glow = new THREE.PointLight(0x4dff9a, 3, 30, 1.5); glow.position.set(0, 5, 0); g.add(glow);
+  g.userData.lampMat = null; g.userData.ghost = true;
+  return g;
+}
+const HAILS = {
+  ship: [['Ahoy there! Fair winds!', 'Ahoy! Fair winds to you too!'], ['Where are you bound?', 'Wherever the wind takes us!']],
+  pirate: [['Ahoy, pirates! Lovely day for it!', 'Yo ho ho! Nice little boat, matey!'], ['Not after our fish, are you?', 'Arr, only yer company! Fire a salute, lads!']],
+  trawler: [['Good haul today?', 'Nets are full! Good fishing to ye!'], ['Ahoy, fishermen!', 'Ahoy! Mind the gulls, they’re hungry!']],
+  ghostship: [['…Ahoy?', '…turn… back… the sea… remembers…'], ['Hello? Anyone aboard?', '…we sail… forever…']],
+};
+function* capHail(d) {
+  const side = Math.sign(d.z) || 1, x = d.K.name === 'Ghost Ship' ? -2.2 : 1.3;
+  capSay(`Heading to the rail to hail the ${d.K.name.toLowerCase()}`);
+  yield* walkTo(cap, x, side * (deckHalf(x) - 0.28), 1.3);
+  yield* faceTo(cap, d.m.position.x / BOAT_S, d.m.position.z / BOAT_S, 0.6);
+  const [ask, reply] = pick(HAILS[d.kind]);
+  cap.pose = 'wave'; say(cap.rig.j.neck, ask, 3, 0.78); cap.talkT = 2.6; capSay(`Hailing the ${d.K.name.toLowerCase()}`);
+  if (!dog.busy && !dog.ashore && !dog.sleeping && !dog.inside) dogCommand(d.kind === 'ghostship' ? dogHowl() : dogBarkAt(side, `the ${d.K.name.toLowerCase()}`));
+  yield* wait(1.6);
+  d.waveT = 5; const speaker = d.crew && d.crew[0];
+  if (speaker) { say(speaker.rig.j.neck, reply, 3.6, 0.8); speaker.talkT = 3; }
+  if (d.kind === 'pirate') { yield* wait(1.4); d.m.localToWorld(_v1.copy(d.m.userData.cannon)); for (let i = 0; i < 40; i++) emit(_v1.x, _v1.y, _v1.z, rand(-1.5, 1.5), rand(0.5, 2), rand(-1.5, 1.5) - Math.sign(d.z) * 3, rand(1.5, 2.5), rand(0.4, 0.8), 'rise', [0.75, 0.75, 0.75]); sfx.thunder(30); toast('The pirates fire a cannon salute!'); }
+  yield* wait(2.8);
+  cap.pose = d.kind === 'ghostship' ? 'shrug' : 'cheer'; capSay(d.kind === 'ghostship' ? 'A chill runs down his spine…' : 'They waved back!'); yield* wait(1.6);
+  cap.pose = 'idle';
+}
+system('ships', (dt, t) => {
+  for (const d of dests) {
+    if (!d.crew) continue;
+    const near = Math.abs(d.x) < 140;
+    d.waveT = Math.max(0, (d.waveT || 0) - dt);
+    if (near) for (const v of d.crew) { v.pose = d.waveT > 0 ? (d.kind === 'pirate' && v === d.crew[1] ? 'cheer' : 'wave') : 'idle'; v.talkT = Math.max(0, v.talkT - dt); v.root.rotation.y = v.heading; poseVillager(v, t, dt); }
+    const u = d.m.userData;
+    if (u.birds) for (const b of u.birds) { b.a += dt * b.sp; b.m.position.set(Math.cos(b.a) * b.r - 2, b.h + Math.sin(t * 1.3 + b.r) * 0.4, Math.sin(b.a) * b.r); b.m.rotation.set(0, -b.a, 0.4); const f = Math.sin(t * 9 + b.r) * 0.6; b.m.userData.wings.forEach((w, j) => { w.rotation.set(0, 0, (j ? 1 : -1) * f); }); }
+    if (u.ghost) { if (Math.random() < dt * 8) { d.m.localToWorld(_v1.set(rand(-7, 7), rand(0.5, 3), rand(-2, 2))); emit(_v1.x, _v1.y, _v1.z, rand(-0.3, 0.3), rand(0.1, 0.4), rand(-0.3, 0.3), rand(2, 3.5), rand(0.5, 1.0), 'rise', [0.6, 1.0, 0.85]); } d.m.position.y = Math.sin(t * 0.6) * 0.3 + 0.2; }
+    // the captain goes to the rail to hail a ship passing close by
+    if (!d.hailed && Math.abs(d.x) < 22 && Math.abs(d.z) < 35) {
+      d.hailed = true;
+      const free = !shoreBlocked() && !cap.fishing && !KR.active && !cap.sleeping && !cap.inside && !cap.scared && harbour.phase === 'none';
+      if (free) { interrupt(cap); resetProps(); cap.task = capHail(d); }
+      else d.waveT = 5;
+      if (!world.discoveries.some(x => x.name === d.K.name)) discover(d.K.name, d.K.note);
+      if (d.kind === 'ghostship') sfx.ghost();
+    }
+  }
+});
+
+/* =====================================================================
+   More sea life — an orca pod, leaping manta rays, rafts of sea otters, and a rare sea serpent
+   ===================================================================== */
+function makeOrca() {
+  const g = new THREE.Group(), black = 0x15171a, white = 0xf2f4f6;
+  const body = new THREE.SphereGeometry(0.5, 14, 9); body.scale(1.1, 1.1, 4.4);
+  mk(paintByY(body, black, white, -0.18), vcMat, g);
+  const fin = new THREE.Shape(); fin.moveTo(0, 0); fin.quadraticCurveTo(-0.1, 0.9, -0.35, 1.5); fin.lineTo(-0.7, 0); fin.lineTo(0, 0);
+  const fg = new THREE.ExtrudeGeometry(fin, { depth: 0.08, bevelEnabled: false }); fg.rotateY(Math.PI / 2); fg.translate(-0.04, 0, 0);
+  mk(fg, std(black), g, 0, 0.42, 0.4);
+  for (const s of [-1, 1]) { const p = new THREE.SphereGeometry(0.14, 8, 6); p.scale(1, 0.5, 1.6); mk(p, std(white), g, s * 0.36, 0.14, 1.3); mk(new THREE.BoxGeometry(0.6, 0.05, 0.35), std(black), g, s * 0.5, -0.25, 0.9, 0, s * 0.5, s * -0.4); }
+  const tail = new THREE.Group(); tail.position.set(0, 0, -2.1); g.add(tail);
+  const fl = new THREE.Shape(); fl.moveTo(0, 0); fl.lineTo(0.8, -0.35); fl.lineTo(0.7, 0.05); fl.lineTo(0, 0.18); fl.lineTo(-0.7, 0.05); fl.lineTo(-0.8, -0.35); fl.lineTo(0, 0);
+  const flg = new THREE.ExtrudeGeometry(fl, { depth: 0.06, bevelEnabled: false }); flg.rotateX(-Math.PI / 2); mk(flg, std(black), tail, 0, 0, -0.1);
+  g.userData.tail = tail; return g;
+}
+function makeManta() {
+  const g = new THREE.Group(), top = std(0x2b2f36), belly = std(0xe8e6e0);
+  for (const s of [-1, 1]) {
+    const w = new THREE.Group(); g.add(w);
+    const sh = new THREE.Shape(); sh.moveTo(0, 0.9); sh.quadraticCurveTo(s * 0.9, 0.5, s * 2.1, -0.1); sh.quadraticCurveTo(s * 0.8, -0.35, 0, -0.9); sh.lineTo(0, 0.9);
+    const geo = new THREE.ShapeGeometry(sh); geo.rotateX(-Math.PI / 2);
+    mk(geo, top, w, 0, 0.02, 0); const gb = geo.clone(); mk(gb, belly, w, 0, -0.02, 0).material = new THREE.MeshStandardMaterial({ color: 0xe8e6e0, side: THREE.BackSide, flatShading: true });
+    w.children[0].material = new THREE.MeshStandardMaterial({ color: 0x2b2f36, side: THREE.FrontSide, flatShading: true });
+    g.userData[s > 0 ? 'wR' : 'wL'] = w;
+  }
+  const b = new THREE.SphereGeometry(0.5, 10, 6); b.scale(0.9, 0.35, 1.7); mk(b, top, g, 0, 0, 0);
+  for (const s of [-1, 1]) mk(new THREE.BoxGeometry(0.12, 0.05, 0.45), top, g, s * 0.32, 0, 1.05, 0, s * 0.3, 0);
+  beam(V3(0, 0, -0.85), V3(0, 0, -2.6), 0.03, top, g, 4, 0.01);
+  return g;
+}
+function makeOtter() {
+  const g = new THREE.Group(), fur = std(0x6b4a30, { roughness: 1 }), face = std(0xc9b49a, { roughness: 1 });
+  const body = new THREE.CapsuleGeometry(0.17, 0.45, 4, 8); body.rotateX(Math.PI / 2); mk(body, fur, g, 0, 0, 0);
+  mk(new THREE.SphereGeometry(0.15, 9, 7), face, g, 0, 0.06, 0.38);
+  mk(new THREE.SphereGeometry(0.03, 6, 4), MAT.black, g, 0, 0.14, 0.5);
+  for (const s of [-1, 1]) { mk(new THREE.SphereGeometry(0.025, 5, 4), MAT.black, g, s * 0.06, 0.15, 0.44); mk(new THREE.SphereGeometry(0.045, 6, 4), fur, g, s * 0.09, 0.14, 0.24); mk(new THREE.SphereGeometry(0.04, 6, 4), fur, g, s * 0.09, 0.08, -0.36); }
+  mk(new THREE.ConeGeometry(0.07, 0.4, 6), fur, g, 0, -0.02, -0.55, -Math.PI / 2, 0, 0);
+  mk(new THREE.SphereGeometry(0.05, 6, 4), std(0xd8cdbd), g, 0, 0.18, 0.14);
+  return g;
+}
+// the sea serpent is a single tube re-bent every frame, like the kraken's tentacles
+const SERP = { N: 46, SEG: 9, active: false, next: rand(420, 700), seen: false };
+{
+  const N = SERP.N, SEG = SERP.SEG, pos = new Float32Array(N * SEG * 3), col = new Float32Array(N * SEG * 3), idx = [];
+  const back = C(0x2f7a6a), belly = C(0xc7d9a0), stripe = C(0x1e5a4e);
+  for (let i = 0; i < N; i++) for (let j = 0; j < SEG; j++) { const c = (j === 2 || j === 6) ? stripe : j >= 3 && j <= 5 ? belly : back; const k = (i * SEG + j) * 3; col[k] = c.r; col[k + 1] = c.g; col[k + 2] = c.b; }
+  for (let i = 0; i < N - 1; i++) for (let j = 0; j < SEG; j++) { const a = i * SEG + j, b = i * SEG + (j + 1) % SEG, c = a + SEG, d2 = b + SEG; idx.push(a, c, b, b, c, d2); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(idx);
+  SERP.g = g; SERP.m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.45 })); SERP.m.frustumCulled = false; SERP.m.visible = false; scene.add(SERP.m);
+  SERP.head = new THREE.Group(); scene.add(SERP.head); SERP.head.visible = false;
+  const hm = std(0x2f7a6a, { roughness: 0.45 }), hd = new THREE.SphereGeometry(0.75, 12, 8); hd.scale(0.9, 0.75, 1.5); mk(hd, hm, SERP.head, 0, 0, 0.4);
+  const jaw = new THREE.SphereGeometry(0.6, 10, 6); jaw.scale(0.8, 0.4, 1.4); mk(jaw, std(0xc7d9a0), SERP.head, 0, -0.35, 0.55);
+  for (const s of [-1, 1]) { mk(new THREE.SphereGeometry(0.17, 8, 6), std(0xf2c94c, { emissive: 0x3a2a00, roughness: 0.2 }), SERP.head, s * 0.48, 0.25, 0.85); mk(new THREE.SphereGeometry(0.08, 6, 4), MAT.black, SERP.head, s * 0.58, 0.27, 0.92); mk(new THREE.ConeGeometry(0.16, 1.1, 5), std(0x1e5a4e), SERP.head, s * 0.42, 0.55, -0.35, -1.0, 0, s * 0.4); }
+  const frill = new THREE.Shape(); frill.moveTo(0, 0); for (let k = 0; k <= 6; k++) frill.lineTo(-k * 0.35, (k % 2 ? 0.75 : 0.35)); frill.lineTo(-2.1, 0); frill.lineTo(0, 0);
+  const fg = new THREE.ExtrudeGeometry(frill, { depth: 0.05, bevelEnabled: false }); fg.rotateY(Math.PI / 2); mk(fg, std(0xd9663a, { side: THREE.DoubleSide }), SERP.head, 0, 0.5, 0.2);
+}
+const _sv = V3(), _sn = V3(), _sp = [...Array(SERP.N)].map(() => V3());
+const life = { orcas: [...Array(3)].map(() => { const m = makeOrca(); m.visible = false; m.rotation.order = 'YXZ'; scene.add(m); return { m }; }), orcaOn: false, orcaNext: rand(120, 200), orcaSeen: false,
+  manta: (() => { const m = makeManta(); m.visible = false; m.rotation.order = 'YXZ'; scene.add(m); return { m }; })(), mantaOn: false, mantaNext: rand(90, 160), mantaSeen: false,
+  otters: [...Array(5)].map(() => { const m = makeOtter(); m.visible = false; scene.add(m); return { m }; }), otterOn: false, otterNext: rand(100, 180), otterSeen: false };
+function spawnOrcas() {
+  const side = Math.random() < 0.5 ? -1 : 1, z0 = side * rand(11, 22);
+  life.orcaOn = true; life.orcaT = 0; life.orcaBreach = Math.random() < 0.6;
+  life.orcas.forEach((o, i) => Object.assign(o, { x: rand(30, 45) + i * 4.5, z: z0 + rand(-1.5, 1.5), ph: -i * 1.4 - rand(0, 0.6), y: -3, sp: rand(4.5, 5.5), big: i === 0 ? 1.25 : rand(0.85, 1.05), air: false, vy: 0 }));
+  life.orcas.forEach(o => { o.m.visible = true; o.m.scale.setScalar(o.big); });
+  toast(`A pod of <b>orcas</b> off the ${side > 0 ? 'starboard' : 'port'} bow!`); dogEvent('dolphins', side, 'the orcas');
+  if (!life.orcaSeen) { life.orcaSeen = true; discover('Orca Pod', 'A family of orcas ran alongside us, black fins slicing the water. The big bull breached right off the beam.'); }
+}
+function spawnManta() {
+  const side = Math.random() < 0.5 ? -1 : 1;
+  Object.assign(life, { mantaOn: true, mantaT: 0 }); Object.assign(life.manta, { x: rand(14, 24), z: side * rand(6, 12), y: -0.2, vy: 0, air: false, spin: 0, side });
+  life.manta.m.visible = true;
+  if (!life.mantaSeen) { life.mantaSeen = true; discover('Manta Ray', 'A manta ray glided by with its wingtips breaking the surface, then leapt clean out of the water and belly-flopped.'); }
+  else toast('A manta ray gliding by the boat!');
+}
+function spawnOtters() {
+  const side = Math.random() < 0.5 ? -1 : 1, x0 = rand(25, 35), z0 = side * rand(6, 10);
+  life.otterOn = true; life.otters.forEach((o, i) => { Object.assign(o, { x: x0 + Math.cos(i * 1.3) * 0.9, z: z0 + Math.sin(i * 1.7) * 0.9, a: rand(0, TAU) }); o.m.visible = true; o.m.scale.setScalar(i === 4 ? 0.6 : 1); });
+  toast('Sea otters floating by, holding paws!'); dogEvent('dolphins', side, 'the otters');
+  if (!life.otterSeen) { life.otterSeen = true; discover('Sea Otters', 'A raft of sea otters drifted past on their backs, holding paws so they would not float apart. One was cracking a shell on its belly.'); }
+}
+function spawnSerpent() {
+  const side = Math.random() < 0.5 ? -1 : 1;
+  Object.assign(SERP, { active: true, t: 0, x: 70, z: side * rand(20, 28), side });
+  SERP.m.visible = SERP.head.visible = true;
+  toast('<b>A sea serpent!</b> Its coils roll through the waves…'); dogEvent('dolphins', side, 'the sea serpent');
+  if (!SERP.seen) { SERP.seen = true; discover('Sea Serpent', 'A sea serpent, green as kelp, swam past in great rolling coils. It turned its head to look at us, then slid under.'); }
+}
+system('seaLife', (dt, t) => {
+  const calm = world.w.waves < 1.3;
+  // orcas porpoise past in a line, the bull sometimes breaching
+  if (!life.orcaOn && t > life.orcaNext) { life.orcaNext = t + rand(150, 260); if (calm && !world.isNight) spawnOrcas(); }
+  if (life.orcaOn) {
+    life.orcaT += dt; let alive = 0;
+    for (const o of life.orcas) {
+      if (!o.m.visible) continue;
+      o.x += (-o.sp - world.speed * 0.2) * dt; o.ph += dt * 1.15;
+      let y, pitch;
+      if (o.air) { o.vy -= 9.8 * dt; y = o.y + o.vy * dt; pitch = -Math.atan2(o.vy, o.sp) ; if (o.vy < 0 && y < -0.6) { o.air = false; splash(o.x, o.z, 2.4); sfx.splash(1.6, camera.position.distanceTo(o.m.position)); } }
+      else { const s = Math.sin(o.ph); y = -1.25 + Math.max(s, -0.3) * 1.3; pitch = -Math.cos(o.ph) * 0.35; if (Math.abs(s - 0.05) < 0.04 && Math.random() < 0.3) splash(o.x, o.z, 0.5); if (o.big > 1.1 && life.orcaBreach && life.orcaT > 6 && o.x < 6) { life.orcaBreach = false; o.air = true; o.vy = 9.5; splash(o.x, o.z, 1.6); } }
+      o.y = y; o.m.position.set(o.x, y, o.z); o.m.rotation.set(pitch, -Math.PI / 2, o.air ? Math.sin(t * 3) * 0.4 : 0);
+      o.m.userData.tail.rotation.x = Math.sin(t * 3 + o.ph) * 0.3;
+      if (o.x < -60) o.m.visible = false; else alive++;
+    }
+    if (!alive) life.orcaOn = false;
+  }
+  // a manta glides with its wingtips cutting the surface, then leaps and slaps down
+  if (!life.mantaOn && t > life.mantaNext) { life.mantaNext = t + rand(120, 220); if (calm && !world.isNight) spawnManta(); }
+  if (life.mantaOn) {
+    const M = life.manta; life.mantaT += dt; M.x -= world.speed * 0.6 * dt;
+    const flap = Math.sin(t * 2.4);
+    M.m.userData.wL.rotation.z = -flap * 0.35; M.m.userData.wR.rotation.z = flap * 0.35;
+    if (!M.air && life.mantaT > 5.5 && life.mantaT < 6) { M.air = true; M.vy = 7.5; splash(M.x, M.z, 0.8); }
+    if (M.air) { M.vy -= 9.8 * dt; M.y += M.vy * dt; M.spin += dt * 5; if (M.vy < 0 && M.y < -0.1) { M.air = false; M.y = -0.15; splash(M.x, M.z, 1.6); sfx.splash(1.2, camera.position.distanceTo(M.m.position)); } }
+    else M.y = damp(M.y, life.mantaT > 9 ? -2.5 : -0.12 + Math.max(0, flap) * 0.05, 1.5, dt);
+    M.m.position.set(M.x, M.y + waveHeight(M.x, M.z) * 0.6, M.z); M.m.rotation.set(M.air ? -0.3 : 0.05, -Math.PI / 2 * M.side + Math.PI, M.air ? M.spin : 0);
+    if (life.mantaT > 12) { life.mantaOn = false; M.m.visible = false; }
+  }
+  // otters drift past, bobbing, one cracking a shell
+  if (!life.otterOn && t > life.otterNext) { life.otterNext = t + rand(150, 240); if (world.w.waves < 0.9 && !world.isNight) spawnOtters(); }
+  if (life.otterOn) {
+    let alive = 0;
+    life.otters.forEach((o, i) => {
+      o.x -= world.speed * dt; o.a += dt * 0.2;
+      o.m.position.set(o.x, waveHeight(o.x, o.z) + 0.05, o.z); o.m.rotation.set(-0.15 + Math.sin(t * 1.4 + i) * 0.08, o.a, Math.sin(t * 0.9 + i) * 0.1);
+      if (i === 0) o.m.children[4].position.y = 0.14 + Math.abs(Math.sin(t * 7)) * 0.05;
+      if (o.x < -40) o.m.visible = false; else alive++;
+    });
+    if (!alive) life.otterOn = false;
+  }
+  // the sea serpent
+  if (!SERP.active && t > SERP.next) { SERP.next = t + rand(500, 800); if (world.w.waves < 1.4 && !world.isNight && !KR.active) spawnSerpent(); }
+  if (SERP.active) {
+    SERP.t += dt; SERP.x -= (4.2 + world.speed * 0.3) * dt;
+    const N = SERP.N, SEG = SERP.SEG, sink = sstep(30, 36, SERP.t), rise = sstep(0, 4, SERP.t);
+    for (let i = 0; i < N; i++) {
+      const s = i * 0.85, ph = SERP.t * 1.7 - i * 0.4;
+      _sp[i].set(SERP.x + s, -2.6 + rise * (1.5 + Math.sin(ph) * 1.6) - sink * 3 - (i > N - 6 ? (i - (N - 6)) * 0.25 : 0), SERP.z + Math.sin(ph * 0.5) * 0.6);
+    }
+    _sp[0].y += Math.sin(SERP.t * 0.6) * 0.9 + 1.2 * rise;
+    const pos = SERP.g.attributes.position.array;
+    for (let i = 0; i < N; i++) {
+      const p = _sp[i], q = _sp[Math.min(N - 1, i + 1)], o = _sp[Math.max(0, i - 1)];
+      _sv.subVectors(q, o).normalize(); _sn.set(0, 1, 0).addScaledVector(_sv, -_sv.y).normalize();
+      const side = _v3.crossVectors(_sv, _sn), r = 0.62 * (1 - Math.pow(i / N, 1.6) * 0.9) * (i < 2 ? 0.8 : 1);
+      for (let j = 0; j < SEG; j++) { const a = j / SEG * TAU, c = Math.cos(a) * r, sn = Math.sin(a) * r, k = (i * SEG + j) * 3; pos[k] = p.x + side.x * c + _sn.x * sn; pos[k + 1] = p.y + side.y * c + _sn.y * sn; pos[k + 2] = p.z + side.z * c + _sn.z * sn; }
+    }
+    SERP.g.attributes.position.needsUpdate = true; SERP.g.computeVertexNormals();
+    SERP.head.position.copy(_sp[0]).addScaledVector(_sv.subVectors(_sp[0], _sp[1]).normalize(), 0.4);
+    SERP.head.lookAt(_v2.copy(SERP.head.position).add(_sv)); SERP.head.rotateY(Math.sin(SERP.t * 0.5) * 0.3 - SERP.side * 0.3);
+    if (Math.random() < dt * 6) { const i = (Math.random() * N) | 0; if (Math.abs(_sp[i].y) < 0.3) splash(_sp[i].x, _sp[i].z, 0.5); }
+    if (SERP.t > 37) { SERP.active = false; SERP.m.visible = SERP.head.visible = false; }
+  }
+});
+
+/* =====================================================================
+   Storm drama — green water sweeping the deck, the mainsail reefed in a gale, lightning close aboard
+   ===================================================================== */
+const washTex = canvasTex(256, 128, (c, w, h) => { c.fillStyle = 'rgba(190,225,235,.55)'; c.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++) { c.fillStyle = `rgba(255,255,255,${rand(0.2, 0.7)})`; c.beginPath(); c.ellipse(rand(0, w), rand(0, h), rand(2, 12), rand(1, 4), 0, 0, TAU); c.fill(); } });
+const wash = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.4), new THREE.MeshStandardMaterial({ map: washTex, transparent: true, opacity: 0, depthWrite: false, roughness: 0.2 }));
+wash.rotation.x = -Math.PI / 2; wash.visible = false; wash.renderOrder = 3; Ldeck.add(wash);
+const storm = { washT: -1, cool: 10, washSeen: false };
+system('stormDrama', (dt, t) => {
+  const w = world.w;
+  storm.cool -= dt;
+  if (storm.washT < 0 && storm.cool < 0 && w.waves > 1.35 && PH.pitch < -0.18 && PH.vp < 0) {
+    storm.washT = 0; storm.cool = rand(9, 18);
+    if (!storm.washSeen || Math.random() < 0.3) { storm.washSeen = true; toast('A green wave crashes over the bow!'); }
+    sfx.splash(1.6, 4); world.shake = Math.max(world.shake || 0, 0.45);
+    if (!dog.busy && !dog.ashore && !dog.inside && !dog.sleeping && Math.random() < 0.5) setTimeout(() => { if (!dog.busy) dogCommand(dogShake()); }, 1800);
+  }
+  if (storm.washT >= 0) {
+    storm.washT += dt; const f = storm.washT / 1.7;
+    wash.visible = f < 1;
+    const x = lerp(3.4, -3.4, f), hw = deckHalf(x);
+    wash.position.set(x, deckY(x) + 0.06, 0); wash.scale.set(1, hw * 0.85, 1); wash.material.opacity = Math.sin(Math.min(f, 1) * Math.PI) * 0.85;
+    if (Math.random() < dt * 60 && f < 0.9) { LAYERS.deck.g.localToWorld(_v1.set(x + rand(-0.6, 0.6), deckY(x) + 0.1, rand(-hw, hw))); emit(_v1.x, _v1.y, _v1.z, -rand(1.5, 3), rand(0.4, 1.4), rand(-0.6, 0.6), rand(0.5, 0.9), rand(0.12, 0.25)); }
+    if (f >= 1) storm.washT = -1;
+  }
+});
+function nearStrike(x, z) {
+  splash(x, z, 3.2); for (let i = 0; i < 60; i++) emit(x + rand(-1, 1), 0.3, z + rand(-1, 1), rand(-1, 1), rand(1, 3), rand(-1, 1), rand(2, 3.5), rand(0.4, 0.9), 'rise', [0.85, 0.88, 0.95]);
+  world.shake = Math.max(world.shake || 0, 0.7); world.flash = 1.6;
+  toast('<b>Lightning</b> strikes the sea close aboard!');
+  if (!cap.busyBrace && !cap.fishing && !shoreBlocked() && !cap.inside && !cap.sleeping && !KR.active) { cap.busyBrace = true; const prev = cap.pose; cap.pose = 'scared'; setTimeout(() => { cap.busyBrace = false; if (cap.pose === 'scared' && !KR.active) cap.pose = prev === 'scared' ? 'idle' : prev; }, 1200); }
+  if (!dog.busy && !dog.sleeping && !dog.inside && !dog.ashore) { dog.barkT = 0.3; sfx.whimper(); }
+}
+
+/* =====================================================================
    HUD
    ===================================================================== */
 function toast(html) {
@@ -6229,7 +6764,8 @@ function updateHUD(dt) {
   setText('sDay', `Day ${world.dayNum}`);
   setText('sTime', `${clockStr(world.tod)} · ${phaseOf(world.tod)}`);
   setText('sFinds', `${world.discoveries.length} found`);
-  setText('sWeather', W.name);
+  setText('sWeather', weatherName());
+  setText('sSeason', `${season().name}${world.seasonMode === 'auto' ? '' : ' ·  held'}`);
   setText('sWind', `${Math.round(w.wind)} kn`);
   const sea = w.waves < 0.4 ? 'Calm' : w.waves < 0.6 ? 'Slight' : w.waves < 0.8 ? 'Moderate' : w.waves < 1.2 ? 'Rough' : w.waves < 1.6 ? 'Very Rough' : 'High';
   setText('sSea', sea);
@@ -6243,7 +6779,7 @@ function updateHUD(dt) {
   setText('sGold', world.treasure ? `${world.treasure} chest${world.treasure > 1 ? 's' : ''}` : 'None yet');
   setText('logTime', `Day ${world.dayNum} · ${clockStr(world.tod)}`);
   setText('subDay', world.todAnim ? (world.isNight ? 'Dusk falling…' : 'Dawn rising…') : phaseOf(world.tod));
-  setText('subWeather', W.name);
+  setText('subWeather', weatherName());
   setText('subFish', cap.fishing ? 'Line in the water…' : 'Cast a line · 20%');
   setText('subKraken', !KR.active ? 'Summon the deep' : KR.t < 17.5 ? 'Risen!' : 'Sinking back…');
   setText('subCam', camLabel);
@@ -6336,7 +6872,7 @@ function tick(dt) {
   updateHUD(dt);
 }
 renderer.setAnimationLoop(frame);
-window.__atsea = { choice, pickKraken, taskGalley, ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
+window.__atsea = { SEASONS, setSeason: m => { world.seasonMode = m; }, season, spawnOrcas, spawnManta, spawnOtters, spawnSerpent, strike, sky2, rainbow, life, SERP, storm, choice, pickKraken, taskGalley, ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
   PERCHES, tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
 </script>
 </body>
