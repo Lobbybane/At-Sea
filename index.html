@@ -664,13 +664,24 @@ const WAVES = [ // dir.x, dir.z, wavelength, amplitude weight
   [1.0, 0.22, 27, 0.56], [0.78, -0.62, 15.5, 0.32], [0.28, 1.0, 9.2, 0.2], [-0.5, 0.86, 5.4, 0.11], [0.96, -0.28, 3.3, 0.065],
 ].map(w => { const l = Math.hypot(w[0], w[1]); return [w[0] / l, w[1] / l, w[2], w[3]]; });
 const WAVE_SPEED = 0.85;
+// Ocean grid: vertices are packed near the boat (spacing 2*OCEAN_A/n there). Waves too short for the
+// grid to draw are faded out identically on the GPU and in the buoyancy maths, so the hull always
+// floats on the water you can see.
+const OCEAN_A = 70;
+const WAVE_RES = WAVES.map(() => 1);
+function setOceanRes(n) {
+  const sp = 2 * OCEAN_A / n;
+  WAVES.forEach((w, i) => WAVE_RES[i] = sstep(sp * 2.5, sp * 4, w[2]));
+  return sp;
+}
+setOceanRes(256);
 
 function gerstner(px, pz, t, out) {
   let dx = 0, dy = 0, dz = 0;
   const amp = world.waveAmp, st = world.steep;
   for (let i = 0; i < WAVES.length; i++) {
     const w = WAVES[i], k = TAU / w[2], om = Math.sqrt(9.8 * k) * WAVE_SPEED;
-    const A = w[3] * amp, th = k * (w[0] * px + w[1] * pz) - om * t;
+    const A = w[3] * amp * WAVE_RES[i], th = k * (w[0] * px + w[1] * pz) - om * t;
     const c = Math.cos(th) * st * A;
     dx += w[0] * c; dz += w[1] * c; dy += A * Math.sin(th);
   }
@@ -685,7 +696,7 @@ function waveHeight(x, z) {
 }
 
 function makeOceanGeo(n) {
-  const map = u => Math.sign(u) * (Math.abs(u) * 100 + Math.pow(Math.abs(u), 6) * 1600);
+  const map = u => Math.sign(u) * (Math.abs(u) * OCEAN_A + Math.pow(Math.abs(u), 6) * 1600);
   const pos = new Float32Array((n + 1) * (n + 1) * 3), idx = [];
   let p = 0;
   for (let j = 0; j <= n; j++) for (let i = 0; i <= n; i++) {
@@ -703,7 +714,7 @@ function makeOceanGeo(n) {
 }
 
 const oceanU = {
-  uTime: { value: 0 }, uAmp: { value: 0.3 }, uSteep: { value: 0.35 }, uOff: { value: 0 },
+  uTime: { value: 0 }, uAmp: { value: 0.3 }, uSteep: { value: 0.35 }, uOff: { value: 0 }, uSp: { value: 2 * OCEAN_A / 256 },
   uWaves: { value: WAVES.map(w => new THREE.Vector4(...w)) },
   uDeep: { value: C(0x0d4a6e) }, uCrest: { value: C(0x2c97b8) }, uFoamCol: { value: C(0xeef6f8) },
   uFoam: { value: 0.2 }, uFoamTh: { value: 0.82 }, uCrestAmt: { value: 0.45 }, uSkyCol: { value: C(0xbfdbec) }, uRefl: { value: 0.5 },
@@ -713,14 +724,14 @@ oceanMat.onBeforeCompile = sh => {
   Object.assign(sh.uniforms, oceanU);
   sh.vertexShader = sh.vertexShader
     .replace('#include <common>', `#include <common>
-      uniform float uTime, uAmp, uSteep, uOff; uniform vec4 uWaves[5];
+      uniform float uTime, uAmp, uSteep, uOff, uSp; uniform vec4 uWaves[5];
       varying float vWH; varying float vDist;
       vec3 gerst(vec2 p, float dist){
         vec3 d = vec3(0.0);
         for (int i = 0; i < 5; i++){
           vec4 w = uWaves[i];
           float k = 6.2831853 / w.z; float om = sqrt(9.8 * k) * ${WAVE_SPEED.toFixed(3)};
-          float A = w.w * uAmp * (1.0 - smoothstep(w.z * 3.0, w.z * 7.5, dist));
+          float A = w.w * uAmp * (1.0 - smoothstep(w.z * 3.0, w.z * 7.5, dist)) * smoothstep(uSp * 2.5, uSp * 4.0, w.z);
           float th = k * dot(w.xy, p) - om * uTime;
           d.xz += w.xy * (uSteep * A * cos(th));
           d.y += A * sin(th);
@@ -2625,8 +2636,11 @@ function boatStep(h, t) {
   PH.vy += F * h; PH.y += PH.vy * h;
   // in big seas the hull's pitching rhythm falls into step with the swell and rocks much harder
   const Ip = lerp(PH.Ip, 26 * BOAT_S * BOAT_S, sstep(0.6, 1.6, world.w.waves));
-  PH.vp += Tp / Ip * h; PH.pitch = clamp(PH.pitch + PH.vp * h, -0.65, 0.65);
-  PH.vr += Tr / PH.Ir * h; PH.roll = clamp(PH.roll + PH.vr * h, -0.7, 0.7);
+  // firm springs well before the hard stops, so even a freak wave never jolts the hull against a limit
+  Tp -= Math.sign(PH.pitch) * Math.max(0, Math.abs(PH.pitch) - 0.45) * 500 * BOAT_S * BOAT_S;
+  Tr -= Math.sign(PH.roll) * Math.max(0, Math.abs(PH.roll) - 0.55) * ROLL_K * 4;
+  PH.vp += Tp / Ip * h; PH.pitch = clamp(PH.pitch + PH.vp * h, -0.8, 0.8);
+  PH.vr += Tr / PH.Ir * h; PH.roll = clamp(PH.roll + PH.vr * h, -0.85, 0.85);
   // surge and sway: the hull surfs down wave faces, held back by drag and a soft tether to the scroll origin
   const storm = 0.45 + 0.55 * sstep(0.4, 1.6, world.w.waves);
   const hx = (waveHeight(PH.sx + 1, PH.sz) - waveHeight(PH.sx - 1, PH.sz)) / 2, hz = (waveHeight(PH.sx, PH.sz + 0.8) - waveHeight(PH.sx, PH.sz - 0.8)) / 1.6;
@@ -3854,8 +3868,8 @@ function updateCrewCard(dt) {
    Performance — FPS readout and automatic quality
    ===================================================================== */
 const QUALITY = [
-  { name: 'Low', pr: () => 1, shadow: 512, ocean: 128, rain: 0.35 },
-  { name: 'Medium', pr: () => Math.min(devicePixelRatio, 1.25), shadow: 1024, ocean: 184, rain: 0.65 },
+  { name: 'Low', pr: () => 1, shadow: 512, ocean: 160, rain: 0.35 },
+  { name: 'Medium', pr: () => Math.min(devicePixelRatio, 1.25), shadow: 1024, ocean: 200, rain: 0.65 },
   { name: 'High', pr: () => Math.min(devicePixelRatio, 2), shadow: 2048, ocean: 256, rain: 1 },
 ];
 const perf = { auto: true, level: 2, frames: 0, since: performance.now(), hist: [], changed: 0, fps: 60 };
@@ -3867,7 +3881,7 @@ function applyQuality(i) {
   particleUniforms.uScale.value = renderer.getPixelRatio() * innerHeight * 0.5; starU.uPR.value = renderer.getPixelRatio();
   sun.shadow.mapSize.set(Q.shadow, Q.shadow);
   if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
-  if (ocean.userData.n !== Q.ocean) { ocean.geometry.dispose(); ocean.geometry = makeOceanGeo(Q.ocean); ocean.userData.n = Q.ocean; }
+  if (ocean.userData.n !== Q.ocean) { ocean.geometry.dispose(); ocean.geometry = makeOceanGeo(Q.ocean); ocean.userData.n = Q.ocean; oceanU.uSp.value = setOceanRes(Q.ocean); }
   world.rainScale = Q.rain;
 }
 function cycleQuality() {
@@ -4008,7 +4022,7 @@ function frame() {
   if (!started) { started = true; setTimeout(() => { $('intro').classList.add('gone'); setTimeout(() => toast('Welcome aboard the <b>Wanderer</b>'), 1100); }, 500); }
 }
 renderer.setAnimationLoop(frame);
-window.__atsea = { OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, toggleExplode, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
+window.__atsea = { simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, toggleExplode, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
   PERCHES, tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
 </script>
 </body>
