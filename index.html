@@ -226,7 +226,7 @@ canvas#c:active{cursor:grabbing}
   </div>
   <div class="logrow">
     <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#7cc6d9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l3 5M19 4l-3 5"/><path d="M6 9.5C6 6.5 8.7 5 12 5s6 1.5 6 4.5V14c0 3-2.7 6-6 6s-6-3-6-6z"/><circle cx="9.5" cy="12" r=".6" fill="#7cc6d9"/><circle cx="14.5" cy="12" r=".6" fill="#7cc6d9"/><path d="M11 16h2l-1 1z"/></svg></div>
-    <div><label>Koda &middot; Husky</label><p id="dogTask">Watching the waves</p></div>
+    <div><label>Ghost &middot; Husky</label><p id="dogTask">Watching the waves</p></div>
   </div>
   <div class="entry"><label>Latest log entry</label><p id="logEntry">Cast off at first light. Fair winds and a following sea.</p></div>
 </aside>
@@ -948,7 +948,7 @@ const Lhull = layer('hull', 'Hull & Keel', V3(0, -0.35, 0), V3(-0.5, 0.2, 1.25))
 const Ldeck = layer('deck', 'Deck & Rope Rails', V3(0, 1.25, 0), V3(-2.6, 1.5, -1.0));
 const Lgear = layer('gear', 'Anchor, Rods & Gear', V3(0, 2.3, 3.4), V3(3.0, 0.9, 0.8));
 const Lcabin = layer('cabin', 'Cabin & Lanterns', V3(0, 3.1, 0), V3(-0.6, 1.8, 0.75));
-const Lcrew = layer('crew', 'Captain & Koda', V3(0, 2.6, -3.5), null);
+const Lcrew = layer('crew', 'Captain & Ghost', V3(0, 2.6, -3.5), null);
 const Lmast = layer('mast', 'Mast & Rigging', V3(0, 4.4, 0), V3(0.9, 6.4, 0));
 const Lsails = layer('sails', 'Sails & Boom', V3(0, 4.6, 3.8), V3(-0.8, 4.0, 0));
 
@@ -1569,7 +1569,7 @@ function makeCaptain() {
     pos: new THREE.Vector2(-2.75, 0), heading: Math.PI / 2, targetHeading: Math.PI / 2, moving: 0, pose: 'helm', poseT: 0, walkPh: 0, speed: 1.15, mouthOpen: 0 };
 }
 
-/* ---------- Koda the husky ---------- */
+/* ---------- Ghost the husky ---------- */
 function makeDog() {
   const R = new Rig(), root = new THREE.Group();
   const fur = std(0xf3f2ee, { roughness: 0.95 }), fur2 = std(0xd9dde2, { roughness: 0.95 }), dark = std(0x1a1a1a), pink = std(0xd99a9a);
@@ -2003,13 +2003,13 @@ function* taskCheckRod() {
 function* taskPetDog() {
   if (world.isNight || dog.busy) return;
   const spot = pick([{ d: [2.25, 0.12], c: [1.62, 0.12] }, { d: [-0.15, 1.04], c: [-0.82, 1.04] }, { d: [-3.2, 0.12], c: [-2.6, 0.12] }]);
-  capSay('Calling Koda over');
+  capSay('Calling Ghost over');
   dogCommand(dogComeForPets(spot.d, spot.c));
   yield* walkTo(cap, spot.c[0], spot.c[1]);
   yield* faceTo(cap, spot.d[0], spot.d[1]);
   yield* waitUntil(() => dog.arrived, 7);
-  if (!dog.arrived) { capSay('Koda is busy — maybe later'); yield* wait(1); return; }
-  capSay('Giving Koda a good scratch');
+  if (!dog.arrived) { capSay('Ghost is busy — maybe later'); yield* wait(1); return; }
+  capSay('Giving Ghost a good scratch');
   cap.pose = 'pet';
   yield* wait(rand(4, 5.5));
   cap.pose = 'idle'; dog.released = true;
@@ -2102,7 +2102,7 @@ function fishButton() {
   cap.task = fishTask();
 }
 
-/* ---------- Koda tasks ---------- */
+/* ---------- Ghost tasks ---------- */
 const DOG_SPOTS = { rails: [[1.55, 0.96, 0], [1.55, -0.96, Math.PI], [-0.6, 1.06, 0], [-0.6, -1.06, Math.PI], [-3.1, 0.9, 0.4], [-3.1, -0.9, Math.PI - 0.4], [2.95, 0.3, Math.PI / 2]],
   open: [[2.1, 0.3], [1.3, 0.5], [-2.95, 0.45], [2.6, -0.1], [-3.3, -0.1], [0.1, -1.0]] };
 function* dogWatch() {
@@ -2739,7 +2739,7 @@ function makeGull() {
   mk(new THREE.BoxGeometry(0.15, 0.02, 0.16), grey, g, 0, 0.03, -0.34);
   const wings = [], tips = [];
   for (const s of [-1, 1]) {
-    const w = new THREE.Group(); w.position.set(s * 0.1, 0.06, 0.03); g.add(w);
+    const w = new THREE.Group(); w.position.set(s * 0.1, 0.06, 0.03); w.rotation.order = 'YXZ'; g.add(w);
     mk(new THREE.BoxGeometry(0.44, 0.016, 0.21), grey, w, s * 0.22, 0, 0);
     const tip = new THREE.Group(); tip.position.set(s * 0.44, 0, 0); w.add(tip);
     mk(new THREE.BoxGeometry(0.34, 0.013, 0.16), grey, tip, s * 0.17, 0, -0.025);
@@ -2750,12 +2750,21 @@ function makeGull() {
   g.userData = { wings, tips };
   return g;
 }
+// Perch points sit exactly on a surface (in that layer's local space); a gull's feet are GULL_FOOT below its origin.
+const GULL_FOOT = 0.18;
 const PERCHES = [
-  { layer: 'mast', p: () => V3(MAST_X, MAST_TOP + 0.13, 0) },
-  { layer: 'deck', p: () => V3(5.12, hullTop(1) + 0.4, 0) },
-  { layer: 'cabin', p: () => V3(-3.86, deckY(-3.86) + 1.27, 0) },
-  { layer: 'cabin', p: () => V3(-1.15, deckY(-0.6) + 0.92, 0.42) },
+  { layer: 'mast', yaw: 0.6, p: () => V3(MAST_X, MAST_TOP + 0.14, 0) },                                         // masthead light
+  { layer: 'deck', yaw: Math.PI / 2, p: () => V3(3.55, hullTop(tOf(3.55)) + 0.815, hullW(tOf(3.55)) * 0.97) },  // bow stanchion knob
+  { layer: 'cabin', yaw: Math.PI / 2, p: () => V3(-3.86, deckY(-3.86) + 0.92 + 0.34, 0) },                      // stern lantern handle
+  { layer: 'cabin', yaw: -0.5, p: () => V3(-0.6, deckY(-0.6) + 0.925, -0.3) },                                   // cabin roof, clear of lantern and chimney
 ];
+const _gUp = V3(0, GULL_FOOT, 0);
+// take a perched gull off the boat and back into open air
+function unperch(g) {
+  if (!g.sitting) return;
+  g.m.getWorldPosition(g.pos); scene.add(g.m);
+  g.sitting = false; g.vel.set(0, 2.5, 0); g.m.rotation.set(0, 0, 0);
+}
 const gulls = [];
 for (let i = 0; i < 5; i++) {
   const m = makeGull(); m.visible = false; m.rotation.order = 'YXZ'; scene.add(m);
@@ -2775,7 +2784,7 @@ system('gulls', (dt, t) => {
       }
       continue;
     }
-    if (!want && g.mode !== 'leave') { g.mode = 'leave'; g.perch = -1; _gd.set(g.pos.x, 0, g.pos.z).normalize(); g.leaveDir = _gd.clone(); }
+    if (!want && g.mode !== 'leave') { unperch(g); g.mode = 'leave'; g.perch = -1; _gd.set(g.pos.x, 0, g.pos.z).normalize(); g.leaveDir = _gd.clone(); }
     let speed = 5.5, k = 1.6;
     if (g.mode === 'circle') {
       circling++;
@@ -2789,13 +2798,19 @@ system('gulls', (dt, t) => {
       }
     } else if (g.mode === 'perch') {
       const P = PERCHES[g.perch];
-      LAYERS[P.layer].g.localToWorld(_gt.copy(P.p()));
-      const dist = g.pos.distanceTo(_gt);
-      if (dist < 4) { speed = Math.max(0.4, dist * 1.6); k = 4; }
-      if (dist < 0.08) { g.sitting = true; g.pos.copy(_gt); g.vel.set(0, 0, 0); }
-      if (g.sitting) {
+      if (!g.sitting) {
+        LAYERS[P.layer].g.localToWorld(_gt.copy(P.p()).add(_gUp));
+        const dist = g.pos.distanceTo(_gt);
+        if (dist < 4) { speed = Math.max(0.5, dist * 1.8); k = 5; }
+        if (dist < 0.15 && !world.explode) {
+          // land: parent the gull to the boat part it stands on so it rides every pitch and roll
+          g.sitting = true; g.vel.set(0, 0, 0);
+          LAYERS[P.layer].g.add(g.m);
+          g.m.position.copy(P.p()).add(_gUp);
+        }
+      } else {
         g.timer -= dt;
-        if (g.timer < 0 || world.explode) { g.sitting = false; g.mode = 'circle'; g.perch = -1; g.timer = rand(15, 30); g.vel.set(0, 2.5, 0); }
+        if (g.timer < 0 || world.explode) { unperch(g); g.mode = 'circle'; g.perch = -1; g.timer = rand(15, 30); }
       }
     } else if (g.mode === 'leave') {
       _gt.copy(g.pos).addScaledVector(g.leaveDir, 20); _gt.y = 30; speed = 7;
@@ -2813,13 +2828,13 @@ system('gulls', (dt, t) => {
       const flapping = g.vel.y > 0.4 || speed < 3 || Math.sin(t * 0.7 + i * 2.1) > 0.55;
       g.ph += dt * (flapping ? 13 : 0);
       const f = flapping ? Math.sin(g.ph) * 0.75 : damp(g.m.userData.wings[0].rotation.z, 0.08, 4, dt);
-      g.m.userData.wings.forEach((w, j) => { const s = j ? 1 : -1; w.rotation.set(0, 0, -s * f); g.m.userData.tips[j].rotation.z = -s * (flapping ? Math.sin(g.ph - 0.7) * 0.45 : -0.05); });
+      g.m.userData.wings.forEach((w, j) => { const s = j ? 1 : -1; w.position.set(s * 0.1, 0.06, 0.03); w.rotation.set(0, 0, -s * f); w.scale.setScalar(1); g.m.userData.tips[j].rotation.set(0, 0, -s * (flapping ? Math.sin(g.ph - 0.7) * 0.45 : -0.05)); });
+      g.m.position.copy(g.pos);
     } else {
-      // perched: wings folded, head turning
-      g.m.rotation.set(0, Math.sin(t * 0.6 + i) * 0.8 + (g.perch === 1 ? -Math.PI / 2 : 0), 0);
-      g.m.userData.wings.forEach((w, j) => { const s = j ? 1 : -1; w.rotation.set(0, s * 1.25, -s * 0.25); g.m.userData.tips[j].rotation.z = s * 0.3; });
+      // perched (local to the boat): wings folded, turning to look around
+      g.m.rotation.set(0, PERCHES[g.perch].yaw + Math.sin(t * 0.6 + i) * 0.35, 0);
+      g.m.userData.wings.forEach((w, j) => { const s = j ? 1 : -1; w.position.set(s * 0.045, 0.108, 0.02); w.rotation.set(0, s * 1.52, 0); w.scale.setScalar(0.5); g.m.userData.tips[j].rotation.set(0, s * 0.06, 0); });
     }
-    g.m.position.copy(g.pos);
   }
   if (circling && t > nextGullCall) { nextGullCall = t + rand(7, 18); sfx.gull(); }
 });
@@ -2911,7 +2926,7 @@ function spawnTurtle() {
   Object.assign(turtle, { active: true, t: 0, x: rand(-2, 12), z: side * rand(4.5, 11), heading: rand(0, TAU), side });
   turtle.m.visible = true;
   if (Math.random() < 0.5) toast('A sea turtle paddles up beside the boat');
-  if (!turtle.seen) { turtle.seen = true; discover('Sea Turtle', 'A sea turtle came up for air right beside the hull and looked at Koda.'); }
+  if (!turtle.seen) { turtle.seen = true; discover('Sea Turtle', 'A sea turtle came up for air right beside the hull and looked at Ghost.'); }
 }
 system('turtle', (dt, t) => {
   if (!turtle.active) {
@@ -3159,7 +3174,7 @@ function pendingDest() {
 }
 
 /* =====================================================================
-   Crew life — extra routines for the captain and Koda
+   Crew life — extra routines for the captain and Ghost
    ===================================================================== */
 // floating icons (hearts, music notes) above the crew
 const heartTex = canvasTex(64, 64, (c, w, h) => { c.fillStyle = '#ff6f8f'; c.beginPath(); c.moveTo(32, 54); c.bezierCurveTo(4, 34, 8, 8, 32, 20); c.bezierCurveTo(56, 8, 60, 34, 32, 54); c.fill(); });
@@ -3248,7 +3263,7 @@ function composeEntry() {
     `${(world.offset / 60).toFixed(1)} nautical miles logged.`,
     world.fishCount ? `${world.fishCount} fish in the bucket.` : 'No fish yet, but the day is young.',
     last ? `Still thinking about the ${last.name.toLowerCase()}.` : 'Nothing on the horizon yet. Patience.',
-    'Koda in fine spirits.', 'All hands well.', world.w.waves > 1.1 ? 'Sea running high; sails reefed.' : 'A fine sea for sailing.',
+    'Ghost in fine spirits.', 'All hands well.', world.w.waves > 1.1 ? 'Sea running high; sails reefed.' : 'A fine sea for sailing.',
   ];
   return `${sky} ${pick(extra)}`;
 }
@@ -3267,7 +3282,7 @@ function* taskLogbook() {
 function* taskFetch() {
   if (dog.busy || dog.sleeping) return;
   const st = { phase: 'wait', ready: false };
-  capSay('Calling Koda for a game of fetch');
+  capSay('Calling Ghost for a game of fetch');
   dogCommand(dogFetch(st));
   try {
     yield* walkTo(cap, 1.32, 0.48);
@@ -3276,7 +3291,7 @@ function* taskFetch() {
     if (!st.ready) return;
     for (let round = 0; round < 2; round++) {
       cap.rig.j.handR.add(ball); ball.position.set(0, -0.1, 0.03); ball.visible = true;
-      capSay(round ? 'One more throw!' : 'Ready, Koda? Fetch!');
+      capSay(round ? 'One more throw!' : 'Ready, Ghost? Fetch!');
       cap.pose = 'throwBack'; yield* wait(0.45);
       cap.pose = 'throwFwd'; yield* wait(0.12);
       ball.getWorldPosition(_cw); Lcrew.add(ball); Lcrew.worldToLocal(ball.position.copy(_cw));
@@ -3284,12 +3299,12 @@ function* taskFetch() {
       st.phase = 'fetch'; st.ballAt = to;
       for (let k = 0; k < 1; k += DT / 0.7) { ball.position.lerpVectors(from, to, Math.min(1, k)); ball.position.y += Math.sin(Math.min(1, k) * Math.PI) * 1.1; yield; }
       ball.position.copy(to); sfx.plop();
-      cap.pose = 'idle'; capSay('Watching Koda chase the ball');
+      cap.pose = 'idle'; capSay('Watching Ghost chase the ball');
       yield* waitUntil(() => st.phase === 'dropped', 9);
       cap.pose = 'crouch'; yield* wait(0.5);
       cap.pose = 'idle';
     }
-    capSay('Good boy, Koda!');
+    capSay('Good boy, Ghost!');
     yield* wait(0.8);
   } finally { st.phase = 'done'; ball.visible = false; Lcrew.add(ball); }
 }
@@ -3345,13 +3360,13 @@ function* capWave() {
 }
 function* capScold() {
   yield* faceTo(cap, dog.pos.x, dog.pos.y, 0.6);
-  cap.pose = 'scold'; capSay('Hey! Koda, that was my fish!');
+  cap.pose = 'scold'; capSay('Hey! Ghost, that was my fish!');
   yield* wait(2.2);
-  cap.pose = 'shrug'; capSay('Shaking his head at Koda'); yield* wait(1.2);
+  cap.pose = 'shrug'; capSay('Shaking his head at Ghost'); yield* wait(1.2);
   cap.pose = 'idle';
 }
 
-/* ---------- Koda ---------- */
+/* ---------- Ghost ---------- */
 function* dogFetch(st) {
   dog.busy = true;
   try {
@@ -3399,7 +3414,7 @@ function* dogSteal() {
   world.fishCount--; updateBucket();
   const fish = makeFish(...FISH_COLORS[(Math.random() * FISH_COLORS.length) | 0], 0.5);
   fish.rotation.set(0, Math.PI / 2, 0); dog.mouthItem.add(fish);
-  toast('Koda stole a fish from the bucket!');
+  toast('Ghost stole a fish from the bucket!');
   if (!cap.fishing && !cap.sleeping) { interrupt(cap); resetProps(); cap.task = capScold(); }
   dog.pose = 'stand'; dogSay('Making off with a fish!');
   try {
@@ -3426,7 +3441,7 @@ function* dogHowl() {
   for (let i = 0; i < 2; i++) { sfx.howl(); yield* wait(2.1); }
   dog.pose = 'sit'; yield* wait(0.6);
 }
-// rain stopping -> Koda shakes off
+// rain stopping -> Ghost shakes off
 let wasRaining = false;
 system('crewWatch', () => {
   const r = world.w.rain;
@@ -3473,7 +3488,7 @@ const SHOTS = [
   { name: 'Waterline', pos: k => _cp.set(13 - k * 5, 1.0, 8 + k * 2.5), look: () => _ct.set(0, 2.4, 0) },
   { name: 'Crane', pos: k => _cp.set(Math.cos(0.5 + k * 0.7) * 24, 13 - k * 3, Math.sin(0.5 + k * 0.7) * 24), look: () => _ct.set(0, 3, 0) },
   { name: 'The Captain', pos: k => { cap.rig.j.neck.getWorldPosition(_ct); const h = cap.heading + boat.rotation.y; return _cp.set(_ct.x + Math.sin(h) * 2.2 + Math.cos(h) * (k - 0.5) * 1.4, _ct.y + 0.15, _ct.z + Math.cos(h) * 2.2 - Math.sin(h) * (k - 0.5) * 1.4); }, look: () => cap.rig.j.neck.getWorldPosition(_ct).setY(_ct.y + 0.12) },
-  { name: 'Koda', pos: k => { dog.rig.j.head.getWorldPosition(_ct); const h = dog.heading + boat.rotation.y; return _cp.set(_ct.x + Math.sin(h) * 1.5 + Math.cos(h) * (k - 0.5), _ct.y + 0.25, _ct.z + Math.cos(h) * 1.5 - Math.sin(h) * (k - 0.5)); }, look: () => dog.rig.j.head.getWorldPosition(_ct) },
+  { name: 'Ghost', pos: k => { dog.rig.j.head.getWorldPosition(_ct); const h = dog.heading + boat.rotation.y; return _cp.set(_ct.x + Math.sin(h) * 1.5 + Math.cos(h) * (k - 0.5), _ct.y + 0.25, _ct.z + Math.cos(h) * 1.5 - Math.sin(h) * (k - 0.5)); }, look: () => dog.rig.j.head.getWorldPosition(_ct) },
   { name: 'Masthead', pos: k => LAYERS.mast.g.localToWorld(_cp.set(MAST_X - 0.8 - k, MAST_TOP + 1.4, 1.6 - k * 2)), look: () => LAYERS.deck.g.localToWorld(_ct.set(-0.5, 1, 0)) },
   { name: 'Chase', pos: k => _cp.set(-16 + k * 3, 3.6, 4 - k * 6), look: () => _ct.set(3, 3, 0) },
   { name: 'Horizon', pos: k => LAYERS.deck.g.localToWorld(_cp.set(4.4, 2.6, 0.6)), look: () => { const d = dests.find(d => !d.gone && d.kind !== 'bottle' && d.x > 0); return d ? _ct.copy(d.m.position).setY(6) : _ct.set(80, 4, 10); } },
@@ -3563,7 +3578,7 @@ function crewAt(x, y) {
 }
 function showCard(who, hint, text) {
   card = { who, t: 3.2 };
-  $('ccName').textContent = who === cap ? 'The Captain' : 'Koda · Husky';
+  $('ccName').textContent = who === cap ? 'The Captain' : 'Ghost · Husky';
   $('ccTask').textContent = text || (who === cap ? $('capTask') : $('dogTask')).dataset.t || '';
   $('ccHint').textContent = hint;
   const el = $('crewCard'); el.hidden = false; el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
@@ -3579,7 +3594,7 @@ function clickCrew(who) {
   if (dog.sleeping) return showCard(dog, 'Fast asleep, paws twitching');
   if (dog.busy) return showCard(dog, 'Too busy to notice right now');
   dogCommand(dogHappy());
-  showCard(dog, 'You gave Koda a scratch behind the ears', 'Loving the attention!');
+  showCard(dog, 'You gave Ghost a scratch behind the ears', 'Loving the attention!');
 }
 renderer.domElement.addEventListener('pointerdown', e => { clickStart = { x: e.clientX, y: e.clientY, t: performance.now() }; });
 renderer.domElement.addEventListener('pointerup', e => {
@@ -3767,8 +3782,8 @@ function frame() {
   if (!started) { started = true; setTimeout(() => { $('intro').classList.add('gone'); setTimeout(() => toast('Welcome aboard the <b>Wanderer</b>'), 1100); }, 500); }
 }
 renderer.setAnimationLoop(frame);
-window.__atsea = { camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, toggleExplode, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
-  tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
+window.__atsea = { Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, toggleExplode, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
+  PERCHES, tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
 </script>
 </body>
 </html>
