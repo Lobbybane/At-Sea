@@ -189,6 +189,8 @@ body.peeking #bar,body.peeking #log,body.peeking #title,body.peeking #hint,body.
 .ybtn.gold{background:var(--gold);color:#1a1208;border-color:var(--gold)}
 body.yard #log{opacity:0;visibility:hidden}
 @media (max-width:820px){#yard{left:10px;right:10px;top:auto;bottom:10px;width:auto;height:min(64vh,580px)} body.yard #bar,body.yard #tools{opacity:0;visibility:hidden}}
+.say{position:fixed;left:0;top:0;translate:-50% -100%;max-width:230px;padding:8px 12px 9px;border-radius:14px;background:rgba(250,244,230,.95);color:#2a1f14;font:500 13.5px/1.3 var(--serif);pointer-events:none;z-index:5;box-shadow:0 8px 20px rgba(0,0,0,.25);animation:cardin .3s cubic-bezier(.2,.9,.25,1.2) both}
+.say::after{content:"";position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:inherit;translate:-50% 0;rotate:45deg;border-radius:2px}
 #crewCard{position:fixed;left:0;top:0;translate:-50% -100%;min-width:180px;max-width:240px;padding:10px 14px 11px;border-radius:14px;pointer-events:none;z-index:6;transform-origin:50% 100%;animation:cardin .35s cubic-bezier(.2,.9,.25,1.2) both}
 @keyframes cardin{from{opacity:0;scale:.9}to{opacity:1;scale:1}}
 #crewCard label{display:block;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);font-weight:700}
@@ -261,6 +263,7 @@ body.yard #log{opacity:0;visibility:hidden}
     <div><label>Logged</label><b id="sDist">0.0 nm</b></div>
     <div><label>Catch</label><b id="sFish">0 fish</b></div>
     <div><label>Discoveries</label><b id="sFinds">0 found</b></div>
+    <div><label>Treasure</label><b id="sGold">None yet</b></div>
   </div>
   </div></div>
 </header>
@@ -295,6 +298,7 @@ body.yard #log{opacity:0;visibility:hidden}
   <div class="yfoot"><button id="yardRandom" class="ybtn gold">Surprise me</button><button id="yardReset" class="ybtn">Reset</button></div>
 </aside>
 <div id="peek" hidden><div class="frame"></div><div class="pbar panel"><button id="pkPrev" aria-label="Previous window">&#8249;</button><span id="pkName">Porthole</span><button id="pkNext" aria-label="Next window">&#8250;</button><button id="pkBack">Back on deck</button></div></div>
+<div id="says"></div>
 <div id="crewCard" class="panel" hidden><label id="ccName">The Captain</label><p id="ccTask">Taking the helm</p><small id="ccHint">Click again to wave</small></div>
 
 <div id="hint"><b>Drag</b> to orbit &nbsp;&middot;&nbsp; <b>Scroll</b> to zoom &nbsp;&middot;&nbsp; <b>Click</b> the crew<br><b>D W F C K</b> shortcuts &nbsp;&middot;&nbsp; <b>B</b> shipwright &nbsp;&middot;&nbsp; <b>M</b> sound &nbsp;&middot;&nbsp; <b>Q</b> quality</div>
@@ -432,7 +436,7 @@ const world = {
   waveAmp: 0.32, steep: 0.35,
   fishCount: 0,
   flash: 0,
-  time: 0,
+  time: 0, focus: new THREE.Vector3(), treasure: 0,
 };
 const night = () => 1 - world.day;
 
@@ -1642,10 +1646,11 @@ function updateSails(dt, t) {
   const wind = sstep(4, 46, world.w.wind);
   const storm = sstep(1.0, 1.8, world.w.waves);
   const belly = 0.32 + wind * 0.35;
-  _A.set(0.02, 0.08, 0); _B.set(-3.75, 0.1, 0); _Cc.set(0.02, MAST_TOP - BOOM_Y - 0.45, 0);
-  shapeSail(rig.main, _A, _B, _Cc, belly, 0.015 + storm * 0.07, t);
+  const furl = rig.furl || 0;
+  _A.set(0.02, 0.08, 0); _B.set(-3.75, 0.1, 0); _Cc.set(0.02, (MAST_TOP - BOOM_Y - 0.45) * (1 - furl * 0.86), 0);
+  shapeSail(rig.main, _A, _B, _Cc, belly * (1 - furl * 0.8), 0.015 + storm * 0.07, t);
   const js = Math.sin(rig.sailAngle) * 1.0;
-  _A.set(5.05, hullTop(1) + 0.4, 0); _B.set(1.75, deckY(1.75) + 0.65, js + 0.12 * Math.sign(js || 1)); _Cc.set(MAST_X + 0.12, MAST_TOP - 0.6, 0);
+  _A.set(5.05, hullTop(1) + 0.4, 0); _B.set(lerp(1.75, 4.2, furl), lerp(deckY(1.75) + 0.65, hullTop(1) + 0.5, furl), (js + 0.12 * Math.sign(js || 1)) * (1 - furl)); _Cc.set(lerp(MAST_X + 0.12, 4.3, furl), lerp(MAST_TOP - 0.6, hullTop(1) + 1.2, furl), 0);
   shapeSail(rig.jib, _A, _B, _Cc, belly * 0.85 * Math.sign(js || 1), 0.02 + storm * 0.08, t + 1.3);
   // sheets
   const boomEnd = _v2.set(-3.6, 0, 0).applyAxisAngle(_up, rig.sailAngle).add(rig.boom.position);
@@ -2097,6 +2102,7 @@ function poseCaptain(c, t, dt) {
       break;
     }
     case 'carry': R.r('armL', -1.0, 0, -0.1); R.r('elbowL', -0.9); R.r('neck', 0.25, 0, 0); break;
+    case 'carryChest': R.r('armL', -0.85, 0, -0.18); R.r('armR', -0.85, 0, 0.18); R.r('elbowL', -0.75); R.r('elbowR', -0.75); R.r('spine', -0.1, 0, 0); break;
     case 'crouch': case 'pet': {
       R.p('hips', 0, 0.6, -0.05);
       R.r('legL', -1.05, 0, 0.08); R.r('legR', -1.05, 0, -0.08); R.r('kneeL', 1.75); R.r('kneeR', 1.75);
@@ -2144,12 +2150,14 @@ function poseCaptain(c, t, dt) {
       R.r('spine', 0.5 + tr, 0, tr); R.r('armL', -2.5, 0, -0.85); R.r('armR', -2.5, 0, 0.85); R.r('elbowL', -1.9); R.r('elbowR', -1.9);
       R.r('neck', 0.15, 0, 0); mouth = 0.45; brow = 1; break;
     }
-    case 'chair': case 'chairWrite': case 'chairRead': case 'chairChart': {
+    case 'chair': case 'chairWrite': case 'chairRead': case 'chairChart': case 'chairRoast': case 'chairEat': {
       R.p('hips', 0, c.seatH ?? 0.47, 0);
       R.r('legL', -1.5, 0, 0.06); R.r('legR', -1.5, 0, -0.06); R.r('kneeL', 1.45); R.r('kneeR', 1.5);
       R.r('spine', 0.06 + breathe, 0, 0);
       if (P === 'chairWrite') { R.r('spine', 0.22, 0, 0); R.r('armL', -0.9, 0, -0.1); R.r('elbowL', -0.8); R.r('armR', -0.75, 0, 0.3 + Math.sin(t * 7) * 0.05); R.r('elbowR', -0.9 + Math.sin(t * 9) * 0.08); R.r('neck', 0.5, 0, 0); }
       else if (P === 'chairChart') { R.r('spine', 0.28, 0, 0); R.r('armL', -1.0, 0, -0.25); R.r('elbowL', -0.6); R.r('armR', -1.0, 0, 0.25 + Math.sin(t * 0.8) * 0.1); R.r('elbowR', -0.6); R.r('neck', 0.55, Math.sin(t * 0.6) * 0.3, 0); }
+      else if (P === 'chairRoast') { R.r('spine', 0.12, 0, 0); R.r('armR', -1.25, 0, 0.1); R.r('elbowR', -0.25); R.r('armL', -1.0, 0, -0.35); R.r('elbowL', -0.5); R.r('neck', 0.3, 0, 0); }
+      else if (P === 'chairEat') { const s2 = Math.max(0, Math.sin(t * 2.6)); R.r('armR', -1.2 - s2 * 0.3, 0, 0.3); R.r('elbowR', -1.6 - s2 * 0.25); R.r('armL', -0.5, 0, -0.1); R.r('elbowL', -1.0); R.r('neck', 0.1 - s2 * 0.1, 0, 0); mouth = s2 * 0.55; }
       else if (P === 'chairRead') { R.r('armL', -1.0, 0, -0.2); R.r('elbowL', -1.0); R.r('armR', -0.3, 0, 0.3); R.r('elbowR', -1.2); R.r('neck', 0.35, 0, 0); mouth = 0.1; }
       else { R.r('armL', -0.35, 0, -0.1); R.r('armR', -0.35, 0, 0.1); R.r('elbowL', -0.9); R.r('elbowR', -0.9); }
       break;
@@ -2208,7 +2216,7 @@ function poseCaptain(c, t, dt) {
     const k = mv, c2 = Math.cos(c.walkPh);
     R.r('legL', s * 0.6 * k, 0, 0.03); R.r('legR', -s * 0.6 * k, 0, -0.03);
     R.r('kneeL', 0.05 + Math.max(0, -Math.sin(c.walkPh - 0.6)) * 0.85 * k); R.r('kneeR', 0.05 + Math.max(0, Math.sin(c.walkPh - 0.6)) * 0.85 * k);
-    const busy = P === 'carry' || c.carrying || gear.rods.some(r => r.inHand);
+    const busy = P === 'carry' || P === 'carryChest' || c.carrying || gear.rods.some(r => r.inHand);
     if (!busy) {
       const bal = sstep(0.9, 1.6, world.w.waves) * 0.5;                    // arms out for balance in big seas
       R.r('armL', -s * 0.45 * k, 0, 0.1 + bal); R.r('armR', s * 0.45 * k, 0, -0.1 - bal);
@@ -2264,6 +2272,7 @@ function poseDog(d, t, dt) {
       else R.r('head', 0.05, Math.sin(t * 0.4) * 0.4, 0);
       break;
     case 'sniff': R.r('head', 0.65, Math.sin(t * 3) * 0.35, 0); wagSpd = 7; break;
+    case 'dig': { const k = Math.sin(t * 17); R.r('body', 0.32, 0, k * 0.04); R.p('body', 0, 0.32, -0.2); R.r('fl', -0.7 + k * 0.75); R.r('fr', -0.7 - k * 0.75); R.r('head', 0.55, 0, 0); R.r('bl', 0.25); R.r('br', 0.25); wagSpd = 18; wagAmp = 0.5; ear = 0.1; break; }
     case 'lookout': R.r('head', -0.2, Math.sin(t * 0.7) * 0.25, Math.sin(t * 0.3) * 0.15); R.r('fl', -0.15); ear = 0.22; break;
     case 'bark': { const b = d.barkT > 0 ? Math.sin(d.barkT * 40) * 0.2 : 0; R.r('head', -0.3 + b, 0, 0); R.r('fl', -0.2); R.r('fr', 0.1); wagSpd = 14; ear = 0.25; break; }
     case 'excited': R.p('body', 0, 0.36 + Math.abs(Math.sin(t * 8)) * 0.06, -0.2); R.r('fl', -0.4 * Math.abs(Math.sin(t * 8))); R.r('fr', -0.4 * Math.abs(Math.sin(t * 8))); R.r('head', -0.2, 0, Math.sin(t * 4) * 0.2); wagSpd = 20; wagAmp = 0.55; pant = true; break;
@@ -2473,6 +2482,13 @@ function updateMover(c, dt, turnK = 6) {
   c.moving = damp(c.moving, c.walking ? 1 : 0, 9, dt);
   c.walkPh += dt * c.speed * (c.walkSpd || 1) * 7.5 * c.moving;
   c.walking = false;
+  if (c.hopping) return;
+  if (c.ashore) {
+    c.root.position.set(c.pos.x, c.fixedY ?? islandH(c.ashore, c.pos.x, c.pos.y), c.pos.y);
+    c.tiltR = damp(c.tiltR, 0, 4, dt); c.tiltP = damp(c.tiltP, 0, 4, dt);
+    c.root.quaternion.setFromAxisAngle(_up, c.heading);
+    return;
+  }
   c.root.position.set(c.pos.x * BOAT_S, (c.floorY ?? deckY(c.pos.x)) * BOAT_S, c.pos.y * BOAT_S);
   // lean against the boat's roll and pitch to stay upright (a little late, like real sea legs)
   const low = c.seated || c.inBunk || ['sleep', 'sit', 'lie', 'cower', 'crouch', 'pet', 'coil', 'eat', 'beg', 'happy', 'howl'].includes(c.pose);
@@ -2483,6 +2499,7 @@ function updateMover(c, dt, turnK = 6) {
 }
 const _qT = new THREE.Quaternion(), _qY = new THREE.Quaternion(), _eT = new THREE.Euler(0, 0, 0, 'ZXY');
 function runTask(c, dt) {
+  if (c.ashore && c.task && !c.task.shore) c.task = asShore(chainTasks(returnAboard(c, c.ashore), c.task));
   if (c.inside && c.task && !c.task.inside) c.task = asInside(chainTasks(exitCabin(c, true), c.task));
   if (c.task) { const r = c.task.next(); if (r.done) c.task = null; }
   if (!c.task) c.task = c.next();
@@ -2726,6 +2743,7 @@ function* fishTask() {
   cap.pose = 'idle';
 }
 function fishButton() {
+  if (shoreBlocked()) { toast(cap.ashore ? `The captain is ashore at <b>${cap.ashore.name}</b>` : 'Tied up at the jetty — fishing can wait'); return; }
   if (cap.fishing) { toast('The captain already has a line in the water'); return; }
   interrupt(cap); resetProps();
   cap.task = fishTask();
@@ -2843,7 +2861,7 @@ function* dogCatch() {
 }
 function dogCommand(gen) { interrupt(dog); dog.task = gen; }
 function dogEvent(kind, side, what) {
-  if (dog.busy || world.isNight || dog.sleeping && world.isNight) return;
+  if (dog.busy || dog.ashore || world.isNight || dog.sleeping && world.isNight) return;
   dog.sleeping = false;
   if (kind === 'dolphins') dogCommand(dogBarkAt(side, what));
   else if (kind === 'catch') dogCommand(dogCatch());
@@ -3151,7 +3169,7 @@ function advanceClock(h) {
 }
 function onNightChange() {
   sfx.bell();
-  if (!KR.active) {   // nobody goes to bed (or wakes for the day) while the kraken is up
+  if (!KR.active && !shoreBlocked()) {   // nobody goes to bed (or wakes for the day) while the kraken is up or the crew are ashore
     if (!cap.fishing && (world.isNight || !cap.sleeping)) { interrupt(cap); resetProps(); }
     if (world.isNight || !dog.sleeping) interrupt(dog);
   }
@@ -3167,7 +3185,7 @@ function updateEnv(dt, t) {
   w.waves = damp(w.waves, W.waves, 0.28, dt);
   world.waveAmp = w.waves * (0.86 + 0.2 * Math.sin(t * 0.043) * Math.sin(t * 0.027 + 2) + 0.06 * Math.sin(t * 0.11));
   world.steep = 0.32 + 0.38 * sstep(0.3, 1.8, w.waves);
-  world.speed = damp(world.speed, 1.6 + w.wind * 0.1, 0.5, dt);
+  world.speed = world.speedOverride ?? damp(world.speed, 1.6 + w.wind * 0.1, 0.5, dt);
   world.offset += world.speed * dt;
   // auto weather drift
   if (t > world.nextAutoWeather) {
@@ -3218,8 +3236,12 @@ function updateEnv(dt, t) {
   skyU.uMoon.value = sstep(-0.05, 0.25, mel) * (1 - w.cover * 0.9);
   lightDir.copy(moonDir).lerp(sunDir, sstep(-0.12, 0.05, sunEl)).normalize();
   if (lightDir.y < 0.16) { lightDir.y = 0.16; lightDir.normalize(); }
-  sun.position.copy(lightDir).multiplyScalar(60);
-  sun.target.position.set(0, 0, 0);
+  const fx = cap.ashore ? cap.root.getWorldPosition(_v3) : null;
+  world.focus.lerp(fx ? _v3.set(fx.x * 0.6, 0, fx.z * 0.6) : _v3.set(0, 0, 0), 1 - Math.exp(-1.5 * dt));
+  sun.position.copy(lightDir).multiplyScalar(60).add(world.focus);
+  sun.target.position.copy(world.focus);
+  const ext = world.focus.length() > 2 ? 21 : 11;
+  if (sun.shadow.camera.right !== ext) { Object.assign(sun.shadow.camera, { left: -ext, right: ext, top: ext, bottom: -ext }); sun.shadow.camera.updateProjectionMatrix(); }
   sun.color.copy(COL.moon).lerp(sunCol, sstep(-0.12, 0.05, sunEl));
   const dayI = 2.8 * (1 - w.cover * 0.42 - w.dark * 0.38), nightI = 0.95 * (1 - w.cover * 0.5);
   sun.intensity = lerp(nightI, dayI, sstep(-0.08, 0.3, sunEl)) * (1 - golden * 0.25);
@@ -3757,6 +3779,7 @@ const DEST_KINDS = {
   palms: { name: 'Palm Island', make: makePalmIsland, z: [60, 110], note: 'A little island of palms off the bow. Sand white as sailcloth.', say: 'Land ho! An island with palm trees', w: 1.1 },
   wreck: { name: 'Old Shipwreck', make: makeWreck, z: [32, 50], note: 'Passed an old wreck on a sandbar. Mast still standing, sail in rags.', say: 'A shipwreck on the sandbar!', w: 1 },
   ship: { name: 'Passing Schooner', make: makeSchooner, z: [36, 55], note: 'Hailed a two-masted schooner bound the other way. Her crew waved back.', say: 'A ship on the horizon!', w: 1.1 },
+  village: { name: 'Harbour island', make: null, z: [31, 31], note: '', say: 'Land ho! An island with houses and a jetty', w: 1.5 },
   bottle: { name: 'Message in a Bottle', make: makeBottle, z: [2.6, 3.2], note: '', say: 'Something glinting in the water…', w: 0.9 },
 };
 const BOTTLE_NOTES = [
@@ -3767,14 +3790,19 @@ const BOTTLE_NOTES = [
 ];
 const dests = [];
 let nextDest = 35;
+let villageSeed = Math.floor(Math.random() * 1000);
 function spawnDest(kind) {
-  const K = DEST_KINDS[kind], m = K.make();
-  const side = Math.random() < 0.5 ? -1 : 1;
+  const K = DEST_KINDS[kind];
+  let side = Math.random() < 0.5 ? -1 : 1, I = null;
+  if (kind === 'village') { I = makeVillage(++villageSeed); const busy = dests.find(d => d.x > 150 && d.kind !== 'bottle'); if (busy) side = -busy.side; I.side = side; }
+  const m = I ? I.m : K.make();
   const d = { kind, K, m, x: kind === 'bottle' ? 34 : 360, z: side * rand(...K.z), side, spotted: false, done: false, t: 0 };
   if (kind === 'ship') { d.x = 300; d.vx = -rand(2.5, 4); }
   m.position.set(d.x, 0, d.z);
   if (kind !== 'bottle') m.rotation.y = rand(0, TAU);
   if (kind === 'ship') m.rotation.y = Math.PI;
+  if (I) { d.I = I; d.z = side * ISL.Zc; m.position.z = d.z; m.rotation.y = side > 0 ? 0 : Math.PI; d.name = I.name; d.note = `Sighted ${I.name}, a little island with a jetty and cottages.`; }
+  else { const near = dests.find(o => o.I && Math.abs(o.x - d.x) < 140 && o.side === side); if (near) { d.side = side = -side; d.z = -d.z; m.position.z = d.z; } }
   scene.add(m); dests.push(d);
   return d;
 }
@@ -3820,9 +3848,9 @@ system('destinations', (dt, t) => {
     // nobody on deck to spot it? It still goes in the log.
     if (!d.spotted && d.kind !== 'bottle' && d.x < 70) {
       d.spotted = true;
-      if (discover(d.K.name, d.K.note)) toast(world.isNight ? `${d.K.name} slips past in the dark` : `Passing the ${d.K.name.toLowerCase()}`);
+      if (!d.I && discover(d.K.name, d.K.note)) toast(world.isNight ? `${d.K.name} slips past in the dark` : `Passing the ${d.K.name.toLowerCase()}`);
     }
-    if (d.gone) { scene.remove(d.m); dests.splice(i, 1); }
+    if (d.gone && harbour.d !== d) { scene.remove(d.m); d.m.traverse(o => { if (o.geometry) o.geometry.dispose(); }); dests.splice(i, 1); }
   }
 });
 // what the captain should go and look at next
@@ -4104,7 +4132,7 @@ let wasRaining = false;
 system('crewWatch', () => {
   const r = world.w.rain;
   if (r > 0.3) wasRaining = true;
-  if (wasRaining && r < 0.06) { wasRaining = false; if (!dog.busy && !dog.sleeping && !world.isNight) dogCommand(dogShake()); }
+  if (wasRaining && r < 0.06) { wasRaining = false; if (!dog.busy && !dog.ashore && !dog.inside && !dog.sleeping && !world.isNight) dogCommand(dogShake()); }
 });
 
 /* =====================================================================
@@ -4158,7 +4186,11 @@ function updateCamera(dt, t) {
     camLabel = 'Orbit';
     if (!interacting && t - lastInteract > 6) controls.autoRotate = true;
     controls.target.y = damp(controls.target.y, 3.2 + bs.heave * 0.5, 2, dt);
-    controls.target.x = damp(controls.target.x, boat.position.x * 0.6, 1.5, dt); controls.target.z = damp(controls.target.z, boat.position.z * 0.6, 1.5, dt);
+    const fc = cap.ashore || (dog.ashore && harbour.phase === 'shore') ? (cap.ashore ? cap : dog).root.getWorldPosition(_v3) : null;
+    const tx = fc ? lerp(boat.position.x, fc.x, 0.7) : boat.position.x * 0.6, tz = fc ? lerp(boat.position.z, fc.z, 0.7) : boat.position.z * 0.6;
+    const ox = controls.target.x, oz = controls.target.z;
+    controls.target.x = damp(controls.target.x, tx, fc ? 0.9 : 1.5, dt); controls.target.z = damp(controls.target.z, tz, fc ? 0.9 : 1.5, dt);
+    if (fc || Math.abs(ox) > 1.5 || Math.abs(oz) > 1.5) { camera.position.x += controls.target.x - ox; camera.position.z += controls.target.z - oz; }
     controls.update();
   } else if (camMode === 1) {
     camLabel = 'Deck View';
@@ -4242,6 +4274,8 @@ function showCard(who, hint, text) {
 }
 function clickCrew(who) {
   sfx.init();
+  if (who.ashore) return showCard(who, `Ashore on ${who.ashore.name}`);
+  if (shoreBlocked()) return showCard(who, 'Getting ready to go ashore');
   if (who.inside && !who.sleeping) return showCard(who, 'Below decks — click a window to peek in');
   if (who === cap) {
     if (cap.sleeping) return showCard(cap, 'Snoring softly. Let him rest.');
@@ -4445,7 +4479,7 @@ system('kraken', (dt, t) => {
   if (!KR.active) {
     if (t > KR.next) {
       KR.next = t + rand(170, 330);
-      if (world.day > 0.75 && !world.isNight && world.w.waves < 1.7 && !cap.fishing) spawnKraken();
+      if (world.day > 0.75 && !world.isNight && world.w.waves < 1.7 && !cap.fishing && harbour.phase === 'none') spawnKraken();
     }
     return;
   }
@@ -5136,6 +5170,782 @@ $('yardReset').addEventListener('click', () => { look = { ...DEFAULT_LOOK }; app
 applyLook(look);
 
 /* =====================================================================
+   Harbour islands — inhabited islands with a jetty. The boat ties up alongside, and the captain and
+   Ghost go ashore to meet the locals, dig up treasure, cook on the beach and rest before sailing on.
+   Island-local units are world units; the jetty points toward local -z (the island is turned to face
+   the boat), and its T-head lines up with the boat's starboard or port quarter when docked.
+   ===================================================================== */
+const ISL = { R1: 12, R2: 17, Zc: 31, deck: 0.95, stopX: -2.75 * BOAT_S, exit: [-2.75, 0.92] };
+const ISLAND_NAMES = ['Gull’s Rest', 'Coral Cay', 'Saltmarsh Isle', 'Driftwood Key', 'Little Barnacle', 'Puffin Point', 'Sandpiper Isle', 'Kelp Harbour', 'Lantern Cove', 'Seaglass Isle', 'Anchor Rock', 'Mussel Bay', 'Whistler’s Key', 'Starfish Isle'];
+const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const onJetty = (x, z) => (Math.abs(x) < 1.1 && z < -14.2 && z > -26.4) || (Math.abs(x) < 7.1 && z <= -26.2 && z > -28.6);
+const islandH = (I, x, z) => onJetty(x, z) ? ISL.deck : islandGround(I, x, z);
+function islandGround(I, x, z) {
+  const r = Math.hypot(x, z), a = Math.atan2(z, x), s = I.seed;
+  const edge = ISL.R2 + Math.sin(a * 3 + s) * 1.1 + Math.sin(a * 5 + s * 2) * 0.5, inner = ISL.R1 + Math.sin(a * 4 + s * 3) * 0.9;
+  if (r > edge) return 0.55 - (r - edge) * 0.65;
+  if (r > inner) return lerp(1.05, 0.55, (r - inner) / (edge - inner));
+  const hill = z > 2 ? sstep(2, 11, z) * sstep(inner, inner - 5, r) * 1.1 : 0;
+  return 1.05 + Math.sin(x * 0.33 + s) * Math.cos(z * 0.29 - s) * 0.18 + hill;
+}
+// shared textures for houses
+const HTEX = {
+  clap: canvasTex(128, 128, (c, w, h) => { c.fillStyle = '#ffffff'; c.fillRect(0, 0, w, h); for (let i = 0; i < 8; i++) { c.fillStyle = 'rgba(0,0,0,.16)'; c.fillRect(0, i * 16 + 13, w, 3); c.fillStyle = 'rgba(255,255,255,.5)'; c.fillRect(0, i * 16, w, 2); } }, true),
+  tiles: canvasTex(128, 128, (c, w, h) => { c.fillStyle = '#ffffff'; c.fillRect(0, 0, w, h); for (let r = 0; r < 8; r++) for (let i = -1; i < 9; i++) { const x = i * 16 + (r % 2) * 8; c.fillStyle = `rgba(0,0,0,${0.08 + ((r * 3 + i) % 3) * 0.03})`; c.beginPath(); c.arc(x + 8, r * 16 + 16, 8, Math.PI, 0); c.fill(); c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(x, r * 16 + 15, 16, 1); } }, true),
+  thatch: canvasTex(128, 128, (c, w, h) => { c.fillStyle = '#e4c98a'; c.fillRect(0, 0, w, h); for (let i = 0; i < 400; i++) { c.strokeStyle = `rgba(${90 + Math.random() * 60},${70 + Math.random() * 40},20,.35)`; c.lineWidth = 1; const x = Math.random() * w, y = Math.random() * h; c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.random() * 3 - 1.5, y + 10); c.stroke(); } for (let r = 1; r < 6; r++) { c.fillStyle = 'rgba(80,60,20,.25)'; c.fillRect(0, r * 22, w, 3); } }, true),
+  stone: canvasTex(128, 64, (c, w, h) => { c.fillStyle = '#8b867c'; c.fillRect(0, 0, w, h); for (let r = 0; r < 4; r++) for (let i = 0; i < 6; i++) { c.fillStyle = `hsl(35, 6%, ${42 + Math.random() * 18}%)`; c.fillRect(i * 22 + (r % 2) * 11 + 1, r * 16 + 1, 20, 14); } }, true),
+};
+HTEX.clap.repeat.set(2, 1.5); HTEX.tiles.repeat.set(3, 2); HTEX.thatch.repeat.set(2, 2); HTEX.stone.repeat.set(3, 1);
+const VGLASS = new THREE.MeshStandardMaterial({ color: 0x33475a, roughness: 0.15, metalness: 0.2, emissive: 0xffc066, emissiveIntensity: 0 });
+const VLAMP = new THREE.MeshStandardMaterial({ color: 0xfff1c9, emissive: 0xffb24e, emissiveIntensity: 0.1 });
+function makeHouse(rnd, st) {
+  const g = new THREE.Group(), { w, d, h } = st, pr = () => pick2(rnd, st.flowers);
+  const wallM = new THREE.MeshStandardMaterial({ map: HTEX.clap, color: st.wall, roughness: 0.9 });
+  const roofM = new THREE.MeshStandardMaterial({ map: st.thatch ? HTEX.thatch : HTEX.tiles, color: st.thatch ? 0xffffff : st.roof, roughness: 0.85 });
+  const trimM = std(st.trim), stoneM = new THREE.MeshStandardMaterial({ map: HTEX.stone, roughness: 1 }), doorM = std(st.door), shM = std(st.shutter);
+  const B = (sx, sy, sz, m, x, y, z, rx = 0, ry = 0, rz = 0) => mk(new THREE.BoxGeometry(sx, sy, sz), m, g, x, y, z, rx, ry, rz);
+  const y0 = 0.3;
+  B(w + 0.3, 0.6, d + 0.3, stoneM, 0, 0.0, 0);
+  B(w, h, d, wallM, 0, y0 + h / 2, 0);
+  for (const [x, z] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) B(0.16, h, 0.16, trimM, x * w / 2, y0 + h / 2, z * d / 2);
+  // roof: two slabs meeting at a ridge along x, gable triangles at each end
+  const p = st.thatch ? 0.72 : 0.6, run = d / 2 + 0.38, ridge = y0 + h + (d / 2) * Math.tan(p), L = run / Math.cos(p) + 0.05;
+  for (const s of [-1, 1]) B(w + 0.75, st.thatch ? 0.3 : 0.15, L, roofM, 0, ridge - run / 2 * Math.tan(p) + 0.06, s * run / 2, s * p, 0, 0);
+  B(w + 0.8, 0.14, 0.24, st.thatch ? roofM : trimM, 0, ridge + 0.1, 0);
+  const gab = new THREE.Shape(); gab.moveTo(-d / 2, 0); gab.lineTo(d / 2, 0); gab.lineTo(0, (d / 2) * Math.tan(p)); gab.lineTo(-d / 2, 0);
+  const gg = new THREE.ExtrudeGeometry(gab, { depth: 0.1, bevelEnabled: false });
+  for (const s of [-1, 1]) { const m = mk(gg, wallM, g, s * (w / 2 - 0.05) - (s > 0 ? 0.1 : 0) + 0.05, y0 + h, 0, 0, Math.PI / 2, 0); m.position.x = s * w / 2 + (s > 0 ? -0.1 : 0); }
+  // a round window in one gable
+  mk(new THREE.TorusGeometry(0.22, 0.05, 5, 12), trimM, g, w / 2 + 0.01, y0 + h + 0.55, 0, 0, Math.PI / 2, 0);
+  mk(new THREE.CircleGeometry(0.2, 12), VGLASS, g, w / 2 + 0.02, y0 + h + 0.55, 0, 0, Math.PI / 2, 0);
+  // chimney
+  B(0.55, 1.6, 0.55, stoneM, w * 0.28, ridge - 0.1, -d * 0.18);
+  B(0.7, 0.12, 0.7, trimM, w * 0.28, ridge + 0.72, -d * 0.18);
+  // front door with frame, step and lamp
+  const dx = st.doorX;
+  B(1.2, 2.15, 0.06, trimM, dx, y0 + 1.07, d / 2 + 0.02);
+  B(0.95, 1.95, 0.1, doorM, dx, y0 + 0.98, d / 2 + 0.05);
+  for (const yy of [0.55, 1.45]) B(0.8, 0.06, 0.04, std(new THREE.Color(st.door).multiplyScalar(0.7)), dx, y0 + yy, d / 2 + 0.11);
+  mk(new THREE.SphereGeometry(0.05, 6, 4), MAT.brass, g, dx + 0.32, y0 + 0.95, d / 2 + 0.13);
+  B(1.4, 0.2, 0.7, stoneM, dx, 0.2, d / 2 + 0.45);
+  const lamp = new THREE.Group(); lamp.position.set(dx + 0.85, y0 + 1.95, d / 2 + 0.16); g.add(lamp);
+  B(0.06, 0.3, 0.06, MAT.black, dx + 0.85, y0 + 2.2, d / 2 + 0.08);
+  mk(new THREE.BoxGeometry(0.18, 0.26, 0.18), VLAMP, lamp, 0, 0, 0).castShadow = false;
+  mk(new THREE.ConeGeometry(0.15, 0.12, 4), MAT.black, lamp, 0, 0.19, 0, 0, Math.PI / 4, 0);
+  // windows with shutters, sills and flower boxes
+  const win = (x, y, z, ry, box) => {
+    const wg = new THREE.Group(); wg.position.set(x, y, z); wg.rotation.y = ry; g.add(wg);
+    const W2 = (sx, sy, sz, m, xx, yy, zz, rz = 0) => mk(new THREE.BoxGeometry(sx, sy, sz), m, wg, xx, yy, zz, 0, 0, rz);
+    mk(new THREE.PlaneGeometry(0.72, 0.82), VGLASS, wg, 0, 0, 0.02);
+    for (const s of [-1, 1]) { W2(0.08, 0.98, 0.08, trimM, s * 0.41, 0, 0.03); W2(0.9, 0.08, 0.08, trimM, 0, s * 0.45, 0.03); }
+    W2(0.04, 0.82, 0.04, trimM, 0, 0, 0.05); W2(0.72, 0.04, 0.04, trimM, 0, 0.05, 0.05);
+    for (const s of [-1, 1]) { const sh = W2(0.36, 0.9, 0.05, shM, s * 0.62, 0, 0.12); sh.rotation.y = s * 0.45; for (let k = 0; k < 4; k++) W2(0.3, 0.03, 0.02, std(new THREE.Color(st.shutter).multiplyScalar(0.72)), s * 0.62 - s * 0.03, -0.3 + k * 0.2, 0.16).rotation.y = s * 0.45; }
+    W2(0.95, 0.07, 0.22, trimM, 0, -0.5, 0.1);
+    if (box) {
+      W2(0.85, 0.2, 0.22, std(0x7a4b2a), 0, -0.64, 0.2);
+      for (let k = 0; k < 6; k++) { mk(new THREE.IcosahedronGeometry(0.075, 0), std(pr()), wg, -0.33 + k * 0.13, -0.48 + (k % 2) * 0.04, 0.22); mk(new THREE.ConeGeometry(0.05, 0.12, 4), std(0x3f7a3a), wg, -0.27 + k * 0.13, -0.5, 0.26); }
+    }
+  };
+  const wy = y0 + h * 0.55;
+  for (const x of [dx - 1.55, dx + 1.6]) if (Math.abs(x) < w / 2 - 0.6) win(x, wy, d / 2, 0, rnd() < 0.7);
+  win(w / 2, wy, 0, Math.PI / 2, rnd() < 0.4); win(-w / 2, wy, 0, -Math.PI / 2, rnd() < 0.4);
+  win(0, wy, -d / 2, Math.PI, false);
+  // porch roof over the door on some houses
+  if (st.porch) {
+    for (const s of [-1, 1]) B(0.12, 2.3, 0.12, trimM, dx + s * 0.95, y0 + 1.0, d / 2 + 1.15);
+    B(2.4, 0.1, 1.5, roofM, dx, y0 + 2.25, d / 2 + 0.6, 0.18, 0, 0);
+    B(2.2, 0.12, 1.3, std(0x8a5a32), dx, 0.32, d / 2 + 0.75);
+  }
+  // a rain barrel by the corner and a bench beside the door
+  const barrel = new THREE.CylinderGeometry(0.3, 0.3, 0.8, 10);
+  mk(barrel, MAT.wood, g, w / 2 - 0.2, 0.7, d / 2 + 0.45);
+  mk(new THREE.TorusGeometry(0.31, 0.025, 4, 12), MAT.iron, g, w / 2 - 0.2, 0.95, d / 2 + 0.45, Math.PI / 2, 0, 0);
+  if (st.sign) {
+    const sgTex = canvasTex(256, 96, (c, W, H) => { c.fillStyle = '#6b4226'; c.fillRect(0, 0, W, H); c.strokeStyle = '#e9c46a'; c.lineWidth = 5; c.strokeRect(6, 6, W - 12, H - 12); c.fillStyle = '#f6e7c0'; c.font = 'bold 40px Georgia'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(st.sign, W / 2, H / 2 + 2); });
+    B(0.06, 0.06, 0.9, MAT.black, dx - 0.85, y0 + 2.3, d / 2 + 0.45);
+    mk(new THREE.PlaneGeometry(1.0, 0.38), new THREE.MeshStandardMaterial({ map: sgTex, side: THREE.DoubleSide }), g, dx - 0.85, y0 + 2.0, d / 2 + 0.75, 0, Math.PI / 2, 0);
+  }
+  g.userData = { lamp, chimney: V3(w * 0.28, ridge + 0.85, -d * 0.18) };
+  return { g, door: V3(dx, 0, d / 2 + 1.25) };
+}
+const pick2 = (rnd, arr) => arr[(rnd() * arr.length) | 0];
+
+/* ---------- villagers: simple jointed rigs in the same style as the crew ---------- */
+const VNAMES = { f: ['Marta', 'Nell', 'Ivy', 'Rosa', 'Wren', 'Juniper', 'Pearl', 'Hattie', 'Mabel', 'Opal'], m: ['Tom', 'Ezra', 'Bodie', 'Silas', 'Gus', 'Otis', 'Abe', 'Finn', 'Hugo', 'Milo'], k: ['Pip', 'Tilly', 'Bean', 'Scout', 'Kit', 'Poppy'] };
+const ROLE_TITLE = { fisher: 'Fisher', baker: 'Baker', gardener: 'Gardener', elder: 'Old', kid: 'Little', weaver: 'Netmaker', greeter: 'Harbourmaster' };
+function makeVillager(rnd, role) {
+  const R = new Rig(), root = new THREE.Group(), kid = role === 'kid', fem = rnd() < 0.5;
+  const skin = std(pick2(rnd, [0xf1c9a5, 0xe0a47a, 0xc68a5e, 0x9a6440, 0x6e4529, 0xf5d6bd])), hairC = std(pick2(rnd, role === 'elder' ? [0xdcdcdc, 0xbdbdbd, 0xf0ece4] : [0x2a1c12, 0x5a3a1e, 0x8a5a2a, 0xc98a3a, 0x1b1b1b, 0xa34a22]));
+  const shirt = std(pick2(rnd, [0xd9534f, 0x3d7ab8, 0x6aa84f, 0xf0c05a, 0xe8e2d4, 0x8e5aa8, 0xe07a3c, 0x4bb0a8])), pants = std(pick2(rnd, [0x3a3f52, 0x5a4632, 0x6b7a8a, 0x2f2f33, 0x7a5a3a]));
+  const boots = std(0x2a2018), white = std(0xf6f3ee), dark = std(0x141414);
+  const hips = R.add('hips', new THREE.Group()); hips.position.set(0, 0.92, 0); root.add(hips);
+  mk(rb(0.32, 0.16, 0.21), pants, hips, 0, 0, 0);
+  for (const s of [1, -1]) {
+    const leg = limb(R, s > 0 ? 'legL' : 'legR', hips, s * 0.095, -0.02, 0);
+    mk(rb(0.13, 0.45, 0.15), pants, leg, 0, -0.21, 0);
+    const knee = limb(R, s > 0 ? 'kneeL' : 'kneeR', leg, 0, -0.43, 0);
+    mk(rb(0.12, 0.4, 0.13), pants, knee, 0, -0.2, 0);
+    mk(rb(0.14, 0.1, 0.24, 0.35), boots, knee, 0, -0.43, 0.04);
+  }
+  const dress = fem && !kid && rnd() < 0.6;
+  if (dress) mk(new THREE.CylinderGeometry(0.2, 0.34, 0.62, 10), shirt, hips, 0, -0.22, 0);
+  const spine = R.add('spine', new THREE.Group()); spine.position.set(0, 0.05, 0); hips.add(spine);
+  mk(rb(0.4, 0.52, 0.25), shirt, spine, 0, 0.27, 0);
+  if (role === 'baker') { mk(new THREE.PlaneGeometry(0.34, 0.6), white, spine, 0, 0.12, 0.128); }
+  if (role === 'fisher') { mk(rb(0.42, 0.4, 0.27), std(0xe9ad1c), spine, 0, 0.3, 0); }
+  if (role === 'elder') { mk(rb(0.44, 0.2, 0.28), std(0x7a5a8a), spine, 0, 0.47, -0.01); }
+  if (role === 'greeter') { mk(rb(0.42, 0.42, 0.27), std(0x24405f), spine, 0, 0.3, 0); for (const y of [0.2, 0.32]) mk(new THREE.SphereGeometry(0.014, 6, 4), MAT.brass, spine, 0.06, y, 0.138); }
+  const neck = R.add('neck', new THREE.Group()); neck.position.set(0, 0.55, 0); spine.add(neck);
+  mk(rb(0.26, 0.3, 0.26, 0.3), skin, neck, 0, 0.2, 0.01);
+  for (const s of [1, -1]) { mk(new THREE.SphereGeometry(0.022, 6, 5), dark, neck, s * 0.06, 0.23, 0.135); }
+  mk(rb(0.05, 0.07, 0.05, 0.4), skin, neck, 0, 0.18, 0.15);
+  const mouth = mk(new THREE.BoxGeometry(0.07, 0.014, 0.01), std(0x6a2a22), neck, 0, 0.11, 0.137);
+  // hair and hats
+  const style = role === 'elder' && !fem ? 'bald' : pick2(rnd, fem ? ['bun', 'long', 'bob'] : ['short', 'short', 'curly']);
+  if (style !== 'bald') mk(rb(0.29, 0.1, 0.29, 0.4), hairC, neck, 0, 0.36, 0);
+  if (style === 'bun') mk(new THREE.SphereGeometry(0.08, 8, 6), hairC, neck, 0, 0.38, -0.12);
+  if (style === 'long') mk(rb(0.28, 0.34, 0.08), hairC, neck, 0, 0.18, -0.13);
+  if (style === 'bob') mk(rb(0.3, 0.2, 0.3), hairC, neck, 0, 0.27, -0.01);
+  if (style === 'curly') for (let k = 0; k < 6; k++) mk(new THREE.IcosahedronGeometry(0.055, 0), hairC, neck, Math.cos(k) * 0.1, 0.38, Math.sin(k) * 0.1);
+  if (!fem && !kid && rnd() < 0.4) mk(rb(0.22, 0.12, 0.08), hairC, neck, 0, 0.08, 0.12);
+  const hat = pick2(rnd, role === 'fisher' ? ['sou'] : role === 'gardener' ? ['straw'] : role === 'greeter' ? ['cap'] : role === 'baker' ? ['chef'] : ['none', 'none', 'straw', 'bandana']);
+  if (hat === 'straw') { mk(new THREE.CylinderGeometry(0.3, 0.3, 0.025, 14), std(0xe3c27a), neck, 0, 0.38, 0); mk(new THREE.CylinderGeometry(0.15, 0.16, 0.12, 12), std(0xe3c27a), neck, 0, 0.44, 0); mk(new THREE.CylinderGeometry(0.161, 0.161, 0.03, 12), std(0xb5382c), neck, 0, 0.405, 0); }
+  if (hat === 'sou') { mk(new THREE.CylinderGeometry(0.17, 0.27, 0.16, 12), std(0xe9ad1c), neck, 0, 0.42, -0.02); }
+  if (hat === 'cap') { mk(new THREE.CylinderGeometry(0.15, 0.14, 0.1, 12), std(0x24405f), neck, 0, 0.4, 0); mk(new THREE.BoxGeometry(0.2, 0.02, 0.12), dark, neck, 0, 0.36, 0.14); }
+  if (hat === 'chef') { mk(new THREE.CylinderGeometry(0.15, 0.13, 0.22, 12), white, neck, 0, 0.47, 0); mk(new THREE.SphereGeometry(0.17, 10, 6), white, neck, 0, 0.6, 0); }
+  if (hat === 'bandana') mk(rb(0.3, 0.08, 0.3, 0.4), std(pick2(rnd, [0xb5382c, 0x2b6fd6, 0xe9c46a])), neck, 0, 0.36, 0);
+  for (const s of [1, -1]) {
+    const arm = limb(R, s > 0 ? 'armL' : 'armR', spine, s * 0.25, 0.47, 0);
+    mk(rb(0.11, 0.33, 0.12), shirt, arm, 0, -0.15, 0);
+    const el = limb(R, s > 0 ? 'elbowL' : 'elbowR', arm, 0, -0.31, 0);
+    mk(rb(0.1, 0.27, 0.11), dress || role === 'baker' ? skin : shirt, el, 0, -0.12, 0);
+    mk(new THREE.SphereGeometry(0.055, 7, 5), skin, el, 0, -0.29, 0);
+  }
+  // hand props
+  const props = {};
+  props.rod = new THREE.Group(); mk(new THREE.CylinderGeometry(0.012, 0.022, 2.2, 5), std(0x3a2a1c), props.rod, 0, 1.0, 0); props.rod.position.set(0, -0.28, 0.05); props.rod.rotation.x = 1.1; R.j.elbowR.add(props.rod);
+  props.basket = new THREE.Group(); mk(new THREE.CylinderGeometry(0.16, 0.12, 0.16, 10, 1, true), std(0xb8864a, { side: THREE.DoubleSide }), props.basket, 0, 0, 0); for (let k = 0; k < 3; k++) mk(new THREE.SphereGeometry(0.06, 6, 5), std(0xd9a05a), props.basket, Math.cos(k * 2) * 0.06, 0.06, Math.sin(k * 2) * 0.06); mk(new THREE.TorusGeometry(0.14, 0.012, 4, 10, Math.PI), std(0x8a5a2a), props.basket, 0, 0.06, 0); props.basket.position.set(0, -0.33, 0.04); R.j.elbowL.add(props.basket);
+  props.broom = new THREE.Group(); mk(new THREE.CylinderGeometry(0.018, 0.018, 1.3, 5), std(0x9a6a3a), props.broom, 0, 0, 0); mk(new THREE.ConeGeometry(0.12, 0.3, 6), std(0xd9b46a), props.broom, 0, -0.75, 0); props.broom.position.set(0, -0.3, 0.06); props.broom.rotation.x = -0.4; R.j.elbowR.add(props.broom);
+  for (const k in props) props[k].visible = false;
+  root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; } });
+  const sc = kid ? 0.66 : 0.92 + rnd() * 0.12;
+  root.scale.setScalar(sc);
+  const name = role === 'kid' ? pick2(rnd, VNAMES.k) : pick2(rnd, fem ? VNAMES.f : VNAMES.m);
+  return { root, rig: R, mouth, props, role, fem, kid, name: `${ROLE_TITLE[role]} ${name}`, short: name, pos: new THREE.Vector2(), heading: 0, targetHeading: 0, moving: 0, walking: false, walkPh: rand(0, 6),
+    speed: kid ? 1.9 : role === 'elder' ? 0.75 : 1.15, pose: 'idle', talkT: 0, seatH: 0.45, task: null, scale: sc };
+}
+function poseVillager(v, t, dt) {
+  const R = v.rig, P = v.pose, mv = v.moving, s = Math.sin(v.walkPh), br = Math.sin(t * 2 + v.walkPh) * 0.015;
+  R.r('armL', 0.05, 0, 0.1 + br); R.r('armR', 0.05, 0, -0.1 - br); R.r('elbowL', -0.2); R.r('elbowR', -0.2);
+  R.r('spine', v.role === 'elder' ? 0.22 : br, 0, 0); R.r('neck', v.role === 'elder' ? -0.12 : 0, Math.sin(t * 0.4 + v.walkPh) * 0.3, 0);
+  for (const k in v.props) v.props[k].visible = false;
+  let talk = 0;
+  const seat = () => { R.p('hips', 0, v.seatH / v.scale, 0); R.r('legL', -1.5, 0, 0.06); R.r('legR', -1.5, 0, -0.06); R.r('kneeL', 1.45); R.r('kneeR', 1.5); };
+  switch (P) {
+    case 'wave': { const w = Math.sin(t * 10) * 0.35; R.r('armR', -2.6, 0, 0.3 + w); R.r('elbowR', -0.5); R.r('neck', -0.15, 0, 0); talk = 0.3; break; }
+    case 'cheer': { const w = Math.sin(t * 9) * 0.25; R.r('armL', -2.9, 0, -0.2 + w); R.r('armR', -2.9, 0, 0.2 - w); break; }
+    case 'talk': { R.r('armR', -0.7 + Math.sin(t * 3.1) * 0.25, 0, 0.25); R.r('elbowR', -1.1 + Math.sin(t * 4.3) * 0.3); R.r('armL', -0.2, 0, 0.2); R.r('elbowL', -0.9); break; }
+    case 'give': R.r('armL', -1.3, 0, -0.1); R.r('elbowL', -0.4); R.r('armR', -1.3, 0, 0.1); R.r('elbowR', -0.4); v.props.basket.visible = true; break;
+    case 'sit': seat(); R.r('armL', -0.4, 0, -0.1); R.r('armR', -0.4, 0, 0.1); R.r('elbowL', -1.0); R.r('elbowR', -1.0); break;
+    case 'sitFish': seat(); R.r('armR', -1.0, 0, 0.15); R.r('elbowR', -0.6 + Math.sin(t * 0.7) * 0.05); R.r('armL', -0.9, 0, -0.1); R.r('elbowL', -0.8); v.props.rod.visible = true; break;
+    case 'mend': seat(); R.r('spine', 0.25, 0, 0); R.r('neck', 0.45, 0, 0); R.r('armL', -0.9 + Math.sin(t * 5) * 0.12, 0, -0.15); R.r('armR', -0.9 - Math.sin(t * 5) * 0.12, 0, 0.15); R.r('elbowL', -1.0); R.r('elbowR', -1.0); break;
+    case 'garden': R.p('hips', 0, 0.55 / v.scale, -0.05); R.r('legL', -1.3, 0, 0.1); R.r('legR', -0.4, 0, -0.1); R.r('kneeL', 1.9); R.r('kneeR', 1.6); R.r('spine', 0.6, 0, 0); R.r('neck', 0.3, 0, 0); R.r('armR', -1.0 + Math.sin(t * 4) * 0.35, 0, 0.1); R.r('elbowR', -0.5); R.r('armL', -0.8, 0, -0.1); break;
+    case 'sweep': R.r('spine', 0.18, Math.sin(t * 2.2) * 0.2, 0); R.r('armR', -0.6 + Math.sin(t * 2.2) * 0.3, 0, 0.1); R.r('elbowR', -0.6); R.r('armL', -0.7 + Math.sin(t * 2.2) * 0.3, 0, -0.3); R.r('elbowL', -0.8); v.props.broom.visible = true; break;
+    case 'basket': R.r('armL', -0.5, 0, 0.1); R.r('elbowL', -1.2); v.props.basket.visible = true; break;
+    case 'clap': { const c = Math.abs(Math.sin(t * 9)); R.r('armL', -1.2, 0, -0.35 * c); R.r('armR', -1.2, 0, 0.35 * c); R.r('elbowL', -0.8); R.r('elbowR', -0.8); break; }
+  }
+  v.talkT = Math.max(0, v.talkT - dt);
+  if (v.talkT > 0) talk = Math.max(talk, Math.abs(Math.sin(t * 14)) * 0.6);
+  v.mouth.scale.y = 1 + talk * 3;
+  if (mv > 0.02) {
+    R.r('legL', s * 0.6 * mv, 0, 0.03); R.r('legR', -s * 0.6 * mv, 0, -0.03);
+    R.r('kneeL', 0.05 + Math.max(0, -Math.sin(v.walkPh - 0.6)) * 0.85 * mv); R.r('kneeR', 0.05 + Math.max(0, Math.sin(v.walkPh - 0.6)) * 0.85 * mv);
+    if (P === 'idle') { R.r('armL', -s * 0.45 * mv, 0, 0.1); R.r('armR', s * 0.45 * mv, 0, -0.1); }
+    R.p('hips', 0, 0.91 + Math.abs(Math.cos(v.walkPh)) * 0.035 * mv, 0);
+  }
+  R.apply(dt, 8);
+}
+
+/* ---------- building an island ---------- */
+const DIALOGUE = {
+  greeter: [['Ahoy, and welcome to {isle}! Tie up anywhere you like.', 'Thank you kindly — fine little harbour you keep.'], ['Fair winds brought you, Captain. Is that a husky?', 'That’s Ghost. Best first mate on the seven seas.']],
+  fisher: [['They’re biting off the jetty today. Here — take one for your supper.', 'Much obliged! I’ll cook it tonight.'], ['Gulls dive where the mackerel run. Watch the gulls.', 'I’ll remember that, friend.']],
+  baker: [['Fresh bread, still warm! Take a loaf for the voyage.', 'Smells wonderful. Ghost thinks so too.'], ['My oven’s been going since dawn. Seeded or plain?', 'Seeded, please — you’re very kind.']],
+  gardener: [['The carrots came up sweet this year. Have a bunch.', 'Ghost will be after these, I’m sure.'], ['Salt air makes the best tomatoes, they say.', 'Your garden is a picture, truly.']],
+  elder: [['When I was a boy, a pirate buried a chest by the old crooked palm…', 'A chest, you say? I might just take a look.'], ['Sixty years I’ve watched the tides here. The sea always gives back.', 'Wise words. I’ll write them in my log.']],
+  kid: [['Is that your dog? Can I pet him? He’s SO fluffy!', 'Go on — gently, behind the ears. He loves that.'], ['I found a shell shaped like a star! Want to see?', 'That’s a beauty. Keep it safe.']],
+  weaver: [['Nets don’t mend themselves. Storm last week tore three.', 'Hard work. You’ve a steady hand.'], ['Take this bit of twine, Captain. Always useful aboard.', 'You’re right there — thank you.']],
+};
+const GIFT = { fisher: 'fish', baker: 'bread', gardener: 'veg' };
+function makeVillage(seed) {
+  const rnd = mulberry(seed * 9973 + 17), I = { seed: (seed % 100) * 0.37 + 1, name: ISLAND_NAMES[seed % ISLAND_NAMES.length], obst: [], nodes: {}, villagers: [], talked: new Set(), houses: [] };
+  const m = new THREE.Group(); I.m = m; const S = new THREE.Group(); m.add(S);   // S holds static scenery (merged later)
+  // terrain: polar grid displaced by islandH, flat-shaded sand and grass
+  {
+    const RING = 22, SEG = 56, rmax = ISL.R2 + 5, pos = [], col = [], P = [];
+    for (let i = 0; i <= RING; i++) { P[i] = []; const r = Math.pow(i / RING, 0.85) * rmax; for (let j = 0; j < SEG; j++) { const a = j / SEG * TAU, x = Math.cos(a) * r, z = Math.sin(a) * r; P[i][j] = V3(x, islandGround(I, x, z), z); } }
+    const sandC = C(0xdcc893), wetC = C(0xb7a473), grassC = C(0x6a9a42), grass2 = C(0x5a8a38), rockC = C(0x7a7366);
+    const face = (a, b, c) => {
+      pos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+      const y = (a.y + b.y + c.y) / 3, r = Math.hypot((a.x + b.x + c.x) / 3, (a.z + b.z + c.z) / 3);
+      const cc = y < 0.35 ? wetC : y < 1.02 || r > ISL.R1 + 0.5 ? sandC : ((a.x * 3 + a.z) | 0) % 2 ? grassC : grass2;
+      const k = 0.94 + ((a.x * 7 + a.z * 13) % 5 + 5) % 5 * 0.025;
+      for (let q = 0; q < 3; q++) col.push(cc.r * k, cc.g * k, cc.b * k);
+    };
+    for (let i = 0; i < RING; i++) for (let j = 0; j < SEG; j++) { const j2 = (j + 1) % SEG, a = P[i][j], b = P[i][j2], c = P[i + 1][j], d = P[i + 1][j2]; face(a, b, c); face(b, d, c); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
+    const t = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.95 })); t.receiveShadow = true; m.add(t);
+    for (let k = 0; k < 18; k++) { const a = rnd() * TAU, r = ISL.R2 + 0.5 + rnd() * 2.5, x = Math.cos(a) * r, z = Math.sin(a) * r; if (Math.abs(x) < 3 && z < 0) continue; mk(new THREE.DodecahedronGeometry(0.6 + rnd() * 1.4, 0), pick2(rnd, [rock, rockDk]), S, x, islandH(I, x, z) - 0.2, z, rnd() * 3, rnd() * 3, 0); }
+  }
+  // the jetty: walkway, T-head, posts, rope rail, bollards, lamps, a tied-up rowboat
+  {
+    const plank = std(0x9b7448), post = std(0x5a3d24);
+    for (let z = -14.4; z > -26.3; z -= 0.42) mk(new THREE.BoxGeometry(2.1, 0.1, 0.38), plank, S, 0, ISL.deck - 0.05, z - 0.19).rotation.y = (rnd() - 0.5) * 0.03;
+    for (let x = -7; x < 7; x += 0.42) mk(new THREE.BoxGeometry(0.38, 0.1, 2.3), plank, S, x + 0.19, ISL.deck - 0.05, -27.4);
+    for (let z = -15; z > -26.5; z -= 2.2) for (const x of [-1.05, 1.05]) mk(new THREE.CylinderGeometry(0.13, 0.15, 3, 7), post, S, x, ISL.deck - 1.3, z);
+    for (let x = -7; x <= 7; x += 2.33) for (const z of [-26.3, -28.5]) mk(new THREE.CylinderGeometry(0.14, 0.16, 3, 7), post, S, x, ISL.deck - 1.3, z);
+    for (const x of [-6.6, -2.8, 2.8, 6.6]) { mk(new THREE.CylinderGeometry(0.16, 0.2, 0.5, 8), MAT.iron, S, x, ISL.deck + 0.25, -28.3); mk(new THREE.SphereGeometry(0.2, 8, 5), MAT.iron, S, x, ISL.deck + 0.5, -28.3); }
+    for (const s of [-1, 1]) {
+      const pts = []; for (let z = -15; z >= -26; z -= 2.2) pts.push(V3(s * 1.05, ISL.deck + 0.9, z));
+      for (const p of pts) mk(new THREE.CylinderGeometry(0.05, 0.05, 0.9, 5), post, S, p.x, ISL.deck + 0.45, p.z);
+      mk(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 30, 0.03, 4), MAT.rope, S);
+    }
+    for (const [x, z] of [[1.05, -18.3], [-1.05, -22.7], [6.6, -26.3], [-6.6, -26.3]]) {
+      mk(new THREE.CylinderGeometry(0.06, 0.06, 1.8, 6), MAT.black, S, x, ISL.deck + 0.9, z);
+      const l = mk(new THREE.BoxGeometry(0.22, 0.3, 0.22), VLAMP, S, x, ISL.deck + 1.95, z); l.castShadow = false;
+      mk(new THREE.ConeGeometry(0.2, 0.15, 4), MAT.black, S, x, ISL.deck + 2.17, z, 0, Math.PI / 4, 0);
+    }
+    const row = new THREE.Group(); row.position.set(-4.5, 0.15, -25.2); row.rotation.y = 0.1; m.add(row);
+    const rg = new THREE.SphereGeometry(1, 12, 6, 0, TAU, Math.PI / 2, Math.PI / 2); rg.scale(0.7, 0.42, 1.9);
+    mk(rg, std(pick2(rnd, [0x3d7ab8, 0xd9534f, 0x6aa84f, 0xf0c05a])), row, 0, 0.35, 0).material.side = THREE.DoubleSide;
+    for (const z of [-0.6, 0.5]) mk(new THREE.BoxGeometry(1.2, 0.06, 0.25), plank, row, 0, 0.28, z);
+    for (const s of [-1, 1]) mk(new THREE.CylinderGeometry(0.025, 0.04, 1.8, 5), std(0x9b7448), row, s * 0.55, 0.5, 0, 0.4, 0, s * 1.1);
+    I.row = row;
+    // crab pots and a coil of rope on the T-head
+    for (const [x, z] of [[-6, -27], [-5.3, -27.6]]) { const cp = new THREE.Group(); cp.position.set(x, ISL.deck, z); S.add(cp); mk(new THREE.BoxGeometry(0.6, 0.4, 0.5), std(0x6b4a2a, { wireframe: true }), cp, 0, 0.2, 0); mk(new THREE.BoxGeometry(0.62, 0.04, 0.52), std(0x6b4a2a), cp, 0, 0.02, 0); }
+    for (let k = 0; k < 3; k++) mk(new THREE.TorusGeometry(0.28, 0.06, 5, 12), MAT.rope, S, 4.2, ISL.deck + 0.06 + k * 0.08, -27.0, Math.PI / 2, 0, 0).scale.setScalar(1 - k * 0.12);
+  }
+  // nodes the crew walk between
+  const N = I.nodes;
+  N.landing = [0, -27.3]; N.jettyMid = [0, -20.5]; N.jettyRoot = [0, -14.6]; N.plaza = [0, -6.0];
+  N.camp = [-9.8, -10.5]; N.campSeat = [-8.4, -9.4]; N.hammock = [10.6, -9.6]; N.hammockSide = [9.3, -8.2];
+  N.chest = [-9.2, -1.6]; N.chestSide = [-8.0, -2.4];
+  // houses around the back of the plaza, facing it
+  const nH = 1 + Math.floor(rnd() * 3), spots = [[-7, 4.2], [0.5, 7.2], [7.4, 3.6]].sort(() => rnd() - 0.5).slice(0, nH);
+  const PAL = { wall: [0xf1ede2, 0x9cc4d8, 0xf2d27a, 0xd98c7a, 0xa8c69a, 0xe8d6c0], roof: [0x8e2a26, 0x3d5a7a, 0x5a4a3a, 0x2f5d4a, 0xb5603c], trim: [0xffffff, 0xf6efe0, 0x2a3a4a], shutter: [0x2f6aa8, 0x2f7f86, 0xb5382c, 0x3f7a3a, 0xe2b43c] };
+  const flowers = [0xe94f6f, 0xf2c94c, 0x9b6bd6, 0xff8a5a, 0xffffff];
+  const signs = ['BAKERY', 'NETS', 'POST'];
+  spots.forEach(([x, z], i) => {
+    const st = { w: 4.4 + rnd() * 1.2, d: 3.7 + rnd() * 0.7, h: 2.7 + rnd() * 0.4, wall: pick2(rnd, PAL.wall), roof: pick2(rnd, PAL.roof), trim: pick2(rnd, PAL.trim), shutter: pick2(rnd, PAL.shutter), door: pick2(rnd, [0x8e2a26, 0x2f5d4a, 0x3d5a7a, 0x6b4226, 0xe2b43c]), thatch: rnd() < 0.3, porch: rnd() < 0.5, doorX: (rnd() - 0.5) * 0.8, flowers, sign: i === 0 ? signs[0] : rnd() < 0.3 ? signs[1 + (rnd() * 2 | 0)] : null };
+    const H = makeHouse(rnd, st), y = islandH(I, x, z);
+    H.g.position.set(x, y, z); H.g.rotation.y = Math.atan2(N.plaza[0] - x, N.plaza[1] - z); m.add(H.g);
+    H.g.updateMatrix(); const door = H.door.clone().applyMatrix4(H.g.matrix);
+    N['door' + i] = [door.x, door.z]; I.houses.push(H);
+    I.obst.push({ c: [x, z], r: Math.hypot(st.w, st.d) / 2 + 0.5 });
+  });
+  // palms (or pines in the cooler months), the crooked old palm by the chest, the hammock pair
+  const tree = (x, z, h, crooked) => { const p = makePalm(h); p.position.set(x, islandH(I, x, z) - 0.1, z); p.scale.setScalar(0.62); if (crooked) p.rotation.z = 0.25; m.add(p); I.obst.push({ c: [x, z], r: 0.55 }); return p; };
+  for (const [x, z] of [[-12.5, 5.5], [11.5, 8.5], [-3.5, 11.5], [13.2, -1.5], [4, 12], [-13.5, -4.8]]) if (rnd() < 0.85) tree(x, z, 7 + rnd() * 3);
+  tree(-10.7, -2.6, 8, true);
+  const hA = [9.2, -11.6], hB = [12.4, -7.8]; tree(...hA, 7.5); tree(...hB, 7.2);
+  // hammock slung between them
+  {
+    const pts = []; const yA = islandH(I, ...hA) + 1.45, yB = islandH(I, ...hB) + 1.45;
+    for (let k = 0; k <= 10; k++) { const f = k / 10; pts.push(V3(lerp(hA[0], hB[0], f), lerp(yA, yB, f) - Math.sin(f * Math.PI) * 0.55, lerp(hA[1], hB[1], f))); }
+    const hg = new THREE.Group(); m.add(hg); I.hammockG = hg;
+    // the cloth: a sagging strip that cups across its width
+    const curve = new THREE.CatmullRomCurve3(pts.slice(2, 9)), L2 = 14, W2 = 4, px = -(hB[1] - hA[1]), pz = hB[0] - hA[0], pl = Math.hypot(px, pz), fpos = [], fuv = [], fidx = [];
+    for (let i = 0; i <= L2; i++) { const c0 = curve.getPoint(i / L2), pinch = 0.35 + 0.65 * Math.sin(i / L2 * Math.PI); for (let k = 0; k <= W2; k++) { const w = (k / W2 - 0.5) * 2; fpos.push(c0.x + px / pl * w * 0.42 * pinch, c0.y + (w * w - 1) * 0.1 * pinch, c0.z + pz / pl * w * 0.42 * pinch); fuv.push(k / W2, i / L2); } }
+    for (let i = 0; i < L2; i++) for (let k = 0; k < W2; k++) { const a0 = i * (W2 + 1) + k; fidx.push(a0, a0 + W2 + 1, a0 + 1, a0 + 1, a0 + W2 + 1, a0 + W2 + 2); }
+    const fab = new THREE.BufferGeometry(); fab.setAttribute('position', new THREE.Float32BufferAttribute(fpos, 3)); fab.setAttribute('uv', new THREE.Float32BufferAttribute(fuv, 2)); fab.setIndex(fidx); fab.computeVertexNormals();
+    mk(fab, new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide, map: canvasTex(64, 64, (c, w, h) => { for (let i = 0; i < 8; i++) { c.fillStyle = i % 2 ? '#e9c46a' : '#d9534f'; c.fillRect(i * 8, 0, 8, h); } }), roughness: 1 }), hg);
+    for (const [a, b] of [[pts[0], pts[2]], [pts[10], pts[8]]]) beam(a, b, 0.02, MAT.rope, hg, 4);
+    I.hammockY = (yA + yB) / 2 - 0.55 + 0.08; I.hammockYaw = Math.atan2(hB[0] - hA[0], hB[1] - hA[1]);
+  }
+  // the campfire on the beach: stones, logs to sit on, a spit
+  {
+    const cx = N.camp[0], cz = N.camp[1], y = islandH(I, cx, cz);
+    for (let k = 0; k < 9; k++) { const a = k / 9 * TAU; mk(new THREE.DodecahedronGeometry(0.17, 0), rockDk, S, cx + Math.cos(a) * 0.55, y + 0.06, cz + Math.sin(a) * 0.55, k, k * 2, 0); }
+    for (let k = 0; k < 3; k++) { const a = k / 3 * TAU; mk(new THREE.CylinderGeometry(0.06, 0.07, 0.75, 6), std(0x5a3d24), S, cx + Math.cos(a) * 0.12, y + 0.12, cz + Math.sin(a) * 0.12, 0.3 * Math.cos(a), a, Math.PI / 2 - 0.3); }
+    for (const [dx, dz, ry] of [[1.45, 1.1, 0.6], [-1.35, 1.25, -0.5]]) mk(new THREE.CylinderGeometry(0.22, 0.24, 1.5, 8), std(0x7a5634), S, cx + dx, y + 0.2, cz + dz, 0, ry, Math.PI / 2);
+    for (const s of [-1, 1]) beam(V3(cx + s * 0.75, y, cz), V3(cx + s * 0.75, y + 0.85, cz), 0.03, std(0x5a3d24), S, 5);
+    beam(V3(cx - 0.8, y + 0.8, cz), V3(cx + 0.8, y + 0.8, cz), 0.02, MAT.iron, S, 4);
+    I.fire = new THREE.Group(); I.fire.position.set(cx, y + 0.1, cz); m.add(I.fire); I.fire.visible = false;
+    const flame = new THREE.MeshStandardMaterial({ color: 0xff9a2a, emissive: 0xff6a10, emissiveIntensity: 2.2, transparent: true, opacity: 0.9, depthWrite: false });
+    I.flames = [0, 1, 2].map(k => { const f = new THREE.Mesh(new THREE.ConeGeometry(0.22 - k * 0.04, 0.6 + k * 0.1, 6), flame); f.position.set(Math.cos(k * 2.1) * 0.08, 0.3, Math.sin(k * 2.1) * 0.08); I.fire.add(f); return f; });
+    I.fireLight = new THREE.PointLight(0xff8a30, 0, 9, 1.6); I.fireLight.position.y = 0.6; I.fire.add(I.fireLight);
+    I.obst.push({ c: [cx, cz], r: 0.8 });
+  }
+  // the treasure spot: an X of driftwood and a ring of shells, the chest buried beneath
+  {
+    const [x, z] = N.chest, y = islandH(I, x, z);
+    for (const a of [0.78, -0.78]) mk(new THREE.CylinderGeometry(0.06, 0.06, 1.3, 5), std(0xb8a07a), S, x, y + 0.05, z, 0, a, Math.PI / 2);
+    for (let k = 0; k < 7; k++) { const a = k / 7 * TAU; mk(new THREE.SphereGeometry(0.07, 6, 4), std(0xf3e6d6), S, x + Math.cos(a) * 0.95, y + 0.03, z + Math.sin(a) * 0.95).scale.y = 0.5; }
+    const ch = new THREE.Group(); ch.position.set(x, y - 0.6, z); ch.rotation.y = rnd() * TAU; m.add(ch); ch.visible = false;
+    const chW = std(0x7a4a24), band = MAT.brass;
+    mk(new THREE.BoxGeometry(0.8, 0.42, 0.5), chW, ch, 0, 0.21, 0);
+    for (const x2 of [-0.3, 0.3]) mk(new THREE.BoxGeometry(0.06, 0.44, 0.52), band, ch, x2, 0.21, 0);
+    const lid = new THREE.Group(); lid.position.set(0, 0.42, -0.25); ch.add(lid);
+    const lg = new THREE.CylinderGeometry(0.25, 0.25, 0.8, 10, 1, false, 0, Math.PI); lg.rotateZ(Math.PI / 2); lg.translate(0, 0, 0.25);
+    mk(lg, chW, lid, 0, 0, 0); for (const x2 of [-0.3, 0.3]) mk(new THREE.TorusGeometry(0.255, 0.03, 4, 10, Math.PI), band, lid, x2, 0, 0.25, 0, Math.PI / 2, 0);
+    mk(new THREE.BoxGeometry(0.1, 0.12, 0.04), band, ch, 0, 0.36, 0.26);
+    for (let k = 0; k < 14; k++) mk(new THREE.CylinderGeometry(0.05, 0.05, 0.015, 8), std(0xf2c94c, { metalness: 0.6, roughness: 0.3, emissive: 0x3a2a00 }), ch, (rnd() - 0.5) * 0.6, 0.4 + rnd() * 0.04, (rnd() - 0.5) * 0.35, rnd(), 0, rnd());
+    I.chest = { g: ch, lid, y, found: false };
+  }
+  // a garden patch, a well, benches, a laundry line, a flagpole on the plaza
+  {
+    const [px, pz] = N.plaza, gx = 6.2, gz = -3.4, y = islandH(I, gx, gz);
+    for (let r = 0; r < 4; r++) for (let k = 0; k < 5; k++) {
+      mk(new THREE.BoxGeometry(0.5, 0.18, 0.4), std(0x5a3c22), S, gx - 1 + k * 0.5, y + 0.04, gz - 0.8 + r * 0.55);
+      mk(new THREE.ConeGeometry(0.12, 0.3, 5), std(0x4f8a3a), S, gx - 1 + k * 0.5, y + 0.28, gz - 0.8 + r * 0.55);
+      if ((r + k) % 2) mk(new THREE.SphereGeometry(0.07, 6, 4), std([0xe8662a, 0xd9483a, 0xf2c94c][r % 3]), S, gx - 1 + k * 0.5 + 0.08, y + 0.2, gz - 0.8 + r * 0.55);
+    }
+    for (let k = 0; k < 10; k++) { const a = k / 10 * TAU; mk(new THREE.BoxGeometry(0.06, 0.5, 0.06), std(0xe8dcc4), S, gx + Math.cos(a) * 1.8, y + 0.25, gz + Math.sin(a) * 1.4); }
+    N.garden = [gx - 1.7, gz + 0.8]; I.obst.push({ c: [gx, gz], r: 1.8 });
+    const wx = 4.2, wz = -8.2, wy = islandH(I, wx, wz);
+    mk(new THREE.CylinderGeometry(0.75, 0.8, 0.8, 12, 1, true), new THREE.MeshStandardMaterial({ map: HTEX.stone, side: THREE.DoubleSide }), S, wx, wy + 0.4, wz);
+    mk(new THREE.CircleGeometry(0.7, 12), MAT.water, S, wx, wy + 0.5, wz, -Math.PI / 2, 0, 0);
+    for (const s of [-1, 1]) mk(new THREE.BoxGeometry(0.1, 1.6, 0.1), std(0x5a3d24), S, wx + s * 0.7, wy + 1.1, wz);
+    const wr = new THREE.ConeGeometry(1.05, 0.6, 4); wr.rotateY(Math.PI / 4); mk(wr, std(0x8e2a26), S, wx, wy + 2.1, wz);
+    mk(new THREE.CylinderGeometry(0.12, 0.1, 0.18, 8), MAT.wood, S, wx, wy + 1.2, wz);
+    I.obst.push({ c: [wx, wz], r: 1.1 });
+    const bench = (x, z, ry) => { const y2 = islandH(I, x, z), b = new THREE.Group(); b.position.set(x, y2, z); b.rotation.y = ry; S.add(b); mk(new THREE.BoxGeometry(1.5, 0.08, 0.45), MAT.wood, b, 0, 0.45, 0); mk(new THREE.BoxGeometry(1.5, 0.35, 0.06), MAT.wood, b, 0, 0.7, -0.2); for (const s of [-1, 1]) mk(new THREE.BoxGeometry(0.08, 0.45, 0.4), MAT.woodDark, b, s * 0.65, 0.22, 0); };
+    N.bench = [-3.6, -7.2]; bench(-3.6, -7.6, Math.atan2(px + 3.6, pz + 7.6)); I.obst.push({ c: [-3.6, -7.6], r: 0.8 });
+    const fy = islandH(I, -1.8, -3.4);
+    mk(new THREE.CylinderGeometry(0.06, 0.08, 6, 6), std(0xe8dcc4), S, -1.8, fy + 3, -3.4);
+    I.flag = mk(new THREE.PlaneGeometry(1.3, 0.8, 6, 2), new THREE.MeshStandardMaterial({ map: canvasTex(128, 80, (c, w, h) => { c.fillStyle = pick2(rnd, ['#2f7f86', '#b5382c', '#2b6fd6', '#3f7a3a']); c.fillRect(0, 0, w, h); c.fillStyle = '#f6e7c0'; star(c, w * 0.5, h * 0.5, 22); c.fill(); }), side: THREE.DoubleSide }), m, -1.8 + 0.65, fy + 5.5, -3.4);
+    I.flagBase = I.flag.geometry.attributes.position.array.slice();
+    I.obst.push({ c: [-1.8, -3.4], r: 0.3 });
+    // laundry line between two posts
+    const l0 = [-10.5, 1.8], l1 = [-6.8, -0.2];
+    if (rnd() < 0.75) {
+      const ya = islandH(I, ...l0), yb = islandH(I, ...l1);
+      for (const [x, z, y2] of [[...l0, ya], [...l1, yb]]) mk(new THREE.CylinderGeometry(0.05, 0.06, 2.2, 5), std(0x5a3d24), S, x, y2 + 1.1, z);
+      const A = V3(l0[0], ya + 2.1, l0[1]), Bv = V3(l1[0], yb + 2.1, l1[1]); beam(A, Bv, 0.01, MAT.rope, S, 3);
+      for (let k = 1; k < 6; k++) { const p = V3().lerpVectors(A, Bv, k / 6); mk(new THREE.PlaneGeometry(0.5, 0.65), new THREE.MeshStandardMaterial({ color: pick2(rnd, [0xffffff, 0xd9534f, 0x9cc4d8, 0xf2d27a, 0xa8c69a]), side: THREE.DoubleSide }), S, p.x, p.y - 0.35, p.z, 0, Math.atan2(Bv.x - A.x, Bv.z - A.z) + Math.PI / 2, 0); }
+    }
+    // fishing nets drying on a rack by the weaver's spot
+    const nx = -4.8, nz = -12.6, ny = islandH(I, nx, nz);
+    for (const s of [-1, 1]) mk(new THREE.CylinderGeometry(0.05, 0.05, 1.8, 5), std(0x5a3d24), S, nx + s, ny + 0.9, nz);
+    mk(new THREE.PlaneGeometry(2, 1.4, 8, 6), new THREE.MeshStandardMaterial({ color: 0x8a7a5a, wireframe: true }), S, nx, ny + 1.05, nz);
+    N.nets = [nx + 0.4, nz + 1.2]; I.obst.push({ c: [nx, nz], r: 1.2 });
+    mk(new THREE.CylinderGeometry(0.22, 0.25, 0.42, 8), MAT.wood, S, nx + 0.4, islandH(I, nx + 0.4, nz + 1.2) + 0.21, nz + 1.2);
+  }
+  // the people who live here
+  const roles = ['greeter', 'fisher'];
+  if (I.houses.length) roles.push('baker');
+  const extra = ['elder', 'kid', 'gardener', 'weaver', 'kid'].sort(() => rnd() - 0.5);
+  const want = 3 + Math.floor(rnd() * 5);
+  while (roles.length < want && extra.length) roles.push(extra.pop());
+  const home = { greeter: [2.0, -12.6], fisher: [0.95, -21.2], baker: N.door0 || [1, -5], elder: N.bench, kid: [1.8, -8.8], gardener: N.garden, weaver: N.nets };
+  for (const role of roles) {
+    const v = makeVillager(rnd, role), [x, z] = home[role];
+    v.home = [x, z]; v.pos.set(x, z); v.island = I; m.add(v.root);
+    v.heading = v.targetHeading = role === 'fisher' ? Math.PI / 2 : Math.atan2(N.plaza[0] - x, N.plaza[1] - z);
+    I.villagers.push(v);
+  }
+  S.traverse(o => { if (o.isMesh) o.receiveShadow = true; });
+  mergeStatic(S);
+  return I;
+}
+
+const feed = (c, food = 0, rest = 0) => { if (!c.needs) return; c.needs.food = clamp(c.needs.food + food, 0, 1); c.needs.energy = clamp(c.needs.energy + rest, 0, 1); };
+/* ---------- speech bubbles over whoever is talking ---------- */
+const bubbles = [...Array(3)].map(() => { const el = document.createElement('div'); el.className = 'say'; el.hidden = true; $('says').appendChild(el); return { el, anchor: null, t: 0, dy: 0.6 }; });
+function say(anchor, text, dur = 3, dy = 0.62) {
+  const b = bubbles.find(b => b.anchor === anchor) || bubbles.reduce((a, b) => a.t < b.t ? a : b);
+  Object.assign(b, { anchor, t: dur, dy }); b.el.textContent = text; b.el.hidden = false; b.el.style.animation = 'none'; void b.el.offsetWidth; b.el.style.animation = '';
+}
+function updateBubbles(dt) {
+  for (const b of bubbles) {
+    if (b.t <= 0) continue;
+    b.t -= dt;
+    if (b.t <= 0 || peek.on) { b.el.hidden = true; if (b.t <= 0) b.anchor = null; continue; }
+    b.anchor.getWorldPosition(_v1); _v1.y += b.dy; _v1.project(camera);
+    if (_v1.z > 1 || Math.abs(_v1.x) > 1.1 || Math.abs(_v1.y) > 1.1) { b.el.hidden = true; continue; }
+    b.el.hidden = false; b.el.style.opacity = Math.min(1, b.t * 2.5).toFixed(2);
+    b.el.style.left = `${((_v1.x * 0.5 + 0.5) * innerWidth).toFixed(1)}px`; b.el.style.top = `${((-_v1.y * 0.5 + 0.5) * innerHeight).toFixed(1)}px`;
+  }
+}
+
+/* ---------- moving about on an island ---------- */
+// one step toward (x, z) in island-local coords, steering round trees, houses and rocks; returns the distance left
+function clearSpot(I, p) {   // nudge a target out of any obstacle's margin
+  for (const o of I.obst) { const ox = p[0] - o.c[0], oz = p[1] - o.c[1], od = Math.hypot(ox, oz) || 1; if (od < o.r + 0.45) { p[0] = o.c[0] + ox / od * (o.r + 0.5); p[1] = o.c[1] + oz / od * (o.r + 0.5); } }
+  return p;
+}
+function stepOn(c, I, x, z, speedMul = 1) {
+  const dx = x - c.pos.x, dz = z - c.pos.y, d = Math.hypot(dx, dz);
+  if (d < 0.05) return d;
+  let ux = dx / d, uz = dz / d;
+  const near = Math.min(1, d / 2.4);   // obstacles matter less right at the goal, so nobody circles a target
+  for (const o of I.obst) {
+    const ox = c.pos.x - o.c[0], oz = c.pos.y - o.c[1], od = Math.hypot(ox, oz), gap = od - o.r - 0.35;
+    if (gap < 0.9 && od > 1e-3 && Math.hypot(x - o.c[0], z - o.c[1]) > o.r + 0.3) {
+      const w = (0.9 - Math.max(gap, 0)) * 1.6 * near, side = (ux * oz - uz * ox) > 0 ? 1 : -1;
+      ux += (ox / od) * w * 0.6 + (-oz / od) * side * w; uz += (oz / od) * w * 0.6 + (ox / od) * side * w;
+    }
+  }
+  const ul = Math.hypot(ux, uz) || 1; ux /= ul; uz /= ul;
+  c.targetHeading = Math.atan2(ux, uz);
+  const err = Math.abs(angDiff(c.heading, c.targetHeading)), st = Math.min(d, c.speed * speedMul * DT * (err > 1.2 ? 0.25 : 1));
+  c.pos.x += ux * st; c.pos.y += uz * st; c.walking = true; c.walkSpd = speedMul;
+  return d;
+}
+function* moveOn(c, I, x, z, speedMul = 1, near = 0.08) {
+  let best = 1e9, since = 0;
+  for (let k = 0; k < 40; k += DT) {
+    const d = stepOn(c, I, x, z, speedMul);
+    if (d < near) return;
+    if (d < best - 0.05) { best = d; since = 0; } else since += DT;
+    if (since > 1.4) { c.pos.x += (x - c.pos.x) * 0.5; c.pos.y += (z - c.pos.y) * 0.5; since = 0; best = 1e9; }   // wedged between obstacles: slip through
+    yield;
+  }
+}
+const onPier = p => p[1] < -14.0;
+function* routeTo(c, I, to, speedMul = 1, near = 0.08) {
+  const N = I.nodes, from = [c.pos.x, c.pos.y], pts = [];
+  if (onPier(from) && !onPier(to)) { if (Math.abs(from[0]) > 0.8) pts.push([0, from[1]]); pts.push(N.jettyRoot); }
+  else if (!onPier(from) && onPier(to)) { pts.push(N.jettyRoot); if (Math.abs(to[0]) > 0.8) pts.push([0, to[1]]); }
+  else if (onPier(from) && onPier(to) && Math.abs(from[0]) > 0.8) pts.push([0, from[1]]);
+  if (!onPier(to) && !onPier(from) && Math.hypot(to[0] - from[0], to[1] - from[1]) > 9) pts.push(N.plaza);
+  pts.push(to);
+  for (let i = 0; i < pts.length; i++) yield* moveOn(c, I, pts[i][0], pts[i][1], speedMul, i === pts.length - 1 ? near : 0.45);
+}
+function* faceOn(c, x, z, maxT = 0.7) { yield* face(c, Math.atan2(x - c.pos.x, z - c.pos.y), maxT); }
+// across the gangway, in world space, then re-parented to the island (or back to the boat)
+const _hp = V3(), _hq = V3();
+function* goAshore(c, I, land) {
+  const ex = ISL.exit[0] + (c === dog ? 0.45 : 0), ez = ISL.exit[1] * I.side;
+  yield* walkTo(c, ex, ez);
+  yield* face(c, I.side > 0 ? 0 : Math.PI, 0.6);
+  c.root.getWorldPosition(_hp); scene.attach(c.root); c.hopping = true; c.pose = c === dog ? 'stand' : 'idle';
+  const T = c === dog ? 0.85 : 1.3, to = I.m.localToWorld(V3(land[0], ISL.deck, land[1]));
+  for (let k = 0; k < T; k += DT) { const f = k / T; c.root.position.lerpVectors(_hp, to, smooth(f)); c.root.position.y += Math.sin(f * Math.PI) * (c === dog ? 0.7 : 0.55); c.walking = true; yield; }
+  I.m.attach(c.root); c.ashore = I; c.hopping = false; c.floorY = undefined; c.pos.set(land[0], land[1]); c.heading = c.targetHeading = 0;
+  if (c === dog) sfx.bark();
+}
+function* returnAboard(c, I) {
+  if (!c.ashore) return;
+  c.pose = c === dog ? 'stand' : 'idle'; c.seated = false; c.sleeping = false; c.fixedY = undefined;
+  if (c === cap) { for (const k in cap.props) if (k !== 'glass') cap.props[k].visible = false; }
+  const land = c === dog ? [0.7, -27.0] : [0, -27.3];
+  yield* routeTo(c, I, land, c === dog ? 1.1 : 1);
+  yield* faceOn(c, land[0], -40);
+  c.root.getWorldPosition(_hp); scene.attach(c.root); c.hopping = true;
+  const ex = ISL.exit[0] + (c === dog ? 0.45 : 0), ez = ISL.exit[1] * I.side, T = c === dog ? 0.85 : 1.3;
+  for (let k = 0; k < T; k += DT) {
+    const f = k / T; LAYERS.deck.g.localToWorld(_hq.set(ex, deckY(ex), ez));
+    c.root.position.lerpVectors(_hp, _hq, smooth(f)); c.root.position.y += Math.sin(f * Math.PI) * 0.6; c.walking = true; yield;
+  }
+  Lcrew.attach(c.root); c.ashore = null; c.hopping = false; c.pos.set(ex, ez); c.floorY = undefined;
+  c.heading = c.targetHeading = I.side > 0 ? Math.PI : 0;
+  if (c === cap && cap.carryingChest) { cap.carryingChest = false; I.chest.g.visible = false; I.chest.g.removeFromParent(); world.treasure = (world.treasure || 0) + 1; deckChest.visible = true; addDeckChestObstacle(); flashStat('sGold'); sfx.chime(); toast(`Treasure stowed aboard — <b>${world.treasure}</b> chest${world.treasure > 1 ? 's' : ''} in the hold`); }
+}
+const asShore = g => { g.shore = true; return g; };
+
+/* ---------- the captain's shore leave ---------- */
+const shore = { act: 'idle', dug: false, feedDog: false, napping: false };
+function* converse(I, v) {
+  if (!v) return;
+  shore.act = 'talk'; v.talking = true; I.talked.add(v);
+  try {
+    capSay(`Walking over to meet ${v.name}`);
+    const a = Math.atan2(cap.pos.x - v.pos.x, cap.pos.y - v.pos.y), off = v.role === 'fisher' ? [-1.2, 0] : [Math.sin(a) * 1.25, Math.cos(a) * 1.25];
+    const tgt = [v.pos.x + off[0], v.pos.y + off[1]]; if (onPier(tgt)) tgt[0] = clamp(tgt[0], -0.85, 0.85); else clearSpot(I, tgt);
+    yield* routeTo(cap, I, tgt);
+    yield* faceOn(cap, v.pos.x, v.pos.y);
+    v.targetHeading = Math.atan2(cap.pos.x - v.pos.x, cap.pos.y - v.pos.y);
+    const [line, reply] = pick(DIALOGUE[v.role]);
+    if (v.role !== 'fisher' && v.role !== 'elder' && v.role !== 'weaver') v.pose = 'talk';
+    say(v.rig.j.neck, line.replace('{isle}', I.name), 3.6, 0.72 * v.scale); v.talkT = 3.2;
+    capSay(`Chatting with ${v.name}`);
+    yield* wait(3.8);
+    cap.pose = 'shrug'; say(cap.rig.j.neck, reply, 3.2, 0.78); cap.talkT = 2.8;
+    yield* wait(1.2); cap.pose = 'idle'; yield* wait(2.2);
+    const gift = GIFT[v.role];
+    if (gift) {
+      v.pose = 'give'; yield* wait(1.1);
+      cap.pose = 'reach'; yield* wait(0.6); cap.pose = 'idle'; v.pose = 'idle';
+      if (gift === 'fish') world.fishCount++; else world.pantry[gift] = (world.pantry[gift] || 0) + 1;
+      toast(`${v.short} gave the captain ${gift === 'fish' ? 'a fresh <b>fish</b>' : gift === 'bread' ? 'a warm <b>loaf of bread</b>' : 'a bunch of <b>carrots</b>'}`);
+      if (gift === 'fish') { gear.bucketFish.forEach((f, i) => f.visible = i < world.fishCount); flashStat('sFish'); }
+      sfx.chime();
+    }
+    if (v.role === 'elder') I.hinted = true;
+    if (v.role === 'kid') { shore.petKid = v; yield* wait(2.5); shore.petKid = null; }
+    v.pose = 'wave'; cap.pose = 'wave'; yield* wait(1.3);
+  } finally { v.talking = false; v.pose = 'idle'; cap.pose = 'idle'; }
+}
+function* cookAshore(I) {
+  const N = I.nodes; shore.act = 'cook';
+  capSay('Gathering driftwood for a fire');
+  yield* routeTo(cap, I, [N.camp[0] + 1.0, N.camp[1] - 0.4]);
+  yield* faceOn(cap, ...N.camp);
+  cap.pose = 'crouch'; yield* wait(1.6);
+  I.fireOn = true; sfx.whoosh(); capSay('Lighting a campfire on the beach'); yield* wait(1.2);
+  const food = world.fishCount > 0 ? 'fish' : world.pantry.bread ? 'bread' : world.pantry.veg ? 'veg' : 'fish';
+  if (food === 'fish' && world.fishCount > 0) { world.fishCount--; gear.bucketFish.forEach((f, i) => f.visible = i < world.fishCount); }
+  else if (food !== 'fish') world.pantry[food]--;
+  cooking.setFood(food);
+  cap.pose = 'idle';
+  yield* routeTo(cap, I, N.campSeat); yield* faceOn(cap, ...N.camp);
+  cap.seated = true; cap.seatH = 0.44; cap.pose = 'chairRoast'; cap.props.stick.visible = true;
+  capSay(food === 'fish' ? 'Roasting a fish over the fire' : food === 'bread' ? 'Toasting the baker’s bread' : 'Roasting carrots in the embers');
+  try {
+    for (let k = 0; k < 6.5; k += DT) { if (Math.random() < DT * 4) { cap.props.stick.userData.tip.getWorldPosition(_v1); emit(_v1.x, _v1.y + 0.05, _v1.z, rand(-0.05, 0.05), rand(0.3, 0.5), rand(-0.05, 0.05), rand(1, 1.6), rand(0.06, 0.1), 'rise', [0.8, 0.8, 0.8]); } yield; }
+    cap.pose = 'chairEat'; capSay('Supper on the beach — delicious!'); sfx.chime();
+    yield* wait(2.5); shore.feedDog = true; yield* wait(2.5);
+    feed(cap, 0.75); feed(dog, 0.6);
+    cap.props.stick.visible = false; cap.pose = 'chair'; capSay('Warm and well fed by the fire'); yield* wait(2.5);
+  } finally { cap.props.stick.visible = false; cap.seated = false; shore.feedDog = false; }
+  cap.pose = 'stretch'; yield* wait(1.2); cap.pose = 'idle';
+}
+function* restAshore(I) {
+  const N = I.nodes; shore.act = 'rest';
+  capSay('Stretching out in a hammock');
+  yield* routeTo(cap, I, N.hammockSide); yield* faceOn(cap, ...N.hammock);
+  cap.pose = 'bunk'; const y0 = islandH(I, cap.pos.x, cap.pos.y);
+  cap.targetHeading = I.hammockYaw;
+  const sx = cap.pos.x, sz = cap.pos.y;
+  for (let k = 0; k < 0.9; k += DT) { const f = smooth(k / 0.9); cap.pos.x = lerp(sx, N.hammock[0], f); cap.pos.y = lerp(sz, N.hammock[1], f); cap.fixedY = lerp(y0, I.hammockY - 0.02, f); yield; }
+  cap.sleeping = true; shore.napping = true; capSay('Snoozing in the hammock');
+  try { yield* wait(rand(9, 12)); }
+  finally {
+    cap.sleeping = false; shore.napping = false;
+    for (let k = 0; k < 0.8; k += DT) { const f = smooth(k / 0.8); cap.pos.x = lerp(N.hammock[0], N.hammockSide[0], f); cap.pos.y = lerp(N.hammock[1], N.hammockSide[1], f); cap.fixedY = lerp(I.hammockY, y0, f); yield; }
+    cap.fixedY = undefined;
+  }
+  cap.pose = 'stretch'; capSay('What a lovely nap'); yield* wait(1.6); cap.pose = 'idle';
+  feed(cap, 0, 0.6); feed(dog, 0, 0.4);
+}
+function* huntTreasure(I) {
+  const N = I.nodes, C2 = I.chest; shore.act = 'treasure'; shore.dug = false;
+  capSay(I.hinted ? 'Searching for the crooked old palm…' : 'Ghost has caught a scent!');
+  if (!I.hinted) dogSay('Nose to the sand — he smells something!');
+  yield* routeTo(cap, I, N.chestSide); yield* faceOn(cap, ...N.chest);
+  yield* waitUntil(() => shore.dug, 14);
+  capSay('Digging where Ghost found the spot'); cap.pose = 'crouch';
+  C2.g.visible = true;
+  for (let k = 0; k < 1.6; k += DT) { C2.g.position.y = lerp(C2.y - 0.6, C2.y - 0.02, smooth(k / 1.6)); if (Math.random() < DT * 25) { C2.g.getWorldPosition(_v1); emit(_v1.x + rand(-0.5, 0.5), _v1.y + 0.4, _v1.z + rand(-0.5, 0.5), rand(-1, 1), rand(1.5, 3), rand(-1, 1), rand(0.5, 0.9), rand(0.08, 0.14), false, [0.86, 0.78, 0.56]); } yield; }
+  cap.pose = 'idle'; yield* wait(0.4);
+  capSay('Prising open the lid…');
+  for (let k = 0; k < 1.1; k += DT) { C2.lid.rotation.x = -1.9 * smooth(k / 1.1); yield; }
+  C2.found = true; sfx.chime();
+  for (let i = 0; i < 40; i++) { C2.g.getWorldPosition(_v1); emit(_v1.x + rand(-0.3, 0.3), _v1.y + 0.5, _v1.z + rand(-0.3, 0.3), rand(-0.4, 0.4), rand(1, 2.4), rand(-0.4, 0.4), rand(0.8, 1.4), rand(0.06, 0.1), 'rise', [1, 0.85, 0.3]); }
+  toast(`<b>Buried treasure</b> on ${I.name}!`);
+  discover(`${I.name} treasure`, `Dug up a chest of old gold on ${I.name}. Ghost found the spot — good boy.`);
+  cap.pose = 'cheer'; capSay('Gold! Pieces of eight!'); yield* wait(2);
+  for (let k = 0; k < 0.7; k += DT) { C2.lid.rotation.x = -1.9 * (1 - smooth(k / 0.7)); yield; }
+  // carry it home
+  cap.pose = 'crouch'; yield* wait(0.5);
+  cap.rig.j.spine.attach(C2.g); C2.g.position.set(0, 0.06, 0.4); C2.g.rotation.set(0, 0, 0); C2.g.scale.setScalar(0.72);
+  cap.carryingChest = true; cap.pose = 'carryChest'; capSay('Carrying the chest back to the boat');
+}
+function* capShore(I) {
+  cap.seated = false; shore.act = 'walk';
+  capSay(`Stepping ashore at ${I.name}`);
+  yield* goAshore(cap, I, [0, -27.3]);
+  const vs = I.villagers, greeter = vs.find(v => v.role === 'greeter');
+  if (greeter && !I.talked.has(greeter)) yield* converse(I, greeter);
+  const acts = (shore.forceActs || ['cook', 'rest', 'talk'].sort(() => Math.random() - 0.5).slice(0, 2));
+  for (const a of acts) {
+    if (harbour.recall) break;
+    if (a === 'talk') { const pool = vs.filter(v => !I.talked.has(v)); if (pool.length) yield* converse(I, pick(pool)); }
+    else if (a === 'cook') yield* cookAshore(I);
+    else yield* restAshore(I);
+    shore.act = 'walk'; yield* wait(0.6);
+  }
+  if (!I.chest.found && !harbour.recall) yield* huntTreasure(I);
+  shore.act = 'return'; capSay(harbour.recall ? 'Hurrying back to the boat' : 'Heading back to the boat');
+  yield* returnAboard(cap, I);
+  harbour.crewBack = true;
+  cap.pose = 'wave'; capSay(`Waving goodbye to ${I.name}`); yield* wait(2.4); cap.pose = 'idle';
+}
+function* dogShore(I) {
+  dog.busy = true;
+  try {
+    dogSay('Wagging at the jetty');
+    yield* waitUntil(() => cap.ashore === I && Math.hypot(cap.pos.x, cap.pos.y + 27.3) > 1.5, 30);
+    if (cap.ashore !== I) return;
+    yield* goAshore(dog, I, [0.7, -27.0]);
+    dogSay(`Exploring ${I.name}`);
+    while (shore.act !== 'return' && cap.ashore === I) {
+      const N = I.nodes;
+      if (shore.act === 'treasure' && !shore.dug) {
+        dog.pose = 'stand'; yield* routeTo(dog, I, [N.chest[0] + 0.55, N.chest[1] + 0.2], 1.4);
+        yield* faceOn(dog, ...N.chest); dog.pose = 'sniff'; dogSay('Sniffing the sand by the old palm'); yield* wait(1.4);
+        dog.pose = 'dig'; dogSay('Digging furiously!');
+        for (let k = 0; k < 3.5; k += DT) { if (Math.random() < DT * 20) { dog.rig.j.head.getWorldPosition(_v1); emit(_v1.x, _v1.y - 0.25, _v1.z, rand(-1.2, 1.2), rand(1.2, 2.5), rand(-1.2, 1.2), rand(0.4, 0.8), rand(0.06, 0.12), false, [0.86, 0.78, 0.56]); } yield; }
+        shore.dug = true; dog.pose = 'excited'; dog.barkT = 0.3; sfx.bark(); dogSay('Found it! Found it!');
+        yield* waitUntil(() => shore.act !== 'treasure' || I.chest.found, 10); yield* wait(1.5);
+      } else if (shore.act === 'cook') {
+        dog.pose = 'stand'; yield* routeTo(dog, I, [N.campSeat[0] + 0.7, N.campSeat[1] + 0.6], 1.2); yield* faceOn(dog, cap.pos.x, cap.pos.y);
+        dog.pose = 'sit'; dogSay('Watching the fire, nose twitching');
+        yield* waitUntil(() => shore.feedDog || shore.act !== 'cook', 20);
+        if (shore.feedDog) { dog.pose = 'eat'; dogSay('Sharing the captain’s supper'); yield* wait(3); dog.pose = 'lie'; }
+        yield* waitUntil(() => shore.act !== 'cook', 10);
+      } else if (shore.act === 'rest') {
+        dog.pose = 'stand'; yield* routeTo(dog, I, [N.hammock[0] - 0.6, N.hammock[1] + 1.0], 1.1);
+        dog.pose = 'lie'; yield* wait(1); dog.pose = 'sleep'; dog.sleeping = true; dogSay('Napping in the shade');
+        yield* waitUntil(() => shore.act !== 'rest', 20); dog.sleeping = false; dog.pose = 'stand'; yield* wait(0.5);
+      } else if (shore.petKid) {
+        const v = shore.petKid; dog.pose = 'stand';
+        yield* routeTo(dog, I, [v.pos.x + Math.sin(v.heading) * 0.7, v.pos.y + Math.cos(v.heading) * 0.7], 1.4);
+        yield* faceOn(dog, v.pos.x, v.pos.y); dog.pose = 'happy'; dog.happy = true; dogSay(`Getting pats from ${v.short}`); v.pose = 'clap';
+        yield* waitUntil(() => !shore.petKid, 6); dog.happy = false;
+      } else {
+        // trot after the captain, sit when he stops
+        const bx = cap.pos.x - Math.sin(cap.heading) * 0.9 + Math.cos(cap.heading) * 0.6, bz = cap.pos.y - Math.cos(cap.heading) * 0.9 - Math.sin(cap.heading) * 0.6;
+        const d = Math.hypot(bx - dog.pos.x, bz - dog.pos.y);
+        if (d > 0.9) { dog.pose = 'stand'; stepOn(dog, I, bx, bz, d > 3 ? 1.5 : 1); }
+        else { dog.targetHeading = Math.atan2(cap.pos.x - dog.pos.x, cap.pos.y - dog.pos.y); if (cap.moving < 0.1) dog.pose = shore.act === 'talk' ? 'sit' : 'stand'; }
+        yield;
+      }
+    }
+    dog.pose = 'stand'; dog.sleeping = false;
+    yield* waitUntil(() => !cap.ashore || Math.hypot(cap.pos.x, cap.pos.y + 27.3) < 3, 30);
+    yield* returnAboard(dog, I);
+    dogSay('Back aboard, tail wagging');
+  } finally { dog.busy = false; dog.happy = false; }
+}
+
+/* ---------- the locals go about their day ---------- */
+function* vwait(v, s) { for (let k = 0; k < s; k += DT) { if (v.talking) return; yield; } }
+function* villagerLife(v) {
+  const I = v.island, N = I.nodes, [hx, hz] = v.home;
+  for (;;) {
+    if (v.talking) { v.moving = 0; yield; continue; }
+    if (harbour.waveAt === I && harbour.waveT > 0 && v.role !== 'fisher' && v.role !== 'elder') {
+      v.targetHeading = Math.atan2(N.landing[0] - v.pos.x, N.landing[1] - v.pos.y); v.pose = 'wave'; yield* vwait(v, harbour.waveT); v.pose = 'idle'; continue;
+    }
+    switch (v.role) {
+      case 'fisher': v.fixedY = ISL.deck - 0.46; v.pos.set(1.32, -21.2); v.targetHeading = Math.PI / 2; v.pose = 'sitFish'; yield* vwait(v, rand(10, 16)); if (!v.talking && Math.random() < 0.4) { v.pose = 'cheer'; yield* vwait(v, 1.5); } break;
+      case 'elder': v.pos.set(N.bench[0], N.bench[1] - 0.35); v.targetHeading = Math.atan2(N.plaza[0] - v.pos.x, N.plaza[1] - v.pos.y); v.pose = 'sit'; yield* vwait(v, 6); break;
+      case 'weaver': v.pos.set(...N.nets); v.targetHeading = Math.PI; v.seatH = 0.42; v.pose = 'mend'; yield* vwait(v, 8); break;
+      case 'gardener': v.pose = 'garden'; yield* vwait(v, rand(6, 9)); v.pose = 'basket'; yield* vmove(v, rand(-1, 1) + N.plaza[0] + 3, N.plaza[1] - 1); yield* vwait(v, 2); yield* vmove(v, hx, hz); v.targetHeading = Math.atan2(6.2 - v.pos.x, -3.4 - v.pos.y); break;
+      case 'baker': v.pose = 'sweep'; yield* vwait(v, rand(5, 8)); v.pose = 'idle'; yield* vmove(v, N.plaza[0] + rand(-2, 2), N.plaza[1] + rand(-1, 1.5)); v.pose = 'basket'; yield* vwait(v, 3); v.pose = 'idle'; yield* vmove(v, hx, hz); break;
+      case 'kid': v.pose = 'idle'; yield* vmove(v, N.plaza[0] + rand(-4, 4), N.plaza[1] + rand(-3, 2), 1.3); if (Math.random() < 0.35) { v.pose = 'cheer'; yield* vwait(v, 1.4); } else yield* vwait(v, rand(0.5, 2)); break;
+      case 'greeter': v.pose = 'idle'; v.targetHeading = Math.atan2(-v.pos.x, -30 - v.pos.y); yield* vwait(v, rand(4, 7)); yield* vmove(v, hx + rand(-1, 1), hz + rand(-0.6, 0.6)); break;
+      default: yield* vwait(v, 3);
+    }
+    yield;
+  }
+}
+function* vmove(v, x, z, sp = 1) { for (let k = 0; k < 30 && !v.talking; k += DT) { if (stepOn(v, v.island, x, z, sp) < 0.1) return; yield; } }
+function updateVillage(I, dt, t) {
+  const n = 1 - world.day;
+  for (const v of I.villagers) {
+    if (!v.task) v.task = villagerLife(v);
+    v.task.next();
+    v.heading = dampAng(v.heading, v.targetHeading, 6, dt);
+    v.moving = damp(v.moving, v.walking ? 1 : 0, 9, dt); v.walkPh += dt * v.speed * (v.walkSpd || 1) * 7.5 * v.moving; v.walking = false;
+    v.root.position.set(v.pos.x, v.fixedY ?? islandH(I, v.pos.x, v.pos.y), v.pos.y); v.root.rotation.y = v.heading;
+    poseVillager(v, t, dt);
+  }
+  // the island flag, chimney smoke, campfire
+  const fp = I.flag.geometry.attributes.position, fb = I.flagBase;
+  for (let i = 0; i < fp.count; i++) { const x = fb[i * 3] + 0.65; fp.setZ(i, Math.sin(t * 5 + x * 5) * 0.08 * x); }
+  fp.needsUpdate = true; I.flag.geometry.computeVertexNormals();
+  I.smokeT = (I.smokeT || 0) - dt;
+  if (I.smokeT <= 0) { I.smokeT = 0.9; for (const H of I.houses) { H.g.localToWorld(_v1.copy(H.g.userData.chimney)); emit(_v1.x, _v1.y, _v1.z, rand(-0.1, 0.1) - world.w.wind * 0.01, rand(0.4, 0.7), rand(-0.1, 0.1), rand(2.5, 3.5), rand(0.18, 0.3), 'rise', [0.82, 0.82, 0.84]); } }
+  I.fireK = damp(I.fireK || 0, I.fireOn ? 1 : 0, 1.2, dt);
+  I.fire.visible = I.fireK > 0.02;
+  if (I.fire.visible) {
+    I.flames.forEach((f, k) => { f.scale.set(1, (0.8 + Math.sin(t * (9 + k * 3) + k) * 0.25 + Math.random() * 0.1) * I.fireK, 1); });
+    I.fireLight.intensity = I.fireK * (3 + Math.sin(t * 13) * 0.6 + Math.random() * 0.4) * (0.6 + n * 0.8);
+    if (Math.random() < dt * 6 * I.fireK) { I.fire.getWorldPosition(_v1); emit(_v1.x + rand(-0.15, 0.15), _v1.y + 0.6, _v1.z + rand(-0.15, 0.15), rand(-0.1, 0.1), rand(0.8, 1.4), rand(-0.1, 0.1), rand(0.8, 1.3), rand(0.04, 0.07), 'rise', [1, 0.6, 0.2]); }
+  }
+}
+
+/* ---------- docking ---------- */
+const harbour = { phase: 'none', d: null, base: 2.5, t: 0, recall: false, crewBack: false, waveT: 0, waveAt: null };
+// mooring lines, fenders and the gangway appear while tied up
+const moorMat = MAT.rope, moorLines = [0, 1].map(() => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1, 5), moorMat); m.visible = false; scene.add(m); return m; });
+const plank = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.06, 1), std(0x9b7448)); plank.visible = false; plank.castShadow = true; scene.add(plank);
+const fenders = [-1, 1].map(sd => { const g = new THREE.Group(); g.visible = false; Lhull.add(g); for (const x of [-2.0, -0.2, 1.6]) { const t2 = tOf(x), z = sd * (hullW(t2) + 0.05); mk(new THREE.CylinderGeometry(0.07, 0.07, 0.3, 8), std(0xf1ede4), g, x, 0.62, z); beam(V3(x, 0.78, z), V3(x, hullTop(t2) + 0.2, sd * hullW(t2)), 0.008, MAT.rope, g, 3); } return g; });
+// a chest on deck once the first treasure is found
+const deckChest = new THREE.Group(); deckChest.position.set(3.0, deckY(3.0), -0.32); deckChest.rotation.y = 0.1; deckChest.visible = false; Lgear.add(deckChest);
+{
+  const w = std(0x7a4a24); mk(new THREE.BoxGeometry(0.36, 0.17, 0.24), w, deckChest, 0, 0.085, 0);
+  const lg = new THREE.CylinderGeometry(0.12, 0.12, 0.36, 10, 1, false, 0, Math.PI); lg.rotateZ(Math.PI / 2); mk(lg, w, deckChest, 0, 0.17, 0);
+  for (const x of [-0.13, 0.13]) { mk(new THREE.BoxGeometry(0.03, 0.18, 0.25), MAT.brass, deckChest, x, 0.09, 0); mk(new THREE.TorusGeometry(0.123, 0.014, 4, 10, Math.PI), MAT.brass, deckChest, x, 0.17, 0, 0, Math.PI / 2, 0); }
+  mk(new THREE.BoxGeometry(0.05, 0.06, 0.02), MAT.brass, deckChest, 0, 0.16, 0.125);
+}
+let chestObst = false;
+function addDeckChestObstacle() {
+  if (chestObst) return; chestObst = true;
+  OBST.push({ box: [2.8, 3.2, -0.46, -0.18] }); cap.grid = makeNavGrid(cap.rad); dog.grid = makeNavGrid(dog.rad);
+}
+// the captain's roasting stick (fish, bread or carrots on the end)
+const cooking = {};
+{
+  const st = new THREE.Group(); st.visible = false; cap.rig.j.handR.add(st); st.position.set(0, -0.02, 0.03); st.rotation.x = Math.PI - 0.35;
+  mk(new THREE.CylinderGeometry(0.01, 0.014, 1.1, 5), std(0x8a6a44), st, 0, 0.5, 0);
+  const tip = new THREE.Object3D(); tip.position.set(0, 1.02, 0); st.add(tip); st.userData.tip = tip;
+  cooking.fish = makeFish(0x3f6f8f, 0xd8e2e6, 0.5); cooking.fish.rotation.x = Math.PI / 2; tip.add(cooking.fish);
+  cooking.bread = mk(new RoundedBoxGeometry(0.16, 0.09, 0.09, 2, 0.04), std(0xc98a44), tip, 0, 0, 0);
+  cooking.veg = new THREE.Group(); tip.add(cooking.veg); for (let k = 0; k < 3; k++) mk(new THREE.ConeGeometry(0.025, 0.14, 6), std(0xe8662a), cooking.veg, (k - 1) * 0.04, 0, 0, Math.PI, 0, 0);
+  cooking.setFood = f => { for (const k of ['fish', 'bread', 'veg']) cooking[k].visible = k === f; };
+  cap.props.stick = st;
+}
+world.pantry = { bread: 0, veg: 0 };
+function shoreBlocked() { return harbour.phase === 'docked' || harbour.phase === 'shore' || cap.ashore || dog.ashore; }
+system('harbour', (dt, t) => {
+  for (const d of dests) if (d.I) updateVillage(d.I, dt, t);
+  VLAMP.emissiveIntensity = 0.1 + Math.max(1 - world.day, world.w.dark * 0.5) * 3.2; VGLASS.emissiveIntensity = (1 - world.day) * 1.1;
+  const H = harbour, d = H.d;
+  harbour.waveT = Math.max(0, harbour.waveT - dt);
+  if (H.phase === 'none') {
+    const v = dests.find(d => d.kind === 'village' && !d.visited && d.x < 165 && d.x > 40);
+    if (v) {
+      v.visited = true;
+      const ok = world.tod > 6.4 && world.tod < 15.8 && !world.isNight && world.w.waves < 1.0 && !KR.active && !cap.fishing && !peek.on;
+      if (ok) {
+        Object.assign(H, { phase: 'approach', d: v, base: Math.max(world.speed, 1.2), t: 0, recall: false, crewBack: false });
+        toast(`Land ho! Making for the jetty at <b>${v.I.name}</b>`);
+        discover(v.I.name, `Put in at ${v.I.name}: ${v.I.houses.length} cottage${v.I.houses.length > 1 ? 's' : ''} and ${v.I.villagers.length} friendly locals.`);
+      } else if (world.w.waves >= 1.0) toast(`Too rough to put in at <b>${v.I.name}</b> — sailing on`);
+    }
+    return;
+  }
+  const I = d.I, side = I.side;
+  if (H.phase === 'approach') {
+    const dist = d.x - ISL.stopX;
+    world.speedOverride = Math.min(H.base, Math.sqrt(2 * 0.11 * Math.max(dist, 0)) + 0.03);
+    rig.furl = damp(rig.furl || 0, dist < 22 ? 1 : 0, 0.8, dt);
+    if (dist < 0.03) { d.x = ISL.stopX; d.m.position.x = d.x; world.speedOverride = 0; H.phase = 'docked'; H.t = 0; harbour.waveAt = I; harbour.waveT = 3.5; toast(`Tied up alongside the jetty at <b>${I.name}</b>`); sfx.creak(1); }
+  } else if (H.phase === 'docked') {
+    H.t += dt; world.speedOverride = 0;
+    if (H.t > 2.2) { H.phase = 'shore'; H.t = 0; interrupt(cap); resetProps(); cap.task = asShore(capShore(I)); dogCommand(asShore(dogShore(I))); }
+  } else if (H.phase === 'shore') {
+    H.t += dt; world.speedOverride = 0;
+    if ((world.isNight || world.tod > 18.4 || world.w.waves > 1.25) && !H.recall) { H.recall = true; toast(world.isNight ? 'Night is falling — time to head back aboard' : 'The weather is turning — back to the boat!'); }
+    if (H.crewBack && !cap.ashore && !dog.ashore) { H.phase = 'leaving'; H.t = 0; harbour.waveAt = I; harbour.waveT = 4; toast(`Casting off — farewell, <b>${I.name}</b>!`); I.fireOn = false; sfx.creak(0.8); }
+  } else if (H.phase === 'leaving') {
+    H.t += dt;
+    rig.furl = damp(rig.furl || 0, 0, 1.2, dt);
+    world.speedOverride = H.t < 1.5 ? 0 : Math.min(H.base, (H.t - 1.5) * 0.16);
+    if (world.speedOverride >= H.base - 1e-3) { H.phase = 'none'; H.d = null; world.speedOverride = null; }
+  }
+  // mooring lines from the boat's cleats to the nearest bollards
+  const tied = H.phase === 'docked' || H.phase === 'shore' || (H.phase === 'leaving' && H.t < 1.4) || (H.phase === 'approach' && d.x - ISL.stopX < 1.5);
+  fenders[side > 0 ? 1 : 0].visible = tied || H.phase === 'approach'; fenders[side > 0 ? 0 : 1].visible = false;
+  moorLines.forEach((L, i) => {
+    L.visible = tied; if (!tied) return;
+    LAYERS.deck.g.localToWorld(_v1.set(i ? 3.2 : -3.3, deckY(i ? 3.2 : -3.3) + 0.06, side * (i ? 0.45 : 0.85)));
+    let best = null, bd = 1e9; for (const bx of [-6.6, -2.8, 2.8, 6.6]) { I.m.localToWorld(_v2.set(bx, ISL.deck + 0.5, -28.3)); const dd = _v2.distanceTo(_v1); if (dd < bd) { bd = dd; best = _v3.copy(_v2); } }
+    setBeam(L, _v1, best);
+  });
+  plank.visible = H.phase === 'shore';
+  if (plank.visible) {
+    LAYERS.deck.g.localToWorld(_v1.set(ISL.exit[0], hullTop(tOf(ISL.exit[0])) + 0.24, side * (hullW(tOf(ISL.exit[0])) - 0.05)));
+    I.m.localToWorld(_v2.set(0, ISL.deck + 0.03, -27.9));
+    plank.position.lerpVectors(_v1, _v2, 0.5); plank.lookAt(_v2); plank.scale.set(1, 1, _v1.distanceTo(_v2));
+  }
+});
+
+/* =====================================================================
    HUD
    ===================================================================== */
 function toast(html) {
@@ -5160,6 +5970,7 @@ function updateHUD(dt) {
   setText('sSea', sea);
   setText('sDist', `${(world.offset / 60).toFixed(1)} nm`);
   setText('sFish', `${world.fishCount} fish`);
+  setText('sGold', world.treasure ? `${world.treasure} chest${world.treasure > 1 ? 's' : ''}` : 'None yet');
   setText('logTime', `Day ${world.dayNum} · ${clockStr(world.tod)}`);
   setText('subDay', world.todAnim ? (world.isNight ? 'Dusk falling…' : 'Dawn rising…') : phaseOf(world.tod));
   setText('subWeather', W.name);
@@ -5184,6 +5995,7 @@ function toggleDay() {
 }
 function cycleWeather() { world.lastWeatherPress = world.time; setWeather(world.weatherIdx + 1); }
 function summonKraken() {
+  if (harbour.phase !== 'none') { toast('The kraken won’t come this close to the harbour'); return; }
   if (KR.active) { toast(KR.t < 17.5 ? 'The kraken is already here!' : 'The kraken is sinking back into the deep…'); return; }
   KR.next = world.time + rand(170, 330);     // no surprise visit straight after a summoned one
   spawnKraken(true);
@@ -5222,7 +6034,12 @@ addEventListener('pointerdown', () => sfx.init(), { once: false, passive: true }
    ===================================================================== */
 let nextCreak = 4, started = false;
 function frame() {
-  const dt = Math.min(clock.getDelta(), 0.05) * (world.timeScale || 1);
+  tick(Math.min(clock.getDelta(), 0.05) * (world.timeScale || 1));
+  renderer.render(scene, camera);
+  if (!started) { started = true; setTimeout(() => { $('intro').classList.add('gone'); setTimeout(() => toast(`Welcome aboard the <b>${nameText({ ...look, nameFont: 'classic' })}</b>`), 1100); }, 500); }
+}
+// one step of the whole simulation (rendering is separate, so tests can fast-forward)
+function tick(dt) {
   world.time += dt; const t = world.time;
   DT = dt;
   updateEnv(dt, t);
@@ -5244,12 +6061,11 @@ function frame() {
   if (t > nextCreak) { nextCreak = t + rand(4, 11) / (0.6 + world.w.waves); sfx.creak(0.4 + world.w.waves * 0.6); }
   updateCamera(dt, t);
   updateCrewCard(dt);
+  updateBubbles(dt);
   updateHUD(dt);
-  renderer.render(scene, camera);
-  if (!started) { started = true; setTimeout(() => { $('intro').classList.add('gone'); setTimeout(() => toast(`Welcome aboard the <b>${nameText({ ...look, nameFont: 'classic' })}</b>`), 1100); }, 500); }
 }
 renderer.setAnimationLoop(frame);
-window.__atsea = { setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
+window.__atsea = { ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
   PERCHES, tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
 </script>
 </body>
