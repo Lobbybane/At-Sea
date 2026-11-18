@@ -1575,7 +1575,8 @@ const rb = (w, h, d, r = 0.24) => new RoundedBoxGeometry(w, h, d, 2, Math.min(w,
 function makeCaptain() {
   const R = new Rig(), root = new THREE.Group();
   const skin = std(0xe0a47a), coat = std(0x24405f), coatDk = std(0x1a2f47), pants = std(0x4a3a2b), boots = std(0x1d1916, { roughness: 0.6 });
-  const beard = std(0xa79c90), hatW = std(0xf3efe5), hatB = std(0x151515), gold = MAT.brass, knit = std(0xd9cfb6);
+  const beard = std(0xa79c90), beardDk = std(0x8f8378), hatW = std(0xf3efe5), hatB = std(0x151515), gold = MAT.brass, knit = std(0xd9cfb6);
+  const sole = std(0x0e0c0b), cheek = std(0xe58f7a), white = std(0xf6f3ee, { roughness: 0.4 }), iris = std(0x2d3a4a, { roughness: 0.3 });
   const hips = R.add('hips', new THREE.Group()); hips.position.set(0, 0.92, 0); root.add(hips);
   mk(rb(0.34, 0.16, 0.22), pants, hips, 0, 0, 0);
   for (const s of [1, -1]) {
@@ -1583,43 +1584,70 @@ function makeCaptain() {
     mk(rb(0.14, 0.45, 0.16), pants, leg, 0, -0.21, 0);
     const knee = limb(R, s > 0 ? 'kneeL' : 'kneeR', leg, 0, -0.43, 0);
     mk(rb(0.125, 0.42, 0.14), pants, knee, 0, -0.2, 0);
+    mk(rb(0.158, 0.07, 0.17, 0.3), boots, knee, 0, -0.31, 0.005);                   // boot cuff
     mk(rb(0.15, 0.1, 0.27, 0.35), boots, knee, 0, -0.43, 0.045);
+    mk(rb(0.155, 0.025, 0.28, 0.4), sole, knee, 0, -0.478, 0.045);                  // sole
   }
   const spine = R.add('spine', new THREE.Group()); spine.position.set(0, 0.05, 0); hips.add(spine);
   mk(rb(0.42, 0.56, 0.26), coat, spine, 0, 0.28, 0);
   mk(rb(0.44, 0.22, 0.28), coatDk, spine, 0, -0.02, 0); // coat skirt
-  mk(rb(0.43, 0.05, 0.27, 0.4), std(0x3b2614), spine, 0, 0.08, 0); // belt
+  for (const s of [1, -1]) {
+    mk(rb(0.12, 0.03, 0.02, 0.4), coatDk, spine, s * 0.13, 0.0, 0.142);             // pocket flaps
+    const lap = mk(rb(0.09, 0.26, 0.02, 0.4), coatDk, spine, s * 0.085, 0.42, 0.135); // lapels
+    lap.rotation.z = s * 0.32;
+  }
+  mk(rb(0.3, 0.08, 0.06, 0.4), coatDk, spine, 0, 0.55, -0.11);                      // raised collar at the back
+  mk(rb(0.43, 0.05, 0.27, 0.4), std(0x3b2614), spine, 0, 0.08, 0);                 // belt
   mk(new THREE.BoxGeometry(0.07, 0.05, 0.02), gold, spine, 0, 0.08, 0.14);
-  for (const y of [0.18, 0.3, 0.42]) for (const x of [-0.06, 0.06]) mk(new THREE.SphereGeometry(0.014, 5, 3), gold, spine, x, y, 0.135);
-  mk(new THREE.CylinderGeometry(0.12, 0.14, 0.09, 10), knit, spine, 0, 0.56, 0); // turtleneck
+  for (const y of [0.18, 0.3]) for (const x of [-0.06, 0.06]) mk(new THREE.SphereGeometry(0.014, 6, 4), gold, spine, x, y, 0.135);
+  mk(new THREE.CylinderGeometry(0.12, 0.14, 0.09, 12), knit, spine, 0, 0.56, 0);   // turtleneck
   const beltGlass = mk(new THREE.CylinderGeometry(0.025, 0.03, 0.26, 8), gold, spine, -0.19, 0.0, -0.06, 0.2, 0, 0.1);
   for (const s of [1, -1]) {
     const arm = limb(R, s > 0 ? 'armL' : 'armR', spine, s * 0.27, 0.48, 0);
-    mk(new THREE.SphereGeometry(0.075, 8, 6), coat, arm, 0, -0.01, 0); // shoulder
+    mk(new THREE.SphereGeometry(0.075, 10, 7), coat, arm, 0, -0.01, 0);           // shoulder
+    mk(rb(0.13, 0.025, 0.12, 0.4), gold, arm, s * 0.01, 0.06, 0);                   // epaulette
+    for (const k of [-0.035, 0, 0.035]) mk(new THREE.CylinderGeometry(0.006, 0.006, 0.04, 4), gold, arm, s * 0.065, 0.04, k);
     mk(rb(0.12, 0.32, 0.13), coat, arm, 0, -0.14, 0);
     const el = limb(R, s > 0 ? 'elbowL' : 'elbowR', arm, 0, -0.29, 0);
     mk(rb(0.105, 0.28, 0.115), coat, el, 0, -0.12, 0);
     mk(rb(0.118, 0.045, 0.128, 0.4), coatDk, el, 0, -0.25, 0);
+    mk(rb(0.12, 0.012, 0.13, 0.3), gold, el, 0, -0.232, 0);                         // cuff stripe
     const hand = limb(R, s > 0 ? 'handL' : 'handR', el, 0, -0.3, 0);
-    mk(rb(0.09, 0.1, 0.09, 0.35), skin, hand, 0, -0.02, 0);
+    mk(rb(0.09, 0.085, 0.09, 0.35), skin, hand, 0, -0.015, 0);                       // palm
+    mk(rb(0.082, 0.05, 0.08, 0.4), skin, hand, 0, -0.07, 0.008);                     // curled fingers
+    mk(rb(0.03, 0.055, 0.035, 0.45), skin, hand, -s * 0.045, -0.035, 0.03);          // thumb
   }
   const neck = R.add('neck', new THREE.Group()); neck.position.set(0, 0.58, 0); spine.add(neck);
   mk(rb(0.23, 0.26, 0.23, 0.3), skin, neck, 0, 0.15, 0);
+  for (const s of [1, -1]) mk(rb(0.03, 0.065, 0.05, 0.45), skin, neck, s * 0.118, 0.16, -0.01);   // ears
+  for (const s of [1, -1]) mk(rb(0.045, 0.025, 0.01, 0.45), cheek, neck, s * 0.072, 0.152, 0.116); // rosy cheeks
   mk(rb(0.245, 0.14, 0.12, 0.35), beard, neck, 0, 0.06, 0.07);
-  mk(rb(0.15, 0.04, 0.035, 0.4), beard, neck, 0, 0.13, 0.125); // moustache
-  mk(rb(0.05, 0.065, 0.055, 0.4), std(0xd08f66), neck, 0, 0.18, 0.13); // nose
+  mk(rb(0.16, 0.06, 0.06, 0.4), beardDk, neck, 0, 0.0, 0.1);                       // chin tuft
+  mk(rb(0.15, 0.04, 0.035, 0.4), beard, neck, 0, 0.13, 0.125);                     // moustache
+  mk(rb(0.05, 0.065, 0.055, 0.4), std(0xd08f66), neck, 0, 0.18, 0.13);            // nose
   const mouth = mk(new THREE.BoxGeometry(0.07, 0.024, 0.012), std(0x3a1812), neck, 0, 0.095, 0.131);
-  const eyes = [];
+  const eyes = [], pupils = [], brows = [];
   for (const x of [-0.055, 0.055]) {
-    eyes.push(mk(new THREE.BoxGeometry(0.035, 0.03, 0.01), std(0x1b1b1b), neck, x, 0.22, 0.117));
-    mk(new THREE.BoxGeometry(0.06, 0.018, 0.012), beard, neck, x, 0.255, 0.117);
+    const eg = new THREE.Group(); eg.position.set(x, 0.22, 0.115); neck.add(eg);
+    mk(rb(0.046, 0.032, 0.008, 0.4), white, eg, 0, 0, 0);
+    pupils.push(mk(new THREE.BoxGeometry(0.022, 0.026, 0.006), iris, eg, 0, 0, 0.005));
+    eyes.push(eg);
+    brows.push(mk(rb(0.06, 0.02, 0.014, 0.4), beard, neck, x, 0.256, 0.118));
   }
-  mk(rb(0.245, 0.08, 0.2, 0.3), beard, neck, 0, 0.21, -0.03); // hair sides
+  mk(rb(0.245, 0.08, 0.2, 0.3), beard, neck, 0, 0.21, -0.03);                      // hair sides
+  mk(rb(0.2, 0.09, 0.06, 0.4), beard, neck, 0, 0.22, -0.11);                       // hair at the back
+  // pipe in the corner of his mouth
+  const pipe = new THREE.Group(); pipe.position.set(0.045, 0.092, 0.13); neck.add(pipe);
+  const pipeM = std(0x4a2a17, { roughness: 0.5 });
+  mk(new THREE.CylinderGeometry(0.008, 0.009, 0.12, 6), pipeM, pipe, 0.02, -0.02, 0.05, 1.2, 0, -0.4);
+  const bowl = mk(new THREE.CylinderGeometry(0.022, 0.017, 0.05, 8), pipeM, pipe, 0.04, -0.035, 0.1);
+  mk(new THREE.CylinderGeometry(0.017, 0.017, 0.004, 8), std(0x1b0f08), pipe, 0.04, -0.009, 0.1);
   // captain's hat
   const hat = new THREE.Group(); neck.add(hat);
-  mk(new THREE.CylinderGeometry(0.15, 0.135, 0.08, 12), hatB, hat, 0, 0.3, 0);
-  mk(new THREE.CylinderGeometry(0.168, 0.15, 0.07, 12), hatW, hat, 0, 0.37, -0.005);
-  const visor = mk(new THREE.CylinderGeometry(0.15, 0.15, 0.015, 10, 1, false, -Math.PI / 2.4, Math.PI / 1.2), hatB, hat, 0, 0.28, 0.04);
+  mk(new THREE.CylinderGeometry(0.15, 0.135, 0.08, 14), hatB, hat, 0, 0.3, 0);
+  mk(new THREE.CylinderGeometry(0.168, 0.15, 0.07, 14), hatW, hat, 0, 0.37, -0.005);
+  mk(new THREE.TorusGeometry(0.15, 0.007, 4, 18), gold, hat, 0, 0.335, 0, Math.PI / 2, 0, 0); // braided band
+  const visor = mk(new THREE.CylinderGeometry(0.15, 0.15, 0.015, 12, 1, false, -Math.PI / 2.4, Math.PI / 1.2), hatB, hat, 0, 0.28, 0.04);
   visor.scale.set(1, 1, 1.15);
   mk(new THREE.BoxGeometry(0.06, 0.04, 0.01), gold, hat, 0, 0.33, 0.145);
   // yellow sou'wester for the rain
@@ -1649,52 +1677,72 @@ function makeCaptain() {
   mk(new THREE.BoxGeometry(0.115, 0.165, 0.012), std(0xf1e6cc), book, -0.062, 0, 0.012, 0, 0.08, 0);
   mk(new THREE.BoxGeometry(0.115, 0.165, 0.012), std(0xf1e6cc), book, 0.062, 0, 0.012, 0, -0.08, 0);
   props.book = book;
-  const pen = mk(new THREE.CylinderGeometry(0.006, 0.004, 0.13, 5), std(0x1b1b1b), R.j.handR, 0, -0.07, 0.03, 0.4, 0, 0);
-  props.pen = pen;
+  props.pen = mk(new THREE.CylinderGeometry(0.006, 0.004, 0.13, 5), std(0x1b1b1b), R.j.handR, 0, -0.07, 0.03, 0.4, 0, 0);
   const bailer = new THREE.Group(); bailer.position.set(0, -0.12, 0.04); R.j.handR.add(bailer);
   mk(new THREE.CylinderGeometry(0.09, 0.07, 0.12, 10, 1, true), new THREE.MeshStandardMaterial({ color: 0x8a95a0, metalness: 0.6, roughness: 0.4, side: THREE.DoubleSide, flatShading: true }), bailer, 0, -0.04, 0);
   props.bailer = bailer;
-  const note = mk(new THREE.PlaneGeometry(0.16, 0.2), new THREE.MeshStandardMaterial({ color: 0xf0e2bd, side: THREE.DoubleSide, roughness: 0.9 }), R.j.handL, 0, -0.12, 0.05, -Math.PI / 2, 0, 0);
-  props.note = note;
+  props.note = mk(new THREE.PlaneGeometry(0.16, 0.2), new THREE.MeshStandardMaterial({ color: 0xf0e2bd, side: THREE.DoubleSide, roughness: 0.9 }), R.j.handL, 0, -0.12, 0.05, -Math.PI / 2, 0, 0);
   for (const k in props) props[k].visible = false;
   root.traverse(o => { if (o.isMesh) o.castShadow = true; });
-  return { root, rig: R, glass, beltGlass, eyes, mouth, hat, sw, props, coatMats: [[coat, coat.color.clone()], [coatDk, coatDk.color.clone()]], coatOn: false,
-    pos: new THREE.Vector2(-2.75, 0), heading: Math.PI / 2, targetHeading: Math.PI / 2, moving: 0, pose: 'helm', poseT: 0, walkPh: 0, speed: 1.15, mouthOpen: 0 };
+  return { root, rig: R, glass, beltGlass, eyes, pupils, brows, mouth, pipe, bowl, hat, sw, props, coatMats: [[coat, coat.color.clone()], [coatDk, coatDk.color.clone()]], coatOn: false,
+    pos: new THREE.Vector2(-2.75, 0), heading: Math.PI / 2, targetHeading: Math.PI / 2, moving: 0, pose: 'helm', poseT: 0, walkPh: 0, speed: 1.15, mouthOpen: 0,
+    tiltR: 0, tiltP: 0, look: null, lookW: 0, fidget: null, fidgetT: 6, talkT: 0, smokeT: 2 };
 }
 
 /* ---------- Ghost the husky ---------- */
 function makeDog() {
   const R = new Rig(), root = new THREE.Group();
-  const fur = std(0xf3f2ee, { roughness: 0.95 }), fur2 = std(0xd9dde2, { roughness: 0.95 }), dark = std(0x1a1a1a), pink = std(0xd99a9a);
-  const blue = std(0x2f7de1, { roughness: 0.5 }), eyeB = new THREE.MeshStandardMaterial({ color: 0x5fb6ff, emissive: 0x1b4f80, emissiveIntensity: 0.4 });
+  const fur = std(0xf3f2ee, { roughness: 0.95 }), fur2 = std(0xc9ced5, { roughness: 0.95 }), fur3 = std(0x9ea6b0, { roughness: 0.95 });
+  const dark = std(0x141414, { roughness: 0.3 }), pink = std(0xd99a9a), pad = std(0x3a3434);
+  const blue = std(0x2f7de1, { roughness: 0.5 }), eyeB = new THREE.MeshStandardMaterial({ color: 0x6cc2ff, emissive: 0x1b4f80, emissiveIntensity: 0.45, roughness: 0.25 });
   const body = R.add('body', new THREE.Group()); body.position.set(0, 0.36, -0.2); root.add(body);
   mk(rb(0.27, 0.25, 0.62, 0.3), fur, body, 0, 0.06, 0.2);
-  mk(rb(0.3, 0.29, 0.27, 0.3), fur, body, 0, 0.08, 0.4); // chest
-  mk(rb(0.22, 0.045, 0.44, 0.4), fur2, body, 0, 0.19, 0.16); // saddle
+  mk(rb(0.3, 0.29, 0.27, 0.3), fur, body, 0, 0.08, 0.4);                    // chest
+  mk(rb(0.23, 0.05, 0.46, 0.4), fur2, body, 0, 0.19, 0.16);                // grey saddle
+  mk(rb(0.15, 0.03, 0.3, 0.4), fur3, body, 0, 0.215, 0.12);                // darker stripe along the spine
+  mk(rb(0.22, 0.05, 0.5, 0.4), std(0xfbfaf7, { roughness: 1 }), body, 0, -0.07, 0.2); // white belly
+  mk(rb(0.32, 0.2, 0.13, 0.45), fur, body, 0, 0.06, 0.55);                 // fluffy neck ruff
   for (const [n, x, z] of [['fl', 0.085, 0.42], ['fr', -0.085, 0.42], ['bl', 0.085, 0.0], ['br', -0.085, 0.0]]) {
     const leg = limb(R, n, body, x, 0, z);
+    if (z < 0.2) mk(rb(0.1, 0.16, 0.13, 0.4), fur, leg, 0, -0.05, -0.01);   // haunch
     mk(rb(0.075, 0.34, 0.08, 0.3), fur, leg, 0, -0.16, 0);
     mk(rb(0.085, 0.05, 0.11, 0.4), fur, leg, 0, -0.33, 0.02);
+    for (const tx of [-0.026, 0, 0.026]) mk(rb(0.024, 0.03, 0.03, 0.45), fur, leg, tx, -0.345, 0.075); // toes
+    mk(rb(0.06, 0.012, 0.06, 0.4), pad, leg, 0, -0.355, 0.02);
   }
   const neck = R.add('head', new THREE.Group()); neck.position.set(0, 0.22, 0.52); body.add(neck);
   mk(rb(0.22, 0.2, 0.2, 0.3), fur, neck, 0, 0.06, 0.04);
-  mk(rb(0.2, 0.06, 0.16, 0.4), fur2, neck, 0, 0.17, 0.0); // grey cap
-  mk(rb(0.12, 0.065, 0.16, 0.35), fur, neck, 0, 0.025, 0.2); // upper snout
-  mk(rb(0.05, 0.04, 0.035, 0.4), dark, neck, 0, 0.05, 0.285); // nose
+  mk(rb(0.2, 0.06, 0.16, 0.4), fur2, neck, 0, 0.17, 0.0);                  // grey cap
+  mk(rb(0.035, 0.07, 0.03, 0.4), fur2, neck, 0, 0.13, 0.142);              // mask stripe down the forehead
+  for (const s of [1, -1]) {
+    mk(rb(0.05, 0.08, 0.1, 0.45), fur, neck, s * 0.115, 0.02, 0.05);        // cheek fluff
+    mk(rb(0.035, 0.015, 0.01, 0.45), std(0xffffff), neck, s * 0.055, 0.128, 0.142); // white "eyebrow" dots
+  }
+  mk(rb(0.12, 0.065, 0.16, 0.35), fur, neck, 0, 0.025, 0.2);              // upper snout
+  mk(rb(0.05, 0.04, 0.035, 0.4), dark, neck, 0, 0.05, 0.285);             // nose
+  mk(rb(0.016, 0.01, 0.01, 0.5), std(0x6a6a6a, { roughness: 0.2 }), neck, -0.01, 0.065, 0.302); // nose shine
   const jaw = R.add('jaw', new THREE.Group()); jaw.position.set(0, -0.01, 0.13); neck.add(jaw);
   mk(rb(0.1, 0.035, 0.14, 0.35), fur, jaw, 0, -0.012, 0.07);
   const tongue = mk(new THREE.BoxGeometry(0.05, 0.01, 0.08), pink, jaw, 0, 0.004, 0.08); tongue.visible = false;
   const mouthItem = new THREE.Object3D(); mouthItem.position.set(0, 0.01, 0.12); jaw.add(mouthItem);
-  const eyes = [];
-  for (const x of [-0.055, 0.055]) eyes.push(mk(new THREE.BoxGeometry(0.035, 0.03, 0.01), eyeB, neck, x, 0.1, 0.142));
-  for (const x of [-0.065, 0.065]) {
-    const ear = mk(new THREE.ConeGeometry(0.05, 0.13, 4), fur2, neck, x, 0.22, -0.01, 0, Math.PI / 4, x > 0 ? -0.2 : 0.2);
-    mk(new THREE.ConeGeometry(0.03, 0.08, 4), pink, ear, 0, -0.01, 0.012, 0, 0, 0);
+  const eyes = [], pupils = [];
+  for (const x of [-0.055, 0.055]) {
+    const eg = new THREE.Group(); eg.position.set(x, 0.1, 0.142); neck.add(eg);
+    mk(new THREE.BoxGeometry(0.038, 0.032, 0.01), eyeB, eg, 0, 0, 0);
+    pupils.push(mk(new THREE.BoxGeometry(0.014, 0.018, 0.006), dark, eg, 0, 0, 0.006));
+    eyes.push(eg);
+  }
+  const ears = [];
+  for (const s of [1, -1]) {
+    const ear = R.add(s > 0 ? 'earL' : 'earR', new THREE.Group()); ear.position.set(s * 0.065, 0.19, -0.01); neck.add(ear);
+    const e = mk(new THREE.ConeGeometry(0.05, 0.13, 4), fur3, ear, 0, 0.05, 0, 0, Math.PI / 4, -s * 0.2);
+    mk(new THREE.ConeGeometry(0.03, 0.08, 4), pink, e, 0, -0.01, 0.012, 0, 0, 0);
+    ears.push(ear);
   }
   // blue collar with a gold tag
-  const collar = mk(new THREE.TorusGeometry(0.12, 0.022, 5, 14), blue, body, 0, 0.13, 0.52, Math.PI / 2 - 0.5, 0, 0);
+  const collar = mk(new THREE.TorusGeometry(0.12, 0.022, 6, 16), blue, body, 0, 0.13, 0.52, Math.PI / 2 - 0.5, 0, 0);
   collar.scale.set(1, 1.15, 1);
-  mk(new THREE.CylinderGeometry(0.025, 0.025, 0.008, 8), MAT.brass, body, 0, 0.0, 0.62, Math.PI / 2 - 0.3, 0, 0);
+  mk(new THREE.CylinderGeometry(0.025, 0.025, 0.008, 10), MAT.brass, body, 0, 0.0, 0.62, Math.PI / 2 - 0.3, 0, 0);
   // orange life vest for storms
   const vest = new THREE.Group(); vest.visible = false; body.add(vest);
   const orange = std(0xf26a1b, { roughness: 0.6 });
@@ -1702,16 +1750,19 @@ function makeDog() {
   for (const z of [0.12, 0.36]) mk(rb(0.34, 0.03, 0.035, 0.3), std(0x22252a), vest, 0, 0.08, z);
   mk(new THREE.TorusGeometry(0.04, 0.012, 4, 8, Math.PI), std(0x22252a), vest, 0, 0.2, 0.25, 0, Math.PI / 2, 0);
   for (const z of [0.12, 0.36]) mk(new THREE.BoxGeometry(0.3, 0.025, 0.03), std(0xe8eef2, { emissive: 0x777777, emissiveIntensity: 0.4 }), vest, 0, 0.0, z);
-  // curled husky tail
+  // fluffy curled husky tail with a white tip
   const tail = R.add('tail', new THREE.Group()); tail.position.set(0, 0.16, -0.1); body.add(tail);
+  const tailSegs = [];
   let p = tail;
-  for (let k = 0; k < 4; k++) {
-    const seg = new THREE.Group(); seg.position.set(0, k ? 0.1 : 0, 0); seg.rotation.x = k ? 0.78 : -0.75; p.add(seg);
-    mk(rb(0.09 - k * 0.012, 0.14, 0.09 - k * 0.012, 0.4), k > 1 ? fur2 : fur, seg, 0, 0.05, 0);
-    p = seg;
+  for (let k = 0; k < 5; k++) {
+    const seg = new THREE.Group(); seg.position.set(0, k ? 0.09 : 0, 0); seg.rotation.x = k ? 0.62 : -0.75; p.add(seg);
+    mk(rb(0.1 - k * 0.012, 0.13, 0.1 - k * 0.012, 0.45), k === 4 ? fur : k > 1 ? fur2 : fur, seg, 0, 0.05, 0);
+    if (k > 0 && k < 4) mk(rb(0.07 - k * 0.01, 0.1, 0.03, 0.45), fur, seg, 0, 0.05, 0.045); // white underside
+    tailSegs.push(seg); p = seg;
   }
   root.traverse(o => { if (o.isMesh) o.castShadow = true; });
-  return { root, rig: R, eyes, tongue, vest, mouthItem, pos: new THREE.Vector2(2.2, 0.15), heading: -Math.PI / 2, targetHeading: -Math.PI / 2, moving: 0, pose: 'stand', poseT: 0, walkPh: 0, speed: 1.6, wag: 1 };
+  return { root, rig: R, eyes, pupils, ears, tailSegs, tongue, vest, mouthItem, pos: new THREE.Vector2(2.2, 0.15), heading: -Math.PI / 2, targetHeading: -Math.PI / 2, moving: 0, pose: 'stand', poseT: 0, walkPh: 0, speed: 1.6, wag: 1,
+    tiltR: 0, tiltP: 0, look: null, lookW: 0, fidget: null, fidgetT: 4 };
 }
 
 const cap = makeCaptain(); Lcrew.add(cap.root);
@@ -1731,8 +1782,9 @@ function poseCaptain(c, t, dt) {
   R.r('armL', 0.05, 0, 0.1 + breathe); R.r('armR', 0.05, 0, -0.1 - breathe);
   R.r('elbowL', -0.15); R.r('elbowR', -0.15);
   R.r('spine', breathe, 0, sway); R.r('neck', 0, Math.sin(t * 0.37) * 0.25, 0);
-  R.r('legL', 0, 0, 0.04 + sway * 0.5); R.r('legR', 0, 0, -0.04 + sway * 0.5);
-  let eyes = 1, mouth = 0;
+  const brace = Math.min(world.w.waves, 1.8) * 0.06;                    // wider stance in rough seas
+  R.r('legL', 0, 0, 0.04 + brace + sway * 0.5); R.r('legR', 0, 0, -0.04 - brace + sway * 0.5);
+  let eyes = 1, mouth = 0, brow = 0;
   switch (P) {
     case 'helm': {
       const st = Math.sin(t * 0.6) * 0.25 * (0.4 + world.w.waves);
@@ -1799,6 +1851,18 @@ function poseCaptain(c, t, dt) {
     case 'throwFwd': R.r('armR', -1.2, 0, 0.1); R.r('elbowR', -0.1); R.r('spine', 0.2, -0.2, 0); R.r('armL', 0.2, 0, 0.3); break;
     case 'wave': { const w2 = Math.sin(t * 10) * 0.35; R.r('armR', -2.6, 0, 0.3 + w2); R.r('elbowR', -0.5); R.r('neck', -0.1, 0, 0); mouth = 0.3; break; }
     case 'scold': R.r('armL', 0, 0, 0.55); R.r('elbowL', -1.9); R.r('armR', -1.2, 0, 0.1); R.r('elbowR', -0.6 + Math.sin(t * 8) * 0.25); R.r('neck', 0.1, 0, Math.sin(t * 4) * 0.12); mouth = 0.2 + Math.abs(Math.sin(t * 9)) * 0.4; break;
+    case 'scared': {
+      const tr = Math.sin(t * 38) * 0.04;
+      R.p('hips', 0, 0.8, -0.04); R.r('legL', -0.45, 0, 0.18); R.r('legR', -0.45, 0, -0.18); R.r('kneeL', 0.8); R.r('kneeR', 0.8);
+      R.r('spine', -0.25 + tr, 0, tr); R.r('armL', -2.3, 0, -0.5 + tr); R.r('armR', -2.3, 0, 0.5 - tr); R.r('elbowL', -1.2); R.r('elbowR', -1.2);
+      R.r('neck', -0.15, 0, 0); mouth = 1; brow = 1; break;
+    }
+    case 'cower': {
+      const tr = Math.sin(t * 30) * 0.03;
+      R.p('hips', 0, 0.55, -0.05); R.r('legL', -1.2, 0, 0.12); R.r('legR', -1.2, 0, -0.12); R.r('kneeL', 1.9); R.r('kneeR', 1.9);
+      R.r('spine', 0.5 + tr, 0, tr); R.r('armL', -2.5, 0, -0.85); R.r('armR', -2.5, 0, 0.85); R.r('elbowL', -1.9); R.r('elbowR', -1.9);
+      R.r('neck', 0.15, 0, 0); mouth = 0.45; brow = 1; break;
+    }
     case 'sleep': case 'sit': {
       R.p('hips', 0, 0.14, 0.05);
       R.r('legL', -1.45, 0, 0.1); R.r('legR', -1.42, 0, -0.1); R.r('kneeL', 0.15); R.r('kneeR', 0.25);
@@ -1807,6 +1871,35 @@ function poseCaptain(c, t, dt) {
       break;
     }
   }
+  // idle fidgets: scratch the beard, straighten the hat, roll the neck, look around
+  const mixJ = (n, v, f) => { const o = R.tgt[n] || [0, 0, 0]; R.r(n, lerp(o[0], v[0], f), lerp(o[1], v[1], f), lerp(o[2], v[2], f)); };
+  const calm = mv < 0.05 && (P === 'idle' || P === 'helm' || P === 'lookUp') && !c.seated;
+  c.fidgetT -= dt;
+  if (c.fidgetT <= 0) { c.fidgetT = rand(6, 13); if (calm) { c.fidget = pick(['beard', 'hat', 'roll', 'look']); c.fidgetE = 1.9; } }
+  if (c.fidget) {
+    c.fidgetE -= dt;
+    if (c.fidgetE <= 0 || !calm) c.fidget = null;
+    else {
+      const f = sstep(0, 0.35, 1.9 - c.fidgetE) * sstep(0, 0.35, c.fidgetE);
+      if (c.fidget === 'beard') { mixJ('armR', [-1.25, 0, 0.5], f); mixJ('elbowR', [-1.95 + Math.sin(t * 14) * 0.12, 0, 0], f); mixJ('neck', [-0.15, 0, 0], f); }
+      if (c.fidget === 'hat') { mixJ('armR', [-2.55, 0, 0.32], f); mixJ('elbowR', [-1.55, 0, 0], f); }
+      if (c.fidget === 'roll') mixJ('neck', [0.1, 0, Math.sin(t * 4) * 0.28], f);
+      if (c.fidget === 'look') mixJ('neck', [-0.05, Math.sin(t * 1.3) * 0.95, 0], f);
+    }
+  }
+  // look at whatever is happening (other crew, sea life, the kraken, you)
+  let lookYaw = 0;
+  if (c.look && c.lookW > 0.02 && !c.fidget) {
+    c.root.updateWorldMatrix(true, false);
+    const L = c.root.worldToLocal(_lk.copy(c.look));
+    lookYaw = clamp(Math.atan2(L.x, L.z), -1.25, 1.25);
+    const pitch = clamp(-Math.atan2(L.y - 1.65, Math.hypot(L.x, L.z)), -0.6, 0.45);
+    mixJ('neck', [pitch * 0.8, lookYaw * 0.72, (R.tgt.neck || [0, 0, 0])[2]], c.lookW);
+    const sp = R.tgt.spine || [0, 0, 0]; R.r('spine', sp[0], lerp(sp[1], lookYaw * 0.28, c.lookW), sp[2]);
+  }
+  // talking moves the mouth
+  c.talkT = Math.max(0, c.talkT - dt);
+  if (c.talkT > 0 && P !== 'sleep') mouth = Math.max(mouth, Math.abs(Math.sin(t * 15)) * 0.45 * Math.min(1, c.talkT * 3));
   // walking overrides the legs and swings the arms
   if (c.seated) {
     R.p('hips', 0, 0.14, 0.05);
@@ -1819,7 +1912,8 @@ function poseCaptain(c, t, dt) {
     R.r('kneeL', 0.05 + Math.max(0, -Math.sin(c.walkPh - 0.6)) * 0.85 * k); R.r('kneeR', 0.05 + Math.max(0, Math.sin(c.walkPh - 0.6)) * 0.85 * k);
     const busy = P === 'carry' || c.carrying || gear.rods.some(r => r.inHand);
     if (!busy) {
-      R.r('armL', -s * 0.45 * k, 0, 0.1); R.r('armR', s * 0.45 * k, 0, -0.1);
+      const bal = sstep(0.9, 1.6, world.w.waves) * 0.5;                    // arms out for balance in big seas
+      R.r('armL', -s * 0.45 * k, 0, 0.1 + bal); R.r('armR', s * 0.45 * k, 0, -0.1 - bal);
       R.r('elbowL', -0.25 - Math.max(0, -s) * 0.35 * k); R.r('elbowR', -0.25 - Math.max(0, s) * 0.35 * k);
     }
     const sp = R.tgt.spine || [0, 0, 0];
@@ -1835,13 +1929,25 @@ function poseCaptain(c, t, dt) {
   c.rain = damp(c.rain || 0, rc, 4, dt);
   for (const [m, base] of c.coatMats) m.color.copy(base).lerp(m === c.coatMats[0][0] ? _yellowCoat : _yellowCoatDk, c.rain);
   c.hat.visible = c.rain < 0.5; c.sw.visible = c.rain >= 0.5;
-  for (const e of c.eyes) e.scale.y = damp(e.scale.y, eyes * (t % 4.3 < 0.12 ? 0.1 : 1), 20, dt);
+  for (const e of c.eyes) e.scale.y = damp(e.scale.y, eyes * (t % 4.3 < 0.12 ? 0.1 : 1) * (brow ? 1.25 : 1), 20, dt);
+  for (const b of c.brows) b.position.y = damp(b.position.y, 0.256 + brow * 0.025 - (P === 'scold' ? 0.012 : 0), 10, dt);
+  for (const p of c.pupils) p.position.x = damp(p.position.x, lookYaw * c.lookW * 0.007, 8, dt);
+  // the pipe, and the odd puff of smoke
+  const pipeOK = !(c.props.mug.visible || c.props.harmonica.visible || P === 'scared' || P === 'cower' || P === 'sleep' || P === 'stretch' || P === 'wave');
+  c.pipe.visible = pipeOK;
+  c.smokeT -= dt;
+  if (pipeOK && c.smokeT <= 0) {
+    c.smokeT = rand(2.5, 5);
+    c.bowl.getWorldPosition(_lk);
+    for (let k = 0; k < 4; k++) emit(_lk.x, _lk.y + 0.03 + k * 0.02, _lk.z, rand(-0.04, 0.04), rand(0.2, 0.35), rand(-0.04, 0.04), rand(1.2, 1.8), rand(0.05, 0.09), 'rise', [0.85, 0.85, 0.85]);
+  }
 }
+const _lk = V3();
 
 function poseDog(d, t, dt) {
   const R = d.rig, mv = d.moving, s = Math.sin(d.walkPh);
   const P = d.pose;
-  let wagSpd = 9, wagAmp = 0.35, eyes = 1, tailX = 0, jaw = 0, pant = false;
+  let wagSpd = 9, wagAmp = 0.35, eyes = 1, tailX = 0, jaw = 0, pant = false, ear = 0.05;
   R.r('head', Math.sin(t * 0.6) * 0.06, Math.sin(t * 0.33) * 0.35, 0);
   const sit = () => { R.p('body', 0, 0.22, -0.2); R.r('body', -0.62, 0, 0); R.r('bl', -0.95); R.r('br', -0.95); R.r('fl', 0.62); R.r('fr', 0.62); tailX = 0.8; };
   const lie = () => { R.p('body', 0, 0.13, -0.2); R.r('fl', -1.45); R.r('fr', -1.45); R.r('bl', -1.35, 0, 0.2); R.r('br', -1.35, 0, -0.2); tailX = 0.9; };
@@ -1860,11 +1966,16 @@ function poseDog(d, t, dt) {
       else R.r('head', 0.05, Math.sin(t * 0.4) * 0.4, 0);
       break;
     case 'sniff': R.r('head', 0.65, Math.sin(t * 3) * 0.35, 0); wagSpd = 7; break;
-    case 'lookout': R.r('head', -0.2, Math.sin(t * 0.7) * 0.25, Math.sin(t * 0.3) * 0.15); R.r('fl', -0.15); break;
-    case 'bark': { const b = d.barkT > 0 ? Math.sin(d.barkT * 40) * 0.2 : 0; R.r('head', -0.3 + b, 0, 0); R.r('fl', -0.2); R.r('fr', 0.1); wagSpd = 14; break; }
+    case 'lookout': R.r('head', -0.2, Math.sin(t * 0.7) * 0.25, Math.sin(t * 0.3) * 0.15); R.r('fl', -0.15); ear = 0.22; break;
+    case 'bark': { const b = d.barkT > 0 ? Math.sin(d.barkT * 40) * 0.2 : 0; R.r('head', -0.3 + b, 0, 0); R.r('fl', -0.2); R.r('fr', 0.1); wagSpd = 14; ear = 0.25; break; }
     case 'excited': R.p('body', 0, 0.36 + Math.abs(Math.sin(t * 8)) * 0.06, -0.2); R.r('fl', -0.4 * Math.abs(Math.sin(t * 8))); R.r('fr', -0.4 * Math.abs(Math.sin(t * 8))); R.r('head', -0.2, 0, Math.sin(t * 4) * 0.2); wagSpd = 20; wagAmp = 0.55; pant = true; break;
     case 'shake': { const sh = Math.sin(t * 34); R.r('body', 0, 0, sh * 0.34); R.r('head', 0.1, sh * 0.45, sh * 0.35); wagSpd = 34; wagAmp = 0.7; R.r('fl', 0.05); R.r('fr', 0.05); break; }
-    case 'sneak': R.p('body', 0, 0.3, -0.2); R.r('head', 0.3, 0, 0); tailX = 0.6; wagAmp = 0.08; break;
+    case 'sneak': R.p('body', 0, 0.3, -0.2); R.r('head', 0.3, 0, 0); tailX = 0.6; wagAmp = 0.08; ear = -0.5; break;
+    case 'cower': {
+      lie(); const tr = Math.sin(t * 36) * 0.035;
+      R.p('body', 0, 0.12, -0.2); R.r('body', 0, 0, tr); R.r('head', 0.42, 0, tr);
+      tailX = -2.2; wagAmp = 0.02; ear = -1.05; break;
+    }
   }
   if (mv > 0.02) {
     const k = mv, sneak = P === 'sneak';
@@ -1875,12 +1986,43 @@ function poseDog(d, t, dt) {
     wagSpd = sneak ? 4 : 12;
     if (d.walkSpd > 1.2) pant = true;
   }
-  if (d.happy) { wagSpd = 20; wagAmp = 0.55; pant = true; }
+  if (d.happy) { wagSpd = 20; wagAmp = 0.55; pant = true; ear = -0.35; }
+  if (P === 'sleep' || P === 'lie') ear = -0.4;
+  // fidgets: ear flick, curious head tilt, sniffing the air
+  const mixJ = (n, v, f) => { const o = R.tgt[n] || [0, 0, 0]; R.r(n, lerp(o[0], v[0], f), lerp(o[1], v[1], f), lerp(o[2], v[2], f)); };
+  const calm = mv < 0.05 && (P === 'stand' || P === 'sit' || P === 'lookout');
+  d.fidgetT -= dt;
+  if (d.fidgetT <= 0) { d.fidgetT = rand(3, 8); if (calm) { d.fidget = pick(['flick', 'tilt', 'sniff', 'flick']); d.fidgetE = d.fidget === 'flick' ? 0.45 : 1.6; } }
+  let flick = 0;
+  if (d.fidget) {
+    d.fidgetE -= dt;
+    if (d.fidgetE <= 0 || !calm) d.fidget = null;
+    else {
+      const f = sstep(0, 0.25, (d.fidget === 'flick' ? 0.45 : 1.6) - d.fidgetE) * sstep(0, 0.25, d.fidgetE);
+      if (d.fidget === 'flick') flick = f;
+      if (d.fidget === 'tilt') { const h = R.tgt.head || [0, 0, 0]; mixJ('head', [h[0] - 0.15, h[1] * 0.3, 0.38], f); ear = Math.max(ear, 0.2); }
+      if (d.fidget === 'sniff') { const h = R.tgt.head || [0, 0, 0]; mixJ('head', [-0.35 + Math.sin(t * 18) * 0.04, h[1], 0], f); }
+    }
+  }
+  // look toward what has his attention
+  let lookYaw = 0;
+  if (d.look && d.lookW > 0.02 && !d.fidget && P !== 'sleep') {
+    d.root.updateWorldMatrix(true, false);
+    const L = d.root.worldToLocal(_lk.copy(d.look));
+    lookYaw = clamp(Math.atan2(L.x, L.z), -1.1, 1.1);
+    const h = R.tgt.head || [0, 0, 0];
+    mixJ('head', [clamp(-Math.atan2(L.y - 0.6, Math.hypot(L.x, L.z)), -0.7, 0.5) + (P === 'sit' ? 0.3 : 0), lookYaw, h[2]], d.lookW);
+  }
+  if (mv < 0.05 && P !== 'sleep' && P !== 'cower') { const b = R.tgt.body || [0, 0, 0]; R.r('body', b[0] + Math.sin(t * 2.6) * 0.012, b[1], b[2]); } // breathing
+  R.r('earL', ear + flick * 0.5, 0, 0); R.r('earR', ear + Math.sin(t * 0.7) * 0.03, 0, 0);
   if (d.barkT > 0) jaw = Math.max(jaw, Math.sin(d.barkT / 0.3 * Math.PI) * 0.5);
   if (pant && jaw < 0.15) jaw = 0.16 + Math.sin(t * 13) * 0.05;
   R.r('jaw', jaw, 0, 0);
   R.r('tail', tailX, Math.sin(t * wagSpd) * wagAmp, 0);
   R.apply(dt, 9);
+  // the tail swings in a wave from base to tip
+  d.tailSegs.forEach((sg, k) => { if (k) sg.rotation.y = Math.sin(t * wagSpd - k * 0.75) * wagAmp * 0.32 * k; });
+  for (const p of d.pupils) p.position.x = damp(p.position.x, lookYaw * d.lookW * 0.007, 8, dt);
   d.tongue.visible = pant || P === 'howl';
   for (const e of d.eyes) e.scale.y = damp(e.scale.y, eyes * (t % 3.7 < 0.1 ? 0.1 : 1), 20, dt);
   d.barkT = Math.max(0, (d.barkT || 0) - dt);
@@ -2034,8 +2176,14 @@ function updateMover(c, dt, turnK = 6) {
   c.walkPh += dt * c.speed * (c.walkSpd || 1) * 7.5 * c.moving;
   c.walking = false;
   c.root.position.set(c.pos.x * BOAT_S, deckY(c.pos.x) * BOAT_S, c.pos.y * BOAT_S);
-  c.root.rotation.y = c.heading;
+  // lean against the boat's roll and pitch to stay upright (a little late, like real sea legs)
+  const low = c.seated || ['sleep', 'sit', 'lie', 'cower', 'crouch', 'pet', 'coil', 'eat', 'beg', 'happy', 'howl'].includes(c.pose);
+  const k = low ? 0.2 : c === dog ? 0.45 : 0.7;
+  c.tiltR = damp(c.tiltR, -PH.roll * k, 4, dt); c.tiltP = damp(c.tiltP, -PH.pitch * k, 4, dt);
+  _eT.set(c.tiltR, 0, c.tiltP); _qT.setFromEuler(_eT); _qY.setFromAxisAngle(_up, c.heading);
+  c.root.quaternion.multiplyQuaternions(_qT, _qY);
 }
+const _qT = new THREE.Quaternion(), _qY = new THREE.Quaternion(), _eT = new THREE.Euler(0, 0, 0, 'ZXY');
 function runTask(c, dt) {
   if (c.task) { const r = c.task.next(); if (r.done) c.task = null; }
   if (!c.task) c.task = c.next();
@@ -2052,7 +2200,7 @@ function setLog(id, text) {
   el.dataset.t = text; el.classList.add('fade');
   clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = text; el.classList.remove('fade'); }, 280);
 }
-const capSay = t => setLog('capTask', t);
+const capSay = t => { if ($('capTask').dataset.t !== t) cap.talkT = 1.3; setLog('capTask', t); };
 const dogSay = t => setLog('dogTask', t);
 
 /* ---------- Fishing helpers ---------- */
@@ -2532,6 +2680,11 @@ const sfx = (() => {
         at += D[i];
       });
     },
+    kraken() {
+      tone('sawtooth', 62, 34, 4.2, 0.2, 0, ['lowpass', 240, 3]); tone('sawtooth', 47, 29, 3.6, 0.14, 0.8, ['lowpass', 180, 3]);
+      tone('sine', 92, 55, 3.2, 0.12, 1.6); burst(5, 'lowpass', 110, 0.8, 0.35, 0.6);
+    },
+    whimper() { tone('sine', 1150, 820, 0.35, 0.045); tone('sine', 1000, 760, 0.3, 0.035, 0.38); },
     gull() { tone('sine', 1800, 1100, 0.35, 0.03, 0, ['bandpass', 1600, 3]); tone('sine', 1900, 1200, 0.3, 0.025, 0.42, ['bandpass', 1600, 3]); },
   };
 })();
@@ -3712,6 +3865,7 @@ function setCamMode(i) {
   toast(`Camera: <b>${CAM_MODES[camMode]}</b>`);
 }
 function seaLifeTarget(out) {
+  if (KR.active) { out.copy(KR.head.position); out.y = Math.max(out.y + 3, 3); return 'The Kraken'; }
   const dol = jumpers.filter(j => j.active && j.kind === 'dolphin');
   if (dol.length) { out.set(0, 0, 0); dol.forEach(j => out.add(j.mesh.position)); out.divideScalar(dol.length); return 'Dolphins'; }
   if (whale.active) { out.copy(whale.m.position); out.y = Math.max(out.y, 0); return 'Whale'; }
@@ -3916,6 +4070,227 @@ system('perf', () => {
 });
 
 /* =====================================================================
+   The Kraken — a rare daytime visitor. Its tentacles rise around the boat (never touching it),
+   the great head surfaces off to one side, the crew panic and take cover, then it sinks away.
+   ===================================================================== */
+const KR = { active: false, t: 0, next: rand(110, 200), tents: [], seen: false };
+const krMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.42, metalness: 0.05 });
+const KR_RINGS = 28, KR_SEG = 10, KR_SUCK = 9;
+function makeTentacle() {
+  const n = KR_RINGS * KR_SEG, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), idx = [];
+  const top = C(0x6a1d42), top2 = C(0x8e2d57), under = C(0xeba7aa);
+  for (let i = 0; i < KR_RINGS; i++) for (let j = 0; j < KR_SEG; j++) {
+    const inner = Math.sin(j / KR_SEG * TAU) > 0.45;                 // the side that faces into the curl carries suckers
+    const cc = inner ? under : top.clone().lerp(top2, ((i * 7) % 5) / 5);
+    col.set([cc.r, cc.g, cc.b], (i * KR_SEG + j) * 3);
+  }
+  for (let i = 0; i < KR_RINGS - 1; i++) for (let j = 0; j < KR_SEG; j++) {
+    const a = i * KR_SEG + j, b = i * KR_SEG + (j + 1) % KR_SEG;
+    idx.push(a, a + KR_SEG, b, b, a + KR_SEG, b + KR_SEG);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(idx);
+  const m = new THREE.Mesh(g, krMat); m.frustumCulled = false; m.visible = false; scene.add(m);
+  return { m, g, pts: Array.from({ length: KR_RINGS }, () => V3()), nrm: Array.from({ length: KR_RINGS }, () => V3()), rad: new Float32Array(KR_RINGS) };
+}
+for (let i = 0; i < 7; i++) KR.tents.push(makeTentacle());
+const krSuckers = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 5), std(0xf6cdd0, { roughness: 0.55 }), KR.tents.length * KR_SUCK);
+krSuckers.frustumCulled = false; krSuckers.visible = false; scene.add(krSuckers);
+function makeKrakenHead() {
+  const g = new THREE.Group();
+  const mantle = new THREE.SphereGeometry(1, 20, 16); mantle.scale(4.2, 6.6, 4.6);
+  const mg = mantle.toNonIndexed(), mp = mg.attributes.position, mc = new Float32Array(mp.count * 3);
+  const lo = C(0xa23f63), hi = C(0x561634), cc = new THREE.Color();
+  for (let i = 0; i < mp.count; i += 3) {
+    const y = (mp.getY(i) + mp.getY(i + 1) + mp.getY(i + 2)) / 3;
+    cc.copy(lo).lerp(hi, sstep(-4, 5, y)).multiplyScalar(0.92 + ((i / 3) % 7) * 0.02);
+    for (let k = 0; k < 3; k++) mc.set([cc.r, cc.g, cc.b], (i + k) * 3);
+  }
+  mg.setAttribute('color', new THREE.BufferAttribute(mc, 3));
+  const mm = mk(mg, krMat, g, 0, 3.4, 0); mm.castShadow = false;
+  for (let k = 0; k < 14; k++) { const a = rand(0, TAU), y = rand(-1, 8); const r = 4.3 * Math.sqrt(Math.max(0.05, 1 - Math.pow((y - 3.4) / 6.6, 2))); mk(new THREE.IcosahedronGeometry(rand(0.25, 0.5), 0), std(0xb4577a), g, Math.cos(a) * r, y, Math.sin(a) * r).castShadow = false; }
+  const eyes = [], lids = [];
+  for (const s of [-1, 1]) {
+    const e = new THREE.Group(); e.position.set(s * 2.75, 0.9, 3.25); e.rotation.y = s * 0.45; g.add(e);
+    mk(new THREE.SphereGeometry(1.05, 16, 12), new THREE.MeshStandardMaterial({ color: 0xffb53a, emissive: 0xff7a00, emissiveIntensity: 0.55, roughness: 0.25 }), e, 0, 0, 0);
+    mk(new THREE.BoxGeometry(0.28, 1.45, 0.2), std(0x0a0a0a, { roughness: 0.2 }), e, 0, 0, 0.98);
+    const lid = mk(new THREE.SphereGeometry(1.14, 16, 10, 0, TAU, 0, Math.PI / 2), std(0x4e1430), e, 0, 0, 0, -0.25, 0, 0);
+    lid.scale.y = 0.15; lids.push(lid); eyes.push(e);
+    mk(new THREE.BoxGeometry(2.2, 0.45, 0.8), std(0x4a1230), e, 0, 1.05, 0.3, 0.25, 0, -s * 0.25).castShadow = false;
+  }
+  g.traverse(o => { if (o.isMesh) o.castShadow = false; });
+  g.userData = { eyes, lids };
+  return g;
+}
+KR.head = makeKrakenHead(); KR.head.visible = false; scene.add(KR.head);
+function spawnKraken() {
+  if (KR.active) return;
+  const ang = rand(0, TAU);
+  Object.assign(KR, { active: true, t: 0, ang, hx: Math.cos(ang) * 30, hz: Math.sin(ang) * 30, bubbles: 0 });
+  KR.tents.forEach((T, i) => {
+    const a = ang + (i - 3) * rand(0.24, 0.32) + rand(-0.08, 0.08);
+    const ext = Math.abs(Math.cos(a)) * 6.4 + Math.abs(Math.sin(a)) * 2.3;   // how far the boat reaches that way
+    const L = rand(10, 14), d = ext + L * 0.55 + rand(2.5, 5);              // keep every tip well clear of the hull
+    Object.assign(T, { bx: Math.cos(a) * d, bz: Math.sin(a) * d, L, dx: -Math.cos(a), dz: -Math.sin(a), r0: rand(0.75, 1.05),
+      a0: Math.PI / 2 - rand(0.05, 0.25), curl: rand(1.1, 1.8), sway: rand(0.12, 0.24), f: rand(1.1, 1.8), ph: rand(0, TAU),
+      delay: 1.3 + i * rand(0.25, 0.45) + rand(0, 0.5), slamAt: Math.random() < 0.55 ? rand(9, 15.5) : -1, slamSide: Math.random() < 0.5 ? -1 : 1, slammed: false });
+    T.m.visible = true;
+  });
+  KR.head.visible = true; KR.head.position.set(KR.hx, -13, KR.hz); KR.head.rotation.y = Math.atan2(-KR.hx, -KR.hz);
+  krSuckers.visible = true;
+  sfx.kraken(); world.shake = Math.max(world.shake || 0, 0.5);
+  toast('Something enormous stirs beneath the waves…');
+  setTimeout(() => { if (KR.active) toast('<b>THE KRAKEN</b> rises from the deep!'); }, 2300);
+  if (!cap.sleeping) { interrupt(cap); resetProps(); cap.task = capScared(); }
+  if (!dog.sleeping) { interrupt(dog); dog.task = dogScared(); }
+}
+const _km = new THREE.Matrix4(), _kq = new THREE.Quaternion(), _kv = V3(), _ks = V3();
+function poseTentacle(T, t, rise, slam) {
+  const N = KR_RINGS, ds = T.L / (N - 1);
+  // slams swing the tentacle down beside the boat, never onto it
+  const sw = T.slamSide * 1.2 * slam, cs = Math.cos(sw), sn = Math.sin(sw);
+  const dx = T.dx * cs - T.dz * sn, dz = T.dx * sn + T.dz * cs, Sx = -dz, Sz = dx;
+  let px = T.bx, py = lerp(-T.L - 1.5, -1.2, rise), pz = T.bz;
+  for (let i = 0; i < N; i++) {
+    const s = i / (N - 1);
+    const a = lerp(T.a0, 0.12, slam) - T.curl * s * s * (1 - slam * 0.7) + T.sway * Math.sin(t * T.f + s * 4.5 + T.ph) * (0.3 + s);
+    const lat = Math.sin(t * T.f * 0.7 + s * 3 + T.ph) * 0.2 * s;
+    T.pts[i].set(px, py, pz);
+    const ca = Math.cos(a);
+    px += ds * (ca * dx + lat * Sx); py += ds * Math.sin(a); pz += ds * (ca * dz + lat * Sz);
+  }
+  const pos = T.g.attributes.position.array;
+  for (let i = 0; i < N; i++) {
+    const p = T.pts[i], q = T.pts[Math.min(N - 1, i + 1)], o = T.pts[Math.max(0, i - 1)];
+    let tx = q.x - o.x, ty = q.y - o.y, tz = q.z - o.z; const tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; ty /= tl; tz /= tl;
+    let nx = ty * Sz, ny = tz * Sx - tx * Sz, nz = -ty * Sx; const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
+    const s = i / (N - 1), r = T.r0 * (1 - s * 0.93) * (i === N - 1 ? 0.25 : 1);
+    T.nrm[i].set(nx, ny, nz); T.rad[i] = r;
+    for (let j = 0; j < KR_SEG; j++) {
+      const ang = j / KR_SEG * TAU, c = Math.cos(ang) * r, sv = Math.sin(ang) * r, k = (i * KR_SEG + j) * 3;
+      pos[k] = p.x + Sx * c + nx * sv; pos[k + 1] = p.y + ny * sv; pos[k + 2] = p.z + Sz * c + nz * sv;
+    }
+  }
+  T.g.attributes.position.needsUpdate = true;
+}
+system('kraken', (dt, t) => {
+  if (!KR.active) {
+    if (t > KR.next) {
+      KR.next = t + rand(170, 330);
+      if (world.day > 0.75 && !world.isNight && world.w.waves < 1.7 && !cap.fishing && !world.explode) spawnKraken();
+    }
+    return;
+  }
+  const k = KR.t += dt;
+  // churning water above it before anything breaks the surface
+  if (k < 4 && Math.random() < dt * 30) { const T = pick(KR.tents); emit(T.bx + rand(-1.5, 1.5), 0, T.bz + rand(-1.5, 1.5), rand(-0.5, 0.5), 0, rand(-0.5, 0.5), rand(1.5, 2.5), rand(0.4, 0.8), true); }
+  let si = 0;
+  KR.tents.forEach((T, i) => {
+    const rise = sstep(T.delay, T.delay + 2.4, k) * (1 - sstep(18.5 + i * 0.3, 21.5 + i * 0.3, k));
+    const slam = T.slamAt > 0 ? sstep(T.slamAt, T.slamAt + 0.45, k) * (1 - sstep(T.slamAt + 1.3, T.slamAt + 2.4, k)) : 0;
+    T.m.visible = rise > 0.01;
+    poseTentacle(T, t, rise, slam);
+    if (rise > 0.05 && Math.random() < dt * 9) { const p = T.pts[4]; emit(p.x + rand(-0.8, 0.8), 0, p.z + rand(-0.8, 0.8), rand(-0.4, 0.4), 0, rand(-0.4, 0.4), rand(1, 2), rand(0.3, 0.6), true); }
+    if (slam > 0.92 && !T.slammed) {
+      T.slammed = true;
+      const tip = T.pts[KR_RINGS - 4];
+      splash(tip.x, tip.z, 2.6); splash(tip.x * 0.9, tip.z * 0.9, 1.6);
+      sfx.thunder(160); world.shake = Math.max(world.shake || 0, 0.8);
+      PH.vy += 0.9; PH.vr += 0.25 * (Math.random() < 0.5 ? -1 : 1);       // the swell rocks the boat
+    }
+    for (let j = 0; j < KR_SUCK; j++) {
+      const ii = 4 + Math.round(j / (KR_SUCK - 1) * (KR_RINGS - 10)), p = T.pts[ii], n = T.nrm[ii], r = T.rad[ii];
+      _kv.copy(p).addScaledVector(n, r * 0.9); _ks.setScalar(T.m.visible ? r * 0.32 : 0);
+      krSuckers.setMatrixAt(si++, _km.compose(_kv, _kq, _ks));
+    }
+  });
+  krSuckers.instanceMatrix.needsUpdate = true;
+  // the head rises off to one side, eyes on the boat, then sinks
+  const up = sstep(3.2, 7.5, k) * (1 - sstep(17.5, 23, k));
+  const H = KR.head, u = H.userData;
+  H.position.set(KR.hx, lerp(-13, 0.3, up) + Math.sin(t * 0.8) * 0.25, KR.hz);
+  H.rotation.z = Math.sin(t * 0.5) * 0.04;
+  const blink = (k % 3.4) < 0.18 ? 1 : 0.15;
+  for (const l of u.lids) l.scale.y = damp(l.scale.y, blink, 18, dt);
+  if (up > 0.05 && Math.random() < dt * 14) { const a = rand(0, TAU); emit(KR.hx + Math.cos(a) * 4.6, 0, KR.hz + Math.sin(a) * 4.6, Math.cos(a) * 0.6, 0, Math.sin(a) * 0.6, rand(1.5, 2.5), rand(0.6, 1.1), true); }
+  if (k > 24.5) {
+    KR.active = false; H.visible = false; krSuckers.visible = false;
+    KR.tents.forEach(T => T.m.visible = false);
+  }
+});
+
+/* ---------- crew reactions ---------- */
+function krakenHide(offset) {
+  // the far side of the cabin from the monster
+  const hx = -0.6 - Math.cos(KR.ang) * 1.7, hz = -Math.sin(KR.ang) * 1.7;
+  return [hx - Math.sin(KR.ang) * offset, hz + Math.cos(KR.ang) * offset];
+}
+function* capScared() {
+  cap.scared = true;
+  try {
+    yield* wait(1.5);
+    yield* faceTo(cap, KR.hx / BOAT_S, KR.hz / BOAT_S, 0.5);
+    cap.pose = 'scared'; capSay('K-K-KRAKEN!');
+    yield* wait(2.4);
+    capSay('Taking cover behind the cabin!'); cap.pose = 'idle';
+    const [hx, hz] = krakenHide(0);
+    yield* walkTo(cap, hx, hz, 1.9);
+    yield* faceTo(cap, KR.hx / BOAT_S, KR.hz / BOAT_S, 0.6);
+    cap.pose = 'cower'; capSay('Peeking out at the monster…');
+    yield* waitUntil(() => !KR.active || KR.t > 21.5, 40);
+    cap.pose = 'idle'; capSay('Phew… it\'s gone. Nobody will ever believe this.');
+    if (!KR.seen) { KR.seen = true; discover('The Kraken', 'A KRAKEN rose beside us, tentacles taller than the mast. It let us be. I need a stiff drink.'); }
+    else addLog('The kraken came back for another look. We kept our heads down.');
+    yield* wait(1.4);
+    cap.pose = 'stretch'; yield* wait(1);
+  } finally { cap.scared = false; }
+  cap.pose = 'idle';
+}
+function* dogScared() {
+  dog.busy = true;
+  try {
+    yield* wait(1.0);
+    yield* faceTo(dog, KR.hx / BOAT_S, KR.hz / BOAT_S, 0.5);
+    dog.pose = 'bark'; dogSay('Barking at the kraken!');
+    for (let i = 0; i < 4; i++) { dog.barkT = 0.3; sfx.bark(); yield* wait(rand(0.35, 0.55)); }
+    dog.pose = 'stand'; dogSay('Running to hide!');
+    const [hx, hz] = krakenHide(0.55);
+    yield* walkTo(dog, hx, hz, 2.0);
+    yield* faceTo(dog, KR.hx / BOAT_S, KR.hz / BOAT_S, 0.4);
+    dog.pose = 'cower'; dogSay('Trembling beside the captain');
+    let w = 0;
+    while (KR.active && KR.t < 21.5) { w += DT; if (w > 1.7) { w = 0; sfx.whimper(); } yield; }
+    dog.pose = 'shake'; dogSay('Shaking off the fright'); yield* wait(1.2);
+    dog.pose = 'happy'; dogSay('So relieved it\'s gone'); yield* wait(1.6);
+  } finally { dog.busy = false; }
+  dog.pose = 'stand';
+}
+
+/* ---------- where each crew member is looking ---------- */
+let lookAcc = 0;
+system('crewLook', (dt) => {
+  for (const c of [cap, dog]) c.lookW = damp(c.lookW, c.look ? 1 : 0, 3, dt);
+  lookAcc += dt; if (lookAcc < 0.4) return; lookAcc = 0;
+  for (const c of [cap, dog]) {
+    const other = c === cap ? dog : cap;
+    let tgt = null;
+    if (KR.active && KR.t > 1.5) tgt = _v2.copy(KR.head.position).setY(Math.max(KR.head.position.y + 2, 3));
+    else if (card.who === c) tgt = camera.position;
+    else {
+      const dol = jumpers.find(j => j.active && j.kind === 'dolphin' && j.mesh.position.length() < 45);
+      if (dol) tgt = dol.mesh.position;
+      else if (whale.active && whale.m.position.y > -3) tgt = whale.m.position;
+      else if (Math.random() < 0.55) {
+        other.rig.j[other === cap ? 'neck' : 'head'].getWorldPosition(_v2);
+        if (_v2.distanceTo(c.root.getWorldPosition(_v3)) < 3.2) tgt = _v2;
+      }
+    }
+    if (c.sleeping || c.pose === 'sleep' || c.pose === 'spyglass' || c.pose === 'write' || c.pose === 'read') tgt = null;
+    c.look = tgt ? (c.lookV || (c.lookV = V3())).copy(tgt) : null;
+  }
+});
+
+/* =====================================================================
    HUD
    ===================================================================== */
 function toast(html) {
@@ -4022,7 +4397,7 @@ function frame() {
   if (!started) { started = true; setTimeout(() => { $('intro').classList.add('gone'); setTimeout(() => toast('Welcome aboard the <b>Wanderer</b>'), 1100); }, 500); }
 }
 renderer.setAnimationLoop(frame);
-window.__atsea = { simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, toggleExplode, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
+window.__atsea = { spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, toggleExplode, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
   PERCHES, tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
 </script>
 </body>
