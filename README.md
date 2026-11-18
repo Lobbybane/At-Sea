@@ -18,7 +18,7 @@ Open `index.html` in a modern browser (it loads three.js from unpkg, so it needs
 | Sound | `M` | Toggle the procedural audio |
 | Quality | `Q` | Auto / High / Medium / Low graphics (the FPS chip shows the current rate) |
 
-Drag to orbit, scroll to zoom; the camera slowly auto-rotates when idle. Click the captain or Koda to see what they're up to.
+Drag to orbit, scroll to zoom; the camera slowly auto-rotates when idle. Click the captain or Koda to see what they're up to. Click the title card to collapse it to a small badge (it remembers your choice).
 
 ## On the voyage
 

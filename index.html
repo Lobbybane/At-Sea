@@ -30,18 +30,31 @@ canvas#c:active{cursor:grabbing}
 .panel{background:linear-gradient(180deg,var(--panel-hi),var(--panel));border:1px solid var(--edge);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2)}
 
 /* ---------- Title card ---------- */
-#title{position:fixed;left:24px;top:24px;width:300px;padding:22px 24px 18px;pointer-events:none;transform-origin:top left}
-#title .eyebrow{font-size:10.5px;letter-spacing:.42em;text-transform:uppercase;color:var(--gold);opacity:.9;font-weight:600}
-#title h1{font-family:var(--serif);font-weight:500;font-size:58px;line-height:.95;letter-spacing:.06em;margin:8px 0 4px;
+#title{position:fixed;left:24px;top:24px;width:236px;padding:13px 16px 13px;cursor:pointer;transform-origin:top left;
+  transition:width .35s cubic-bezier(.2,.8,.2,1),padding .35s cubic-bezier(.2,.8,.2,1),border-color .25s}
+#title:hover{border-color:var(--edge-hi)}
+#title:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#title .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#title .chev{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:var(--ink-dim);background:rgba(246,236,217,.06);border:1px solid var(--edge);transition:transform .35s cubic-bezier(.2,.8,.2,1),color .25s}
+#title:hover .chev{color:var(--gold)}
+#title .chev svg{width:12px;height:12px}
+#title .more{display:grid;grid-template-rows:1fr;opacity:1;transition:grid-template-rows .35s cubic-bezier(.2,.8,.2,1),opacity .25s ease}
+#title .more>div{overflow:hidden;min-height:0}
+#title.collapsed{width:142px;padding:8px 10px 8px 15px}
+#title.collapsed h1{font-size:23px}
+#title.collapsed .chev{transform:rotate(180deg)}
+#title.collapsed .more{grid-template-rows:0fr;opacity:0}
+#title .eyebrow{font-size:9px;letter-spacing:.38em;text-transform:uppercase;color:var(--gold);opacity:.9;font-weight:600;margin-top:6px}
+#title h1{font-family:var(--serif);font-weight:500;font-size:34px;line-height:1;letter-spacing:.06em;margin:0;transition:font-size .35s cubic-bezier(.2,.8,.2,1);
   background:linear-gradient(180deg,#fff8ea 10%,#ecd3a4 70%,#c99a55 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 3px 14px rgba(233,184,102,.18))}
 #title .tagline{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--ink-dim)}
-#title .rule{display:flex;align-items:center;gap:10px;margin:14px 0 12px;color:var(--gold);font-size:12px}
+#title .rule{display:flex;align-items:center;gap:10px;margin:8px 0 9px;color:var(--gold);font-size:11px}
 #title .rule span{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--edge-hi),transparent)}
-#title .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
+#title .stats{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px}
 #title .stats div{display:flex;flex-direction:column;gap:2px;min-width:0}
-#title label{font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
-#title b{font-weight:600;font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .4s}
+#title label{font-size:8.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);font-weight:600}
+#title b{font-weight:600;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .4s}
 #title b.flash{color:var(--gold)}
 
 /* ---------- Ship's log ---------- */
@@ -154,7 +167,7 @@ canvas#c:active{cursor:grabbing}
   #sound{bottom:100px;right:14px}
 }
 @media (max-width:820px){
-  #title{transform:scale(.78)}
+  #title{transform:scale(.9)}
   #log{transform:scale(.8);transform-origin:top right}
   #bar{width:calc(100% - 20px);bottom:10px;gap:6px;padding:7px}
   .btn{flex:1;flex-direction:column;gap:5px;padding:9px 4px 12px;text-align:center}
@@ -167,10 +180,11 @@ canvas#c:active{cursor:grabbing}
 }
 @media (max-width:560px){
   #log{display:none}
-  #title{transform:scale(.7)}
+  #title{transform:scale(.85)}
 }
 @media (prefers-reduced-motion:reduce){
   .toast,#intro h2,#intro .bar span{animation:none}
+  #title,#title *{transition:none!important}
 }
 </style>
 <script type="importmap">
@@ -183,10 +197,13 @@ canvas#c:active{cursor:grabbing}
 <div class="grain"></div>
 <div id="tags"></div>
 
-<header id="title" class="panel">
+<header id="title" class="panel" role="button" tabindex="0" aria-expanded="true" aria-controls="titleMore" title="Hide voyage details">
+  <div class="top">
+    <h1>At Sea</h1>
+    <span class="chev" aria-hidden="true"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 6 4.5l3 3"/></svg></span>
+  </div>
+  <div class="more" id="titleMore"><div>
   <div class="eyebrow">A Voyage Without End</div>
-  <h1>At Sea</h1>
-  <div class="tagline">One captain, one husky, and the open horizon.</div>
   <div class="rule"><span></span>&#9875;<span></span></div>
   <div class="stats">
     <div><label>Voyage</label><b id="sDay">Day 1</b></div>
@@ -198,6 +215,7 @@ canvas#c:active{cursor:grabbing}
     <div><label>Catch</label><b id="sFish">0 fish</b></div>
     <div><label>Discoveries</label><b id="sFinds">0 found</b></div>
   </div>
+  </div></div>
 </header>
 
 <aside id="log" class="panel">
@@ -3696,6 +3714,17 @@ const ACTIONS = { d: ['bDay', toggleDay], w: ['bWeather', cycleWeather], f: ['bF
 for (const k in ACTIONS) $(ACTIONS[k][0]).addEventListener('click', () => { sfx.init(); ACTIONS[k][1](); });
 function toggleSound() { sfx.init(); const on = sfx.toggle(); $('sound').classList.toggle('muted', !on); toast(on ? 'Sound on' : 'Sound off'); }
 $('sound').addEventListener('click', toggleSound);
+// title card: click or tap to collapse it to a small badge (remembered per browser)
+const titleEl = $('title');
+function setTitleCollapsed(c) {
+  titleEl.classList.toggle('collapsed', c);
+  titleEl.setAttribute('aria-expanded', String(!c));
+  titleEl.title = c ? 'Show voyage details' : 'Hide voyage details';
+  try { localStorage.setItem('atsea.titleCollapsed', c ? '1' : '0'); } catch (e) { /* storage unavailable */ }
+}
+titleEl.addEventListener('click', () => setTitleCollapsed(!titleEl.classList.contains('collapsed')));
+titleEl.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); titleEl.click(); } });
+try { if (localStorage.getItem('atsea.titleCollapsed') === '1') setTitleCollapsed(true); } catch (e) { /* storage unavailable */ }
 addEventListener('keydown', e => {
   if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
   const k = e.key.toLowerCase();
