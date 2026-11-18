@@ -10,15 +10,20 @@ Open `index.html` in a modern browser (it loads three.js from unpkg, so it needs
 
 | Button | Key | What it does |
 | --- | --- | --- |
-| Day / Night | `D` | The clock runs on its own (a day every 14 minutes); this jumps to the next dusk or dawn over 3 seconds |
+| Day / Night | `D` | The clock runs on its own (a day every 14 minutes by default); this jumps to the next dusk or dawn over 3 seconds |
 | Weather | `W` | Cycles Clear Skies → Partly Cloudy → Full Clouds → Dark Rain Clouds → Raining → Storming → Heavy Storm |
 | Fish | `F` | The captain casts a line (20% chance of a catch, which goes in the bucket) |
 | Camera | `C` | Orbit → Deck View (drag to look around) → Sea Life (follows dolphins, whales, turtles…) → Cinematic |
-| Kraken | `K` | Summons the kraken: tentacles rise around the boat and the captain and Ghost take cover (it also turns up on its own during the day) |
-| Sound | `M` | Toggle the procedural audio |
+| Kraken | `K` | Summons the kraken (it also turns up on its own by day). When it rises, choose `1` offer it a fish, `2` sound the foghorn or `3` hide |
+| Shipwright | `B` | Repaint and dress the boat: name and lettering, hull, stripes, rails, deck, cabin, sails, flag, figurehead, lights, themes |
+| Photo mode | `P` | Hides the interface; pick a filter, pause time, and take a photo (`Space`) |
+| Settings | `O` | Music and effects volume, day length, season, kraken visits, graphics, reduced motion, vibration, new voyage |
+| Sound | `M` | Toggle all audio (music and effects) |
 | Quality | `Q` | Auto / High / Medium / Low graphics (the FPS chip shows the current rate) |
 
-Drag to orbit, scroll to zoom; the camera slowly auto-rotates when idle. Click the captain or Ghost to see what they're up to. Click the title card to collapse it to a small badge (it remembers your choice).
+Drag to orbit, scroll to zoom; the camera slowly auto-rotates when idle. Click the captain or Ghost to see what they're up to, or click any cabin window to peek inside (arrow keys move between windows, `Esc` steps back). Click the title card to collapse it. On touch screens, swipe left or right with two fingers to change camera, or up for photo mode.
+
+Your voyage (day, catch, treasure, discoveries, log) and your boat's look are saved in the browser.
 
 ## On the voyage
 
@@ -28,3 +33,11 @@ Drag to orbit, scroll to zoom; the camera slowly auto-rotates when idle. Click t
 - **Weather:** rain splashes on the deck, heavy seas break over the bow, lightning lights up the clouds and fog banks roll in.
 - **Animation:** the crew lean against the boat's roll, look at whatever is happening, fidget, and talk. The captain puffs his pipe; Ghost's ears and tail move with his mood.
 - **Crew life:** the captain steers, trims sails, fishes, drinks coffee, coils rope, bails in storms, writes the log, plays harmonica before bed and wears a yellow raincoat in the rain. Ghost fetches, howls at the moon, shakes off the rain, wears a life vest in storms and occasionally steals a fish.
+- **The cabin:** a walk-in room below the deckhouse with a bunk, chart table, coal stove, Ghost's bed, a swinging lantern and a clock that keeps ship's time. At night the captain writes the log, reads or warms up by the stove, then sleeps in his bunk while Ghost curls up by the fire.
+- **Harbour islands:** islands with a jetty, cottages and villagers. The boat ties up, and the captain and Ghost go ashore to chat with the locals (who give bread, fish and carrots), cook at a beach campfire, nap in a hammock and dig up buried treasure.
+- **Crew needs:** Fed and Rest meters for both. A hungry captain cooks in the galley and the two of them eat together on deck; tired crew nap.
+- **Seasons:** spring, summer, autumn and winter turn every two days (or hold one in Settings), with snow, ice floes, seasonal island trees and a winter scarf.
+- **Sky:** moon phases, rainbows after rain, shooting stars, the aurora and glowing plankton.
+- **Ships and sea life:** a pirate ship, a fishing trawler and a ghost ship pass close by, and their crews wave back when the captain hails them. Orcas, manta rays, sea otters and a rare sea serpent join the dolphins and whales.
+- **Storms:** green water sweeps the deck, the mainsail is reefed in a gale and lightning sometimes strikes close aboard.
+- **Music:** a procedural sea shanty by day, soft pads at night, a jig in harbour and drums when the kraken rises.

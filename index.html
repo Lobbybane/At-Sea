@@ -211,6 +211,41 @@ body.yard #log{opacity:0;visibility:hidden}
 .ctime{height:2px;background:rgba(246,236,217,.12);border-radius:2px;margin-top:11px;overflow:hidden}
 .ctime i{display:block;height:100%;background:var(--gold);transform-origin:left}
 @media (max-width:620px){.copts{grid-template-columns:1fr}#choice{bottom:96px}#choice .k{display:none}}
+#opts{position:fixed;right:24px;top:24px;bottom:176px;width:356px;display:flex;flex-direction:column;z-index:6;overflow:hidden}
+#opts[hidden],#shot[hidden]{display:none}
+#opts .yhead{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 18px 12px;border-bottom:1px solid var(--edge)}
+#opts h3{font-family:var(--serif);font-weight:500;font-size:25px;letter-spacing:.04em;color:#f3e3c4;margin:0}
+#opts .yhead p{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-top:4px}
+#opts .ybody{flex:1;overflow-y:auto;padding:16px 18px 20px;display:flex;flex-direction:column;gap:17px;scrollbar-width:thin}
+#opts .yfoot{display:flex;padding:12px 18px 16px;border-top:1px solid var(--edge)}
+.yrange{width:100%;accent-color:var(--gold)}
+.onote{font-size:12px;color:var(--ink-dim);line-height:1.4}
+body.opting #log{opacity:0;visibility:hidden}
+#photoBar{position:fixed;left:50%;bottom:22px;translate:-50% 0;display:none;flex-direction:column;gap:10px;padding:12px 14px;z-index:8;width:min(640px,calc(100% - 20px))}
+#photoBar .prow,#shot .prow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#photoBar .ybtn{flex:none;padding:10px 16px}
+#photoBar #phSnap{margin-left:auto}
+body.photo #photoBar{display:flex}
+body.photo #bar,body.photo #log,body.photo #title,body.photo #hint,body.photo #tools,body.photo #toasts,body.photo #crewCard,body.photo #says,body.photo #choice{opacity:0;visibility:hidden}
+#photoFx{position:fixed;inset:0;pointer-events:none;z-index:2}
+#photoFx.vig{background:radial-gradient(ellipse 75% 70% at 50% 50%,transparent 55%,rgba(0,0,0,.6) 100%)}
+#photoFx.grain::after{content:"";position:absolute;inset:-50%;opacity:.16;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:9}
+#flash.go{animation:flashgo .45s ease-out}
+@keyframes flashgo{from{opacity:.85}to{opacity:0}}
+#shot{position:fixed;left:50%;top:50%;translate:-50% -50%;width:min(560px,calc(100% - 24px));padding:12px;z-index:9;display:flex;flex-direction:column;gap:10px}
+#shot img{width:100%;border-radius:10px;display:block}
+#shot a.ybtn{text-decoration:none;text-align:center}
+@media (max-width:820px){#opts{left:10px;right:10px;top:auto;bottom:10px;width:auto;height:min(68vh,600px)} body.opting #bar,body.opting #tools{opacity:0;visibility:hidden} #photoBar{bottom:10px}}
+@media (max-width:600px) and (orientation:portrait){
+  #log{display:flex !important;width:205px;padding:10px 12px;gap:8px;transform:scale(.82);transform-origin:top right;right:10px;top:12px}
+  #log .entry,#log .head{display:none}
+  .logrow p{font-size:13px}
+  #title{left:10px;top:12px}
+  #tools{gap:6px}
+  #tools .tool{width:38px;height:38px}
+  #perf em{display:none}
+}
 #crewCard{position:fixed;left:0;top:0;translate:-50% -100%;min-width:180px;max-width:240px;padding:10px 14px 11px;border-radius:14px;pointer-events:none;z-index:6;transform-origin:50% 100%;animation:cardin .35s cubic-bezier(.2,.9,.25,1.2) both}
 @keyframes cardin{from{opacity:0;scale:.9}to{opacity:1;scale:1}}
 #crewCard label{display:block;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);font-weight:700}
@@ -304,6 +339,8 @@ body.yard #log{opacity:0;visibility:hidden}
 
 <div id="tools">
 <button id="perf" class="panel" title="Graphics quality (Q) — click to change"><i id="fpsDot"></i><span id="fpsTxt">-- fps</span><em id="qTxt">Auto</em></button>
+<button id="bPhoto" class="panel tool" title="Photo mode (P)" aria-label="Photo mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5 15.5 10M20.5 12l-7 1M16 19.5l-4.5-5.5M7 19.5l2.5-6.5M3.5 11l6.5-1M8 4.5l3.5 6"/></svg></button>
+<button id="bOpts" class="panel tool" title="Settings (O)" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
 <button id="bYard" class="panel tool" title="Shipwright — customise the boat (B)" aria-label="Open the Shipwright"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.4 3.6a2.1 2.1 0 0 1 3 3L12 16l-4 1 1-4z"/><path d="M3 21c1.5-.3 3-1.4 3-3.2 0-1.3 1-2.3 2.3-2.3"/></svg></button>
 <button id="sound" class="panel tool" title="Toggle sound (M)" aria-label="Toggle sound">
   <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
@@ -318,6 +355,15 @@ body.yard #log{opacity:0;visibility:hidden}
   <div class="ybody" id="yardBody"></div>
   <div class="yfoot"><button id="yardRandom" class="ybtn gold">Surprise me</button><button id="yardReset" class="ybtn">Reset</button></div>
 </aside>
+<aside id="opts" class="panel" hidden aria-label="Settings">
+  <div class="yhead"><div><h3>Settings</h3><p>Sound, time, the sea and the screen</p></div><button id="optsClose" class="xbtn" aria-label="Close settings">&times;</button></div>
+  <div class="ybody" id="optsBody"></div>
+  <div class="yfoot"><button id="optsNew" class="ybtn">Start a new voyage</button></div>
+</aside>
+<div id="photoFx"></div>
+<div id="flash"></div>
+<div id="photoBar" class="panel"><div class="chips" id="photoFilters"></div><div class="prow"><button id="phVig" class="chip">Vignette</button><button id="phPause" class="chip">Pause time</button><button id="phSnap" class="ybtn gold">Take photo</button><button id="phExit" class="ybtn">Done</button></div></div>
+<div id="shot" class="panel" hidden><img id="shotImg" alt="Your photo"><div class="prow"><a id="shotSave" class="ybtn gold" href="#" download="at-sea.png">Save photo</a><button id="shotClose" class="ybtn">Keep shooting</button></div><p class="onote">If saving is blocked here, right-click or long-press the picture to keep it.</p></div>
 <div id="peek" hidden><div class="frame"></div><div class="pbar panel"><button id="pkPrev" aria-label="Previous window">&#8249;</button><span id="pkName">Porthole</span><button id="pkNext" aria-label="Next window">&#8250;</button><button id="pkBack">Back on deck</button></div></div>
 <div id="says"></div>
 <div id="choice" class="panel" hidden role="dialog" aria-label="The kraken rises">
@@ -331,7 +377,7 @@ body.yard #log{opacity:0;visibility:hidden}
 </div>
 <div id="crewCard" class="panel" hidden><label id="ccName">The Captain</label><p id="ccTask">Taking the helm</p><small id="ccHint">Click again to wave</small></div>
 
-<div id="hint"><b>Drag</b> to orbit &nbsp;&middot;&nbsp; <b>Scroll</b> to zoom &nbsp;&middot;&nbsp; <b>Click</b> the crew<br><b>D W F C K</b> shortcuts &nbsp;&middot;&nbsp; <b>B</b> shipwright &nbsp;&middot;&nbsp; <b>M</b> sound &nbsp;&middot;&nbsp; <b>Q</b> quality</div>
+<div id="hint"><b>Drag</b> to orbit &nbsp;&middot;&nbsp; <b>Scroll</b> to zoom &nbsp;&middot;&nbsp; <b>Click</b> the crew<br><b>D W F C K</b> shortcuts &nbsp;&middot;&nbsp; <b>B</b> shipwright &nbsp;&middot;&nbsp; <b>P</b> photo &nbsp;&middot;&nbsp; <b>O</b> settings &nbsp;&middot;&nbsp; <b>M</b> sound &nbsp;&middot;&nbsp; <b>Q</b> quality</div>
 
 <nav id="bar" class="panel" aria-label="Controls">
   <button class="btn" id="bDay" aria-keyshortcuts="D">
@@ -440,7 +486,9 @@ controls.addEventListener('end', () => { interacting = false; lastInteract = clo
 renderer.domElement.addEventListener('wheel', () => { lastInteract = clock.elapsedTime; controls.autoRotate = false; }, { passive: true });
 
 addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  camera.aspect = innerWidth / innerHeight;
+  if (camMode === 0 && !peek.on) camera.fov = camera.aspect < 0.8 ? 62 : 42;
+  camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
   particleUniforms.uScale.value = renderer.getPixelRatio() * innerHeight * 0.5;
 });
@@ -744,7 +792,7 @@ function updateLightning(dt) {
     if (boltLife <= 0) bolt.visible = false;
   }
   world.flash = Math.max(0, world.flash - dt * 2.6);
-  const fl = world.flash > 0 ? world.flash * (0.55 + 0.45 * Math.sin(world.time * 70)) : 0;
+  const fl = world.flash > 0 ? world.flash * (world.reduced ? 0.25 : 1) * (0.55 + 0.45 * Math.sin(world.time * 70)) : 0;
   flashLight.intensity = fl * 3.2;
   skyU.uFlash.value = fl * 0.5;
 }
@@ -2604,7 +2652,7 @@ function* landFish(r) {
   for (let i = 0; i < 10; i++) emit(_v1.x, _v1.y + 0.3, _v1.z, rand(-0.6, 0.6), rand(1, 2.2), rand(-0.6, 0.6), rand(0.3, 0.6), 0.06);
   sfx.plop(); sfx.chime();
   const name = FISH_NAMES[caughtIdx % FISH_NAMES.length];
-  toast(`Caught a <b>${name}</b>! &nbsp;${world.fishCount} in the bucket`);
+  toast(`Caught a <b>${name}</b>! &nbsp;${world.fishCount} in the bucket`); buzz(25);
   flashStat('sFish');
   yield* wait(0.3);
   cap.pose = 'cheer'; capSay(`Proud of his ${name.toLowerCase()}`);
@@ -2960,9 +3008,10 @@ const sfx = (() => {
     if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
     ctx = new AC();
-    master = gain(muted ? 0 : 0.9);
+    master = gain(muted ? 0 : 0.9 * vol.fx);
     const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 3;
     master.connect(comp).connect(ctx.destination);
+    initMusic(comp);
     noise = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate);
     const d = noise.getChannelData(0); let b = 0;
     for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; b = (b + 0.02 * w) / 1.02; d[i] = w * 0.55 + b * 3.0; }
@@ -2974,6 +3023,7 @@ const sfx = (() => {
   }
   function update(t) {
     if (!ctx) return;
+    updateMusic();
     const now = ctx.currentTime, w = world.w;
     const swell = 0.62 + 0.38 * Math.sin(t * 0.55) * Math.sin(t * 0.23 + 1);
     amb.sea.g.gain.setTargetAtTime((0.1 + w.waves * 0.16) * swell, now, 0.3);
@@ -3000,10 +3050,76 @@ const sfx = (() => {
     g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     o.start(t0); o.stop(t0 + dur + 0.05);
   }
+  /* ---------- procedural music: a shanty by day, pads at night, a jig in harbour, drums for the kraken ---------- */
+  const vol = { fx: 1, music: 0.5 };
+  let musicBus = null, mStep = 0, mNext = 0, mood = 'day';
+  const moods = {}, STEP = 0.22, mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  const DAY = { mel: [[69, 2], [74, 1], [74, 2], [72, 1], [71, 2], [67, 1], [67, 2], [69, 1], [69, 2], [72, 1], [72, 2], [74, 1], [69, 3], [0, 3], [69, 2], [74, 1], [74, 2], [76, 1], [77, 2], [76, 1], [74, 2], [72, 1], [71, 2], [67, 1], [69, 2], [71, 1], [74, 3], [0, 3]],
+    bass: [50, 48, 53, 45, 50, 46, 43, 50], minor: [1, 0, 0, 1, 1, 0, 0, 1] };
+  const JIG = { mel: [[67, 1], [71, 1], [74, 1], [79, 2], [78, 1], [76, 1], [74, 1], [71, 1], [72, 2], [71, 1], [69, 1], [71, 1], [72, 1], [74, 3], [67, 1], [71, 1], [74, 1], [79, 2], [81, 1], [79, 1], [78, 1], [76, 1], [74, 2], [72, 1], [71, 2], [69, 1], [67, 3]],
+    bass: [43, 43, 48, 50, 43, 43, 48, 43], minor: [0, 0, 0, 0, 0, 0, 0, 0] };
+  const step2note = T => { const map = {}; let s = 0; for (const [m, d] of T.mel) { if (m) map[s] = [m, d]; s += d; } T.map = map; T.len = Math.max(48, Math.ceil(s / 6) * 6); };
+  step2note(DAY); step2note(JIG);
+  function mnote(md, type, f, t0, dur, v, fl, att = 0.02, det = 0) {
+    const o = ctx.createOscillator(), g = gain(0); o.type = type; o.frequency.value = f; o.detune.value = det;
+    let out = o; if (fl) { const b = filt(fl[0], fl[1], fl[2] || 1); o.connect(b); out = b; }
+    out.connect(g).connect(moods[md]);
+    const a = Math.min(att, dur * 0.6);
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(v, t0 + a); g.gain.setValueAtTime(v, t0 + Math.max(a, dur * 0.7)); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.start(t0); o.stop(t0 + dur + 0.05);
+  }
+  function drum(md, t0, f0, v, dur = 0.3) { const o = ctx.createOscillator(), g = gain(0); o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f0 * 0.4, t0 + dur); o.connect(g).connect(moods[md]); g.gain.setValueAtTime(v, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.start(t0); o.stop(t0 + dur + 0.05); }
+  function hit(md, t0, type, f, v, dur) { const n = nodeNoise(false), b = filt(type, f, 0.8), g = gain(0); n.connect(b).connect(g).connect(moods[md]); g.gain.setValueAtTime(v, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); n.start(t0, rand(0, 1.5)); n.stop(t0 + dur + 0.05); }
+  function tune(md, T, t0, s, voice) {
+    const k = s % T.len, bar = (k / 6) | 0, pos = k % 6, root = T.bass[bar % T.bass.length], third = T.minor[bar % 8] ? 3 : 4;
+    if (pos === 0 || pos === 3) {
+      const r = pos ? root + 7 : root;
+      mnote(md, 'triangle', mtof(r), t0, STEP * 2.8, 0.11, ['lowpass', 900]);
+      for (const iv of [12, 12 + third, 19]) for (const dt2 of [-7, 7]) mnote(md, 'sawtooth', mtof(root + iv), t0, STEP * 0.9, 0.012, ['lowpass', 1500], 0.01, dt2);
+      hit(md, t0, pos ? 'highpass' : 'lowpass', pos ? 6000 : 160, pos ? 0.02 : 0.08, pos ? 0.06 : 0.18);
+    }
+    const n = T.map[k];
+    if (n) {
+      const [m, d] = n, dur = d * STEP * 0.95;
+      if (voice === 'fiddle') { mnote(md, 'sawtooth', mtof(m), t0, dur, 0.04, ['bandpass', 2200, 0.9], 0.04, rand(-6, 6)); mnote(md, 'triangle', mtof(m + 12), t0, dur, 0.012, null, 0.04); }
+      else for (const dt2 of [-8, 8]) mnote(md, 'sawtooth', mtof(m), t0, dur, 0.028, ['bandpass', 1300, 0.8], 0.03, dt2);
+    }
+  }
+  const PADS = [[57, 60, 64], [53, 57, 60], [48, 55, 64], [55, 59, 62]], PENTA = [69, 72, 74, 76, 79, 81, 84];
+  function scheduleStep(t0, s) {
+    if (mood === 'day') tune('day', DAY, t0, s, 'accordion');
+    else if (mood === 'harbour') tune('harbour', JIG, t0, s, 'fiddle');
+    else if (mood === 'night') {
+      if (s % 16 === 0) for (const m of PADS[(s / 16 | 0) % 4]) { mnote('night', 'sine', mtof(m), t0, STEP * 17, 0.032, null, 1.4); mnote('night', 'triangle', mtof(m - 12), t0, STEP * 17, 0.014, ['lowpass', 600], 1.6); }
+      if (s % 2 === 0 && Math.random() < 0.28) mnote('night', 'sine', mtof(pick(PENTA)), t0, 1.6, 0.022, null, 0.01);
+    } else if (mood === 'kraken') {
+      const p = s % 12;
+      if ([0, 3, 6, 7, 9].includes(p)) drum('kraken', t0, p === 0 ? 95 : 140, p === 0 ? 0.35 : 0.2);
+      if (p === 0) { mnote('kraken', 'sawtooth', 41.2, t0, STEP * 12, 0.06, ['lowpass', 260], 0.3); mnote('kraken', 'sawtooth', 43.65, t0, STEP * 12, 0.04, ['lowpass', 260], 0.3); }
+      if (p === 6) for (const f of [659, 698]) mnote('kraken', 'sawtooth', f, t0, STEP * 6, 0.008, ['bandpass', 1800, 2], 0.4);
+    }
+  }
+  function initMusic(comp) {
+    musicBus = gain(muted ? 0 : vol.music * 0.6); musicBus.connect(comp);
+    for (const m of ['day', 'night', 'harbour', 'kraken']) { moods[m] = gain(m === mood ? 1 : 0); moods[m].connect(musicBus); }
+    mNext = ctx.currentTime + 0.3;
+  }
+  function updateMusic() {
+    if (!musicBus) return;
+    const now = ctx.currentTime;
+    for (const m in moods) moods[m].gain.setTargetAtTime(m === mood ? 1 : 0, now, 1.2);
+    if (mNext < now) mNext = now + 0.05;
+    if (vol.music <= 0 || muted) { mNext = now + 0.1; return; }
+    while (mNext < now + 0.45) { scheduleStep(mNext, mStep++); mNext += STEP; }
+  }
+  function applyVol() { if (!ctx) return; master.gain.setTargetAtTime(muted ? 0 : 0.9 * vol.fx, ctx.currentTime, 0.1); if (musicBus) musicBus.gain.setTargetAtTime(muted ? 0 : vol.music * 0.6, ctx.currentTime, 0.2); }
   return {
     init, update,
     get on() { return !muted; },
-    toggle() { muted = !muted; if (master) master.gain.setTargetAtTime(muted ? 0 : 0.9, ctx.currentTime, 0.1); return !muted; },
+    toggle() { muted = !muted; applyVol(); return !muted; },
+    setVolumes(fx, mus) { vol.fx = fx; vol.music = mus; applyVol(); },
+    setMood(m) { mood = m; },
+    shutter() { burst(0.07, 'highpass', 3000, 0.7, 0.14); burst(0.05, 'bandpass', 1400, 1, 0.1, 0.002, 0.09); },
     splash(p, dist) { const v = 0.22 * p * clamp(1 - dist / 70, 0.05, 1); burst(0.35 + p * 0.3, 'bandpass', 900 + Math.random() * 500, 0.8, v); burst(0.6, 'lowpass', 400, 0.7, v * 0.7, 0.02); },
     plop() { tone('sine', 520, 140, 0.18, 0.18); burst(0.25, 'bandpass', 1400, 1, 0.08); },
     thunder(dist) {
@@ -3169,11 +3285,11 @@ function updateBoat(dt, t) {
       boat.localToWorld(_bp.set(rand(1.5, 4.2), 0.3, rand(0.5, 1.2) * (Math.random() < 0.5 ? -1 : 1)));
       emit(_bp.x, _bp.y, _bp.z, rand(-2, 1) - world.speed * 0.4, rand(2, 5) * p, Math.sign(_bp.z - PH.sz) * rand(1, 3.5), rand(0.6, 1.1), rand(0.15, 0.35));
     }
-    sfx.splash(1.4 * p, camera.position.distanceTo(boat.position)); sfx.creak(0.8 + p);
+    sfx.splash(1.4 * p, camera.position.distanceTo(boat.position)); sfx.creak(0.8 + p); buzz(Math.round(20 + 40 * p));
     world.shake = Math.max(world.shake || 0, p);
   }
   world.shake = Math.max(0, (world.shake || 0) - dt * 2.5);
-  const sh = (world.shake || 0) * 0.02;
+  const sh = (world.shake || 0) * 0.02 * (world.reduced ? 0.12 : 1);
   boat.position.set(PH.sx, PH.y, PH.sz);
   boat.rotation.set(PH.roll + Math.sin(t * 47) * sh, PH.yaw + Math.sin(t * 0.07) * 0.05, PH.pitch + Math.sin(t * 53) * sh);
   bs.heave = PH.y + 0.14 * BOAT_S; bs.pitch = PH.pitch; bs.roll = PH.roll;
@@ -3240,7 +3356,7 @@ function updateEnv(dt, t) {
     const e = A.t * A.t * (3 - 2 * A.t), want = A.span * e;
     advanceClock(want - A.cur); A.cur = want;
     if (A.t >= 1) world.todAnim = null;
-  } else advanceClock(dt * TOD_RATE);
+  } else advanceClock(dt * (world.todRate || TOD_RATE));
   const nightNow = isNightAt(world.todAnim ? world.todAnim.target : world.tod);
   if (nightNow !== world.isNight) { world.isNight = nightNow; onNightChange(); }
   const sunEl = Math.sin((world.tod - 6) / 24 * TAU) * 0.95;
@@ -4044,8 +4160,8 @@ function* taskSpotDest(d) {
   cap.beltGlass.visible = false; cap.glass.visible = true; cap.sweep = 0; cap.pose = 'spyglass';
   for (let k = 0; k < 3.2; k += DT) { cap.targetHeading = Math.atan2(d.m.position.x - cap.pos.x, d.m.position.z - cap.pos.y); yield; }
   d.spotted = true;
-  capSay(d.K.say + '!');
-  discover(d.K.name, d.K.note);
+  capSay(d.I ? `Land ho! ${d.I.name}, with a jetty and cottages!` : d.K.say + '!');
+  if (!d.I) discover(d.K.name, d.K.note);
   dogEvent('dolphins', d.side, d.kind === 'ship' ? 'the schooner' : 'the horizon');
   yield* wait(1.6);
   cap.glass.visible = false; cap.beltGlass.visible = true; cap.sweep = undefined;
@@ -4194,11 +4310,12 @@ function setCamMode(i) {
     controls.target.set(0, 3.2, 0);
     const d = camera.position.distanceTo(controls.target);
     if (d < 11 || d > 75 || camera.position.y < 2.5) camera.position.set(17.5, 10.5, 18.8);
+    if (camera.aspect < 0.8) camera.fov = 62;
     lastInteract = world.time;
   }
   if (camMode === 1) { deckLook.yaw = 0; deckLook.pitch = -0.24; }
   if (camMode === 3) cine = { i: -1, t: 99 };
-  camera.fov = camMode === 1 ? 60 : 42; camera.updateProjectionMatrix();
+  camera.fov = camMode === 1 ? 60 : camera.aspect < 0.8 ? 62 : 42; camera.updateProjectionMatrix();
   toast(`Camera: <b>${CAM_MODES[camMode]}</b>`);
 }
 function seaLifeTarget(out) {
@@ -4249,7 +4366,7 @@ function updateCamera(dt, t) {
     _cp.y = lerp(ey + boat.position.y, _cp.y, 0.65);
     camera.position.copy(_cp);
     _ct.set(Math.cos(deckLook.pitch) * Math.cos(deckLook.yaw), Math.sin(deckLook.pitch), -Math.cos(deckLook.pitch) * Math.sin(deckLook.yaw));
-    _cq.copy(_qI).slerp(boat.quaternion, 0.6); _ct.applyQuaternion(_cq);
+    _cq.copy(_qI).slerp(boat.quaternion, world.reduced ? 0.15 : 0.6); _ct.applyQuaternion(_cq);
     camera.up.set(0, 1, 0).applyQuaternion(_cq);
     camera.lookAt(_ct.add(_cp));
     camera.up.set(0, 1, 0);
@@ -4528,8 +4645,8 @@ function poseTentacle(T, t, rise, slam) {
 system('kraken', (dt, t) => {
   if (!KR.active) {
     if (t > KR.next) {
-      KR.next = t + rand(170, 330);
-      if (world.day > 0.75 && !world.isNight && world.w.waves < 1.7 && !cap.fishing && harbour.phase === 'none') spawnKraken();
+      KR.next = t + rand(170, 330) * Math.min(krakenFactor(), 5);
+      if (world.day > 0.75 && !world.isNight && world.w.waves < 1.7 && !cap.fishing && harbour.phase === 'none' && settings.kraken !== 'never') spawnKraken();
     }
     return;
   }
@@ -4547,7 +4664,7 @@ system('kraken', (dt, t) => {
       T.slammed = true;
       const tip = T.pts[KR_RINGS - 4];
       splash(tip.x, tip.z, 2.6); splash(tip.x * 0.9, tip.z * 0.9, 1.6);
-      sfx.thunder(160); world.shake = Math.max(world.shake || 0, 0.8);
+      sfx.thunder(160); world.shake = Math.max(world.shake || 0, 0.8); buzz([70, 40, 90]);
       PH.vy += 0.9; PH.vr += 0.25 * (Math.random() < 0.5 ? -1 : 1);       // the swell rocks the boat
     }
     for (let j = 0; j < KR_SUCK; j++) {
@@ -5209,6 +5326,7 @@ $('yardBody').addEventListener('click', e => {
 $('yardBody').addEventListener('input', e => { if (e.target.type === 'color') { Object.assign(look, { [e.target.dataset.k]: e.target.value }); applyLook(look); saveLook(); } });
 $('yardBody').addEventListener('change', e => { if (e.target.type === 'color') syncYard(); });
 function openYard(on = $('yard').hidden) {
+  if (on && !$('opts').hidden) openOpts(false);
   $('yard').hidden = !on; document.body.classList.toggle('yard', on); $('bYard').classList.toggle('on', on);
   if (on) { renderYard(); if (peek.on) exitPeek(); }
 }
@@ -5792,7 +5910,7 @@ function* huntTreasure(I) {
   for (let k = 0; k < 1.1; k += DT) { C2.lid.rotation.x = -1.9 * smooth(k / 1.1); yield; }
   C2.found = true; sfx.chime();
   for (let i = 0; i < 40; i++) { C2.g.getWorldPosition(_v1); emit(_v1.x + rand(-0.3, 0.3), _v1.y + 0.5, _v1.z + rand(-0.3, 0.3), rand(-0.4, 0.4), rand(1, 2.4), rand(-0.4, 0.4), rand(0.8, 1.4), rand(0.06, 0.1), 'rise', [1, 0.85, 0.3]); }
-  toast(`<b>Buried treasure</b> on ${I.name}!`);
+  toast(`<b>Buried treasure</b> on ${I.name}!`); buzz([30, 40, 30, 40, 60]);
   discover(`${I.name} treasure`, `Dug up a chest of old gold on ${I.name}. Ghost found the spot — good boy.`);
   cap.pose = 'cheer'; capSay('Gold! Pieces of eight!'); yield* wait(2);
   for (let k = 0; k < 0.7; k += DT) { C2.lid.rotation.x = -1.9 * (1 - smooth(k / 0.7)); yield; }
@@ -6725,7 +6843,7 @@ system('stormDrama', (dt, t) => {
   if (storm.washT < 0 && storm.cool < 0 && w.waves > 1.35 && PH.pitch < -0.18 && PH.vp < 0) {
     storm.washT = 0; storm.cool = rand(9, 18);
     if (!storm.washSeen || Math.random() < 0.3) { storm.washSeen = true; toast('A green wave crashes over the bow!'); }
-    sfx.splash(1.6, 4); world.shake = Math.max(world.shake || 0, 0.45);
+    sfx.splash(1.6, 4); world.shake = Math.max(world.shake || 0, 0.45); buzz(60);
     if (!dog.busy && !dog.ashore && !dog.inside && !dog.sleeping && Math.random() < 0.5) setTimeout(() => { if (!dog.busy) dogCommand(dogShake()); }, 1800);
   }
   if (storm.washT >= 0) {
@@ -6739,11 +6857,151 @@ system('stormDrama', (dt, t) => {
 });
 function nearStrike(x, z) {
   splash(x, z, 3.2); for (let i = 0; i < 60; i++) emit(x + rand(-1, 1), 0.3, z + rand(-1, 1), rand(-1, 1), rand(1, 3), rand(-1, 1), rand(2, 3.5), rand(0.4, 0.9), 'rise', [0.85, 0.88, 0.95]);
-  world.shake = Math.max(world.shake || 0, 0.7); world.flash = 1.6;
+  world.shake = Math.max(world.shake || 0, 0.7); world.flash = 1.6; buzz([60, 30, 120]);
   toast('<b>Lightning</b> strikes the sea close aboard!');
   if (!cap.busyBrace && !cap.fishing && !shoreBlocked() && !cap.inside && !cap.sleeping && !KR.active) { cap.busyBrace = true; const prev = cap.pose; cap.pose = 'scared'; setTimeout(() => { cap.busyBrace = false; if (cap.pose === 'scared' && !KR.active) cap.pose = prev === 'scared' ? 'idle' : prev; }, 1200); }
   if (!dog.busy && !dog.sleeping && !dog.inside && !dog.ashore) { dog.barkT = 0.3; sfx.whimper(); }
 }
+
+/* =====================================================================
+   Settings, photo mode, saved voyages, haptics and touch gestures
+   ===================================================================== */
+const SETTINGS_KEY = 'atsea.settings', SAVE_KEY = 'atsea.voyage';
+const settings = { music: 0.5, fx: 1, dayLen: 14, kraken: 'normal', reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, haptics: true, season: 'auto' };
+try { Object.assign(settings, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')); } catch (e) { /* storage unavailable */ }
+const KRAKEN_F = { never: Infinity, rare: 2.2, normal: 1, often: 0.45 };
+const krakenFactor = () => KRAKEN_F[settings.kraken] ?? 1;
+function applySettings(changed) {
+  sfx.setVolumes(settings.fx, settings.music);
+  world.todRate = 24 / (settings.dayLen * 60);
+  world.reduced = !!settings.reduced;
+  controls.autoRotateSpeed = world.reduced ? 0.12 : 0.32;
+  world.seasonMode = settings.season;
+  if (changed === 'kraken' && !KR.active) KR.next = world.time + rand(60, 120) * krakenFactor();
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* storage unavailable */ }
+}
+const buzz = p => { if (settings.haptics && navigator.vibrate) try { navigator.vibrate(p); } catch (e) { /* not allowed */ } };
+const OPT_ROWS = [
+  ['music', 'Music', 'range'], ['fx', 'Sound effects', 'range'],
+  ['dayLen', 'Length of a day', 'chips', [[6, '6 min'], [10, '10 min'], [14, '14 min'], [20, '20 min'], [30, '30 min']]],
+  ['season', 'Season', 'chips', [['auto', 'Turning'], ['spring', 'Spring'], ['summer', 'Summer'], ['autumn', 'Autumn'], ['winter', 'Winter']]],
+  ['kraken', 'Kraken visits', 'chips', [['never', 'Never'], ['rare', 'Rare'], ['normal', 'Now and then'], ['often', 'Often']]],
+  ['quality', 'Graphics', 'chips', [['auto', 'Auto'], [2, 'High'], [1, 'Medium'], [0, 'Low']]],
+  ['reduced', 'Reduced motion (no camera shake or flashes)', 'toggle'],
+  ['haptics', 'Vibrate on big moments (phones)', 'toggle'],
+];
+function renderOpts() {
+  const q = perf.auto ? 'auto' : perf.level;
+  $('optsBody').innerHTML = OPT_ROWS.filter(r => r[0] !== 'haptics' || navigator.vibrate).map(([k, label, type, opts]) => {
+    const v = k === 'quality' ? q : settings[k];
+    if (type === 'range') return `<div class="yrow"><label for="o_${k}">${label} <em>${Math.round(v * 100)}%</em></label><input class="yrange" type="range" id="o_${k}" data-k="${k}" min="0" max="1" step="0.05" value="${v}"></div>`;
+    if (type === 'toggle') return `<div class="yrow inline"><label>${label}</label><button class="tg${v ? ' on' : ''}" role="switch" aria-checked="${!!v}" data-k="${k}" data-t="toggle"><i></i></button></div>`;
+    return `<div class="yrow"><label>${label}</label><div class="chips">${opts.map(([val, name]) => `<button class="chip${String(val) === String(v) ? ' on' : ''}" data-k="${k}" data-v="${val}">${name}</button>`).join('')}</div></div>`;
+  }).join('') + `<div class="yrow"><label>Voyage</label><p class="onote">Day ${world.dayNum} · ${world.discoveries.length} discoveries · ${world.treasure} chest${world.treasure === 1 ? '' : 's'} · saved in this browser</p></div>`;
+}
+$('optsBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-k]'); if (!b || b.tagName === 'INPUT') return;
+  const k = b.dataset.k;
+  if (b.dataset.t === 'toggle') settings[k] = !settings[k];
+  else if (k === 'quality') { if (b.dataset.v === 'auto') { perf.auto = true; perf.hist = []; } else { perf.auto = false; applyQuality(+b.dataset.v); } updatePerfChip(); }
+  else settings[k] = k === 'dayLen' ? +b.dataset.v : b.dataset.v;
+  applySettings(k); renderOpts(); sfx.plink && sfx.plink();
+});
+$('optsBody').addEventListener('input', e => { if (e.target.type !== 'range') return; settings[e.target.dataset.k] = +e.target.value; applySettings(e.target.dataset.k); e.target.previousElementSibling.querySelector('em').textContent = `${Math.round(e.target.value * 100)}%`; });
+function openOpts(on = $('opts').hidden) {
+  if (on && !$('yard').hidden) openYard(false);
+  $('opts').hidden = !on; document.body.classList.toggle('opting', on); $('bOpts').classList.toggle('on', on);
+  if (on) renderOpts();
+}
+$('bOpts').addEventListener('click', () => { sfx.init(); openOpts(); });
+$('optsClose').addEventListener('click', () => openOpts(false));
+$('optsNew').addEventListener('click', () => {
+  if (!confirm('Start a new voyage? Your day count, catch, treasure and discoveries will be cleared. Your boat’s paint job stays.')) return;
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* storage unavailable */ }
+  world.noSave = true; location.reload();
+});
+
+/* ---------- saved voyages ---------- */
+function saveVoyage() {
+  if (world.noSave) return;
+  const data = { v: 1, dayNum: world.dayNum, tod: world.tod, offset: world.offset, fishCount: world.fishCount, treasure: world.treasure, pantry: world.pantry,
+    discoveries: world.discoveries, log: world.logEntries.slice(-40), weatherIdx: world.weatherIdx, needs: { cap: cap.needs, dog: dog.needs }, krakenSeen: KR.seen };
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) { /* storage unavailable */ }
+}
+function loadVoyage() {
+  let d = null; try { d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { /* storage unavailable */ }
+  if (!d || d.v !== 1) return false;
+  Object.assign(world, { dayNum: d.dayNum || 1, tod: d.tod ?? 9.5, offset: d.offset || 0, fishCount: Math.min(d.fishCount || 0, 6), treasure: d.treasure || 0, discoveries: d.discoveries || [], logEntries: d.log || [] });
+  world.pantry = { bread: 0, veg: 0, ...(d.pantry || {}) };
+  world.weatherIdx = clamp(d.weatherIdx || 0, 0, WEATHER.length - 1); Object.assign(world.w, WEATHER[world.weatherIdx]);
+  if (d.needs) { Object.assign(cap.needs, d.needs.cap); Object.assign(dog.needs, d.needs.dog); }
+  KR.seen = !!d.krakenSeen;
+  gear.bucketFish.forEach((f, i) => f.visible = i < world.fishCount);
+  if (world.treasure > 0) { deckChest.visible = true; addDeckChestObstacle(); }
+  const last = world.logEntries[world.logEntries.length - 1]; if (last) $('logEntry').textContent = `${last.stamp} — ${last.text}`;
+  return true;
+}
+const resumed = loadVoyage();
+setInterval(saveVoyage, 15000);
+addEventListener('pagehide', saveVoyage);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveVoyage(); });
+
+/* ---------- photo mode ---------- */
+const FILTERS = { none: ['Natural', ''], film: ['Film', 'sepia(.32) saturate(.85) contrast(1.12) brightness(1.04)'], sepia: ['Sepia', 'sepia(.9) contrast(1.05)'],
+  noir: ['Noir', 'grayscale(1) contrast(1.28) brightness(1.02)'], warm: ['Golden', 'saturate(1.25) sepia(.22) hue-rotate(-8deg)'], cool: ['Nordic', 'saturate(.9) hue-rotate(14deg) brightness(1.04)'], dream: ['Dreamy', 'saturate(1.35) brightness(1.08) contrast(.92)'] };
+const photo = { on: false, filter: 'none', vignette: false, paused: false, capture: false, prevScale: 1 };
+$('photoFilters').innerHTML = Object.entries(FILTERS).map(([k, [n]]) => `<button class="chip${k === 'none' ? ' on' : ''}" data-f="${k}">${n}</button>`).join('');
+function setPhotoLook() {
+  renderer.domElement.style.filter = FILTERS[photo.filter][1];
+  $('photoFx').className = `${photo.vignette ? 'vig' : ''} ${photo.filter === 'film' ? 'grain' : ''}`;
+  for (const b of $('photoFilters').children) b.classList.toggle('on', b.dataset.f === photo.filter);
+  $('phVig').classList.toggle('on', photo.vignette); $('phPause').classList.toggle('on', photo.paused);
+  $('phPause').textContent = photo.paused ? 'Resume time' : 'Pause time';
+}
+function togglePhoto(on = !photo.on) {
+  photo.on = on; document.body.classList.toggle('photo', on); $('bPhoto').classList.toggle('on', on);
+  if (on) { openYard(false); openOpts(false); if (peek.on) exitPeek(); }
+  else { if (photo.paused) { photo.paused = false; world.timeScale = photo.prevScale; } renderer.domElement.style.filter = ''; $('photoFx').className = ''; $('shot').hidden = true; }
+  if (on) setPhotoLook();
+}
+$('photoFilters').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; photo.filter = b.dataset.f; if (b.dataset.f === 'film' || b.dataset.f === 'noir') photo.vignette = true; setPhotoLook(); });
+$('phVig').addEventListener('click', () => { photo.vignette = !photo.vignette; setPhotoLook(); });
+$('phPause').addEventListener('click', () => { photo.paused = !photo.paused; if (photo.paused) { photo.prevScale = world.timeScale || 1; world.timeScale = 0; } else world.timeScale = photo.prevScale; setPhotoLook(); });
+$('phSnap').addEventListener('click', () => { photo.capture = true; });
+$('phExit').addEventListener('click', () => togglePhoto(false));
+$('bPhoto').addEventListener('click', () => { sfx.init(); togglePhoto(); });
+$('shotClose').addEventListener('click', () => { $('shot').hidden = true; });
+function capturePhoto() {
+  const src = renderer.domElement, W = src.width, H = src.height, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d'); c.filter = FILTERS[photo.filter][1] || 'none'; c.drawImage(src, 0, 0); c.filter = 'none';
+  if (photo.vignette) { const g = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.hypot(W, H) * 0.55); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.6)'); c.fillStyle = g; c.fillRect(0, 0, W, H); }
+  if (photo.filter === 'film') { const img = c.getImageData(0, 0, W, H), p = img.data; for (let i = 0; i < p.length; i += 4) { const n = (Math.random() - 0.5) * 26; p[i] += n; p[i + 1] += n; p[i + 2] += n; } c.putImageData(img, 0, 0); }
+  const s = Math.max(1, W / 1280); c.font = `italic ${16 * s}px Georgia, serif`; c.fillStyle = 'rgba(255,248,232,.78)'; c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = 6 * s;
+  c.fillText(`${nameText({ ...look, nameFont: 'classic' })} · Day ${world.dayNum}, ${clockStr(world.tod)}`, 22 * s, H - 22 * s);
+  cv.toBlob(b => {
+    if (!b) return; const url = URL.createObjectURL(b), name = `at-sea-day-${world.dayNum}-${clockStr(world.tod).replace(':', '')}.png`;
+    $('shotImg').src = url; $('shotSave').href = url; $('shotSave').download = name; $('shot').hidden = false;
+    try { $('shotSave').click(); } catch (e) { /* downloads blocked: the preview stays up to save by hand */ }
+  });
+  const fl = $('flash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go'); sfx.shutter();
+}
+
+/* ---------- touch: two-finger swipes ---------- */
+let swipe = null;
+renderer.domElement.addEventListener('touchstart', e => { if (e.touches.length === 2) swipe = { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2, t: performance.now() }; else if (e.touches.length > 2) swipe = null; }, { passive: true });
+renderer.domElement.addEventListener('touchend', e => {
+  if (!swipe || e.touches.length) { if (!e.touches.length) swipe = null; return; }
+  const t = e.changedTouches[0], dx = t.clientX - swipe.x, dy = t.clientY - swipe.y, quick = performance.now() - swipe.t < 600; swipe = null;
+  if (!quick) return;
+  if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) { setCamMode(camMode + (dx < 0 ? 1 : -1)); buzz(10); }
+  else if (dy < -80 && Math.abs(dy) > Math.abs(dx) * 1.5) { togglePhoto(); buzz(10); }
+}, { passive: true });
+if (matchMedia('(pointer: coarse)').matches) setTimeout(() => toast('Tip: swipe with two fingers to change camera, or up for photo mode'), 9000);
+
+/* ---------- the soundtrack follows what is happening ---------- */
+system('soundtrack', () => sfx.setMood(KR.active ? 'kraken' : (harbour.phase === 'docked' || harbour.phase === 'shore') ? 'harbour' : world.isNight ? 'night' : 'day'));
+applySettings();
+if (camera.aspect < 0.8) { camera.fov = 62; camera.position.multiplyScalar(1.3); camera.updateProjectionMatrix(); }
 
 /* =====================================================================
    HUD
@@ -6826,12 +7084,17 @@ addEventListener('keydown', e => {
   if (e.target.closest && e.target.closest('input, textarea, select')) { if (e.key === 'Escape') e.target.blur(); return; }
   if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === 'Escape' && !$('yard').hidden) { openYard(false); return; }
+  if (e.key === 'Escape' && !$('opts').hidden) { openOpts(false); return; }
+  if (e.key === 'Escape' && photo.on) { if (!$('shot').hidden) $('shot').hidden = true; else togglePhoto(false); return; }
+  if (photo.on && e.key === ' ') { photo.capture = true; e.preventDefault(); return; }
   const k = e.key.toLowerCase();
   if (choice.open && (k === '1' || k === '2' || k === '3')) { pickKraken(['fish', 'horn', 'hide'][+k - 1]); e.preventDefault(); return; }
   if (peek.on && (k === 'escape' || k === 'arrowleft' || k === 'arrowright')) { if (k === 'escape') exitPeek(); else stepPeek(k === 'arrowleft' ? -1 : 1); e.preventDefault(); return; }
   if (ACTIONS[k]) { sfx.init(); pressFx(ACTIONS[k][0]); ACTIONS[k][1](); e.preventDefault(); }
   else if (k === 'm') toggleSound();
   else if (k === 'b') openYard();
+  else if (k === 'p') { sfx.init(); togglePhoto(); }
+  else if (k === 'o') { sfx.init(); openOpts(); }
   else if (k === 'q') cycleQuality();
 });
 addEventListener('pointerdown', () => sfx.init(), { once: false, passive: true });
@@ -6841,9 +7104,10 @@ addEventListener('pointerdown', () => sfx.init(), { once: false, passive: true }
    ===================================================================== */
 let nextCreak = 4, started = false;
 function frame() {
-  tick(Math.min(clock.getDelta(), 0.05) * (world.timeScale || 1));
+  tick(Math.min(clock.getDelta(), 0.05) * (world.timeScale ?? 1));
   renderer.render(scene, camera);
-  if (!started) { started = true; setTimeout(() => { $('intro').classList.add('gone'); setTimeout(() => toast(`Welcome aboard the <b>${nameText({ ...look, nameFont: 'classic' })}</b>`), 1100); }, 500); }
+  if (photo.capture) { photo.capture = false; capturePhoto(); }
+  if (!started) { started = true; setTimeout(() => { $('intro').classList.add('gone'); setTimeout(() => toast(resumed ? `Welcome back — <b>Day ${world.dayNum}</b> of the voyage` : `Welcome aboard the <b>${nameText({ ...look, nameFont: 'classic' })}</b>`), 1100); }, 500); }
 }
 // one step of the whole simulation (rendering is separate, so tests can fast-forward)
 function tick(dt) {
@@ -6872,7 +7136,7 @@ function tick(dt) {
   updateHUD(dt);
 }
 renderer.setAnimationLoop(frame);
-window.__atsea = { SEASONS, setSeason: m => { world.seasonMode = m; }, season, spawnOrcas, spawnManta, spawnOtters, spawnSerpent, strike, sky2, rainbow, life, SERP, storm, choice, pickKraken, taskGalley, ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
+window.__atsea = { settings, applySettings, togglePhoto, photo, saveVoyage, loadVoyage, openOpts, SEASONS, setSeason: m => { world.seasonMode = m; }, season, spawnOrcas, spawnManta, spawnOtters, spawnSerpent, strike, sky2, rainbow, life, SERP, storm, choice, pickKraken, taskGalley, ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
   PERCHES, tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
 </script>
 </body>
