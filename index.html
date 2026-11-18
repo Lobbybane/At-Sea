@@ -6971,6 +6971,18 @@ $('phSnap').addEventListener('click', () => { photo.capture = true; });
 $('phExit').addEventListener('click', () => togglePhoto(false));
 $('bPhoto').addEventListener('click', () => { sfx.init(); togglePhoto(); });
 $('shotClose').addEventListener('click', () => { $('shot').hidden = true; });
+// inside claude.ai the viewer confirms each save; opened as a plain file, the link downloads directly
+let downloads = null;
+if (window.claude && window.claude.use) window.claude.use('downloads').then(d => { downloads = d; }).catch(() => {});
+$('shotSave').addEventListener('click', e => {
+  if (!downloads || !photo.blob) return;
+  e.preventDefault();
+  downloads.save({ filename: photo.name, data: photo.blob }).then(() => toast('Photo saved')).catch(err => {
+    if (err && err.code === 'declined') return;
+    if (err && err.code === 'rate_limited') toast('One moment — a save is already waiting for you');
+    else toast('Saving isn’t available here — right-click or long-press the picture to keep it');
+  });
+});
 function capturePhoto() {
   const src = renderer.domElement, W = src.width, H = src.height, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const c = cv.getContext('2d'); c.filter = FILTERS[photo.filter][1] || 'none'; c.drawImage(src, 0, 0); c.filter = 'none';
@@ -6980,8 +6992,8 @@ function capturePhoto() {
   c.fillText(`${nameText({ ...look, nameFont: 'classic' })} · Day ${world.dayNum}, ${clockStr(world.tod)}`, 22 * s, H - 22 * s);
   cv.toBlob(b => {
     if (!b) return; const url = URL.createObjectURL(b), name = `at-sea-day-${world.dayNum}-${clockStr(world.tod).replace(':', '')}.png`;
+    photo.blob = b; photo.name = name;
     $('shotImg').src = url; $('shotSave').href = url; $('shotSave').download = name; $('shot').hidden = false;
-    try { $('shotSave').click(); } catch (e) { /* downloads blocked: the preview stays up to save by hand */ }
   });
   const fl = $('flash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go'); sfx.shutter();
 }
