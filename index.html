@@ -363,8 +363,8 @@ const WEATHER = [
   { name: 'Full Clouds',      cover: 0.88, dark: 0.3,  rain: 0,    waves: 0.68, wind: 16, bolt: 0,    fog: 0.0062, sea: 'Moderate' },
   { name: 'Dark Rain Clouds', cover: 1,    dark: 0.62, rain: 0.05, waves: 0.88, wind: 21, bolt: 0,    fog: 0.0090, sea: 'Rough' },
   { name: 'Raining',          cover: 1,    dark: 0.74, rain: 0.55, waves: 1.05, wind: 25, bolt: 0,    fog: 0.0125, sea: 'Rough' },
-  { name: 'Storming',         cover: 1,    dark: 0.88, rain: 0.85, waves: 1.38, wind: 34, bolt: 0.22, fog: 0.0160, sea: 'Very Rough' },
-  { name: 'Heavy Storm',      cover: 1,    dark: 1,    rain: 1,    waves: 1.75, wind: 46, bolt: 0.55, fog: 0.0205, sea: 'High' },
+  { name: 'Storming',         cover: 1,    dark: 0.88, rain: 0.85, waves: 1.6, wind: 34, bolt: 0.22, fog: 0.0160, sea: 'Very Rough' },
+  { name: 'Heavy Storm',      cover: 1,    dark: 1,    rain: 1,    waves: 2.1, wind: 46, bolt: 0.55, fog: 0.0205, sea: 'High' },
 ];
 const world = {
   weatherIdx: 0, lastWeatherPress: -1e9, nextAutoWeather: 95,
@@ -804,9 +804,9 @@ function updateParticles(dt) {
     const bx = rand(-3.6, 3.4);
     const t = clamp((bx + 4) / 8.2, 0, 1);
     const hw = hullW(t) * 0.9 + 0.12;
-    emit(bx, 0, side * hw, -world.speed * rand(0.9, 1.05), 0, side * rand(0.2, 0.7), rand(1.4, 2.8), rand(0.28, 0.6), true);
+    emit(bx + boat.position.x, 0, side * hw + boat.position.z, -world.speed * rand(0.9, 1.05), 0, side * rand(0.2, 0.7), rand(1.4, 2.8), rand(0.28, 0.6), true);
     if (Math.random() < 0.18 + world.w.waves * 0.25) {
-      emit(rand(3.4, 4.3), 0.3, side * rand(0.2, 0.6), -world.speed * 0.6, rand(1, 2.4) + world.w.waves * 2, side * rand(0.6, 1.8), rand(0.4, 0.8), rand(0.1, 0.22));
+      emit(rand(3.4, 4.3) + boat.position.x, 0.3 + boat.position.y, side * rand(0.2, 0.6) + boat.position.z, -world.speed * 0.6, rand(1, 2.4) + world.w.waves * 2, side * rand(0.6, 1.8), rand(0.4, 0.8), rand(0.1, 0.22));
     }
   }
   // storm spray blowing off crests
@@ -2491,15 +2491,75 @@ function updateRods(dt, t) {
 /* =====================================================================
    Boat motion, explode, labels
    ===================================================================== */
+/* Floating-body physics: ten buoyancy points along the hull push up wherever they are under the
+   surface, so the boat heaves, pitches and rolls on its own, overshoots and slams in steep seas, surfs
+   forward and back on wave faces, and heels to the wind. Integrated in small fixed substeps. */
+const HULL_PTS = [];
+for (const x of [-3.5, -1.75, 0, 1.75, 3.55]) for (const z of [-0.85, 0.85]) HULL_PTS.push(V3(x, -0.36, x > 3 ? z * 0.55 : z));
+const PH = { y: -0.14, vy: 0, pitch: 0, vp: 0, roll: 0, vr: 0, sx: 0, vsx: 0, sz: 0, vsz: 0, yaw: 0, vyaw: 0,
+  k: 1.96, c: 0.34, Ip: 7.5, Ir: 2.6, dmax: 1.3, g: 9.8, slam: 0 };
+const ROLL_K = HULL_PTS.reduce((a, p) => a + PH.k * p.z * p.z, 0);
+const PT_H = HULL_PTS.map(() => null); // last water height under each point, for water vertical speed
 const bs = { heave: 0, pitch: 0, roll: 0 };
+const _bm = new THREE.Matrix4(), _bq = new THREE.Quaternion(), _be = new THREE.Euler(0, 0, 0, 'YXZ'), _bp = V3(), _bpos = V3(), _bone = V3(1, 1, 1);
+function boatStep(h, t) {
+  _be.set(PH.roll, PH.yaw, PH.pitch); _bq.setFromEuler(_be); _bpos.set(PH.sx, PH.y, PH.sz); _bm.compose(_bpos, _bq, _bone);
+  let F = -PH.g, Tp = 0, Tr = 0, wet = 0, bowDry = true;
+  const c = PH.c * (1 + sstep(0.5, 1.8, world.w.waves) * 1.4);  // rougher water grips the hull harder
+  for (let i = 0; i < HULL_PTS.length; i++) {
+    const p = HULL_PTS[i];
+    _bp.copy(p).applyMatrix4(_bm);
+    const wh = waveHeight(_bp.x, _bp.z), vw = PT_H[i] === null ? 0 : clamp((wh - PT_H[i]) / h, -6, 6);
+    PT_H[i] = wh;
+    const d = wh - _bp.y;
+    const vpt = PH.vy + PH.vp * p.x - PH.vr * p.z;            // vertical speed of this point
+    if (p.x > 3) {                                            // bow: falling back into the sea after riding clear = slam
+      if (d > 0 && PH.bowDry && vpt - vw < -0.9) PH.slam = Math.max(PH.slam, Math.min(1, -(vpt - vw) / 3));
+      bowDry = bowDry && d <= 0;
+    }
+    if (d <= 0) continue;
+    wet++;
+    const f = PH.k * Math.min(d, PH.dmax) - c * (vpt - vw) * sstep(0, 0.3, d); // drag against the moving water
+    F += f; Tp += f * p.x; Tr -= f * p.z;
+  }
+  // wind heels the boat to leeward, gusting harder in rough weather
+  const wind = sstep(4, 46, world.w.wind), gust = 1 + world.w.waves * 0.4 * Math.sin(t * 0.9) * Math.sin(t * 0.37 + 1);
+  Tr += ROLL_K * 0.11 * wind * gust * Math.sign(rig.sailAngle || 1);
+  Tp -= 1.2 * PH.vp; Tr -= 0.5 * PH.vr;
+  // a hull dropping back onto the water after the bow or stern flew clear slams hard
+  PH.bowDry = bowDry; PH.wet = wet;
+  PH.vy += F * h; PH.y += PH.vy * h;
+  // in big seas the hull's pitching rhythm falls into step with the swell and rocks much harder
+  const Ip = lerp(PH.Ip, 26, sstep(0.6, 1.6, world.w.waves));
+  PH.vp += Tp / Ip * h; PH.pitch = clamp(PH.pitch + PH.vp * h, -0.65, 0.65);
+  PH.vr += Tr / PH.Ir * h; PH.roll = clamp(PH.roll + PH.vr * h, -0.7, 0.7);
+  // surge and sway: the hull surfs down wave faces, held back by drag and a soft tether to the scroll origin
+  const storm = 0.45 + 0.55 * sstep(0.4, 1.6, world.w.waves);
+  const hx = (waveHeight(PH.sx + 1, PH.sz) - waveHeight(PH.sx - 1, PH.sz)) / 2, hz = (waveHeight(PH.sx, PH.sz + 0.8) - waveHeight(PH.sx, PH.sz - 0.8)) / 1.6;
+  PH.vsx += (-PH.g * hx * 0.55 * storm - 0.65 * PH.vsx - 0.5 * PH.sx - 0.14 * PH.sx * PH.sx * PH.sx) * h; PH.sx = clamp(PH.sx + PH.vsx * h, -4, 4);
+  PH.vsz += (-PH.g * hz * 0.25 * storm - 0.9 * PH.vsz - 0.8 * PH.sz - 0.3 * PH.sz * PH.sz * PH.sz) * h; PH.sz = clamp(PH.sz + PH.vsz * h, -2, 2);
+  // uneven water under bow and stern twists the hull
+  const yawT = ((waveHeight(PH.sx + 3.5, 1) - waveHeight(PH.sx + 3.5, -1)) - (waveHeight(PH.sx - 3.5, 1) - waveHeight(PH.sx - 3.5, -1))) * 0.07;
+  PH.vyaw += (yawT - 0.35 * PH.yaw - 0.9 * PH.vyaw) * h; PH.yaw += PH.vyaw * h;
+}
 function updateBoat(dt, t) {
-  const hb = waveHeight(3.4, 0), hs = waveHeight(-3.4, 0), hp = waveHeight(0, 1.35), hn = waveHeight(0, -1.35), hc = waveHeight(0.3, 0);
-  bs.heave = damp(bs.heave, (hb + hs + hp + hn + hc * 2) / 6, 3.2, dt);
-  bs.pitch = damp(bs.pitch, Math.atan2(hb - hs, 6.8) * 0.9, 2.6, dt);
-  bs.roll = damp(bs.roll, -Math.atan2(hp - hn, 2.7) * 0.75, 2.2, dt);
-  const heel = sstep(4, 46, world.w.wind) * 0.11 * Math.sign(rig.sailAngle || 1);
-  boat.position.y = bs.heave - 0.14;
-  boat.rotation.set(bs.roll + heel + Math.sin(t * 0.9) * 0.008, Math.sin(t * 0.07) * 0.05, bs.pitch);
+  const n = Math.max(1, Math.ceil(dt / (1 / 90)));
+  for (let i = 0; i < n; i++) boatStep(dt / n, t);
+  if (PH.slam > 0.05) {
+    // a slam throws spray from the bow and shudders the rigging
+    const p = PH.slam; PH.slam = 0;
+    for (let k = 0; k < 60 * p; k++) {
+      boat.localToWorld(_bp.set(rand(1.5, 4.2), 0.3, rand(-1.2, 1.2) * (Math.random() < 0.5 ? -1 : 1)));
+      emit(_bp.x, _bp.y, _bp.z, rand(-2, 1) - world.speed * 0.4, rand(2, 5) * p, Math.sign(_bp.z - PH.sz) * rand(1, 3.5), rand(0.6, 1.1), rand(0.15, 0.35));
+    }
+    sfx.splash(1.4 * p, camera.position.distanceTo(boat.position)); sfx.creak(0.8 + p);
+    world.shake = Math.max(world.shake || 0, p);
+  }
+  world.shake = Math.max(0, (world.shake || 0) - dt * 2.5);
+  const sh = (world.shake || 0) * 0.02;
+  boat.position.set(PH.sx, PH.y, PH.sz);
+  boat.rotation.set(PH.roll + Math.sin(t * 47) * sh, PH.yaw + Math.sin(t * 0.07) * 0.05, PH.pitch + Math.sin(t * 53) * sh);
+  bs.heave = PH.y + 0.14; bs.pitch = PH.pitch; bs.roll = PH.roll;
 }
 const ease = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 let explodeLin = 0;
@@ -2793,7 +2853,7 @@ system('weatherDetails', (dt, t) => {
   while (g > 0) {
     if (Math.random() > g) break; g -= 1;
     const side = Math.random() < 0.5 ? -1 : 1, bx = rand(-4, 3), hw = hullW(tOf(bx)) * 0.9 + 0.15;
-    emit(bx, 0, side * (hw + rand(0, 0.5)), -world.speed * rand(0.85, 1.05), 0, side * rand(0.1, 0.5), rand(1.2, 2.6), rand(0.1, 0.2), true, GLOW);
+    emit(bx + boat.position.x, 0, side * (hw + rand(0, 0.5)) + boat.position.z, -world.speed * rand(0.85, 1.05), 0, side * rand(0.1, 0.5), rand(1.2, 2.6), rand(0.1, 0.2), true, GLOW);
   }
 });
 
@@ -3568,6 +3628,7 @@ function updateCamera(dt, t) {
     camLabel = 'Orbit';
     if (!interacting && t - lastInteract > 6) controls.autoRotate = true;
     controls.target.y = damp(controls.target.y, lerp(2.4, 5.6, world.explodeT) + bs.heave * 0.5, 2, dt);
+    controls.target.x = damp(controls.target.x, boat.position.x * 0.6, 1.5, dt); controls.target.z = damp(controls.target.z, boat.position.z * 0.6, 1.5, dt);
     if (world.explode && !interacting) {
       const dist = camera.position.distanceTo(controls.target);
       if (dist < 25) camera.position.sub(controls.target).multiplyScalar(1 + dt * 0.9).add(controls.target);
@@ -3852,7 +3913,7 @@ function frame() {
   if (!started) { started = true; setTimeout(() => { $('intro').classList.add('gone'); setTimeout(() => toast('Welcome aboard the <b>Wanderer</b>'), 1100); }, 500); }
 }
 renderer.setAnimationLoop(frame);
-window.__atsea = { Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, toggleExplode, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
+window.__atsea = { PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, toggleExplode, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
   PERCHES, tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
 </script>
 </body>
