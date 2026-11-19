@@ -62,6 +62,7 @@ canvas#c:active{cursor:grabbing}
 #log .head{display:flex;justify-content:space-between;align-items:center;font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:700}
 #log .head i{font-style:normal;color:var(--ink-faint);letter-spacing:.12em}
 .logrow{display:flex;gap:11px;align-items:flex-start}
+.logrow>div:last-child{flex:1;min-width:0}
 .logrow .av{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(246,236,217,.08);border:1px solid var(--edge)}
 .logrow .av svg{width:17px;height:17px}
 .logrow label{display:block;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin-bottom:2px}
@@ -193,12 +194,17 @@ body.yard #log{opacity:0;visibility:hidden}
 @media (max-width:820px){#yard{left:10px;right:10px;top:auto;bottom:10px;width:auto;height:min(54vh,520px)} body.yard #bar,body.yard #tools,body.yard #title,body.opting #title{opacity:0;visibility:hidden}}
 .say{position:fixed;left:0;top:0;translate:-50% -100%;max-width:230px;padding:8px 12px 9px;border-radius:14px;background:rgba(250,244,230,.95);color:#2a1f14;font:500 13.5px/1.3 var(--serif);pointer-events:none;z-index:5;box-shadow:0 8px 20px rgba(0,0,0,.25);animation:cardin .3s cubic-bezier(.2,.9,.25,1.2) both}
 .say::after{content:"";position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:inherit;translate:-50% 0;rotate:45deg;border-radius:2px}
-.needs{display:flex;align-items:center;gap:6px;margin-top:6px}
-.needs em{font-style:normal;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:700}
+.needs{display:flex;align-items:center;gap:5px;margin-top:6px}
+.needs em{font-style:normal;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:700}
 .needs span{flex:1;height:4px;border-radius:2px;background:rgba(246,236,217,.12);overflow:hidden}
 .needs i{display:block;height:100%;width:70%;background:linear-gradient(90deg,#d98a4a,#e9b866);border-radius:2px;transition:width .6s}
 .needs span.e i{background:linear-gradient(90deg,#4f9ab8,#7cc6d9)}
 .needs i.low{background:#e6735c}
+.needs span.m i{background:#9fd69a}
+.logrow[hidden]{display:none}
+.pxwrap{display:flex;flex-direction:column;gap:10px}.pxgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;width:min(100%,232px);aspect-ratio:1;padding:4px;border-radius:10px;background:rgba(0,0,0,.25);border:1px solid var(--edge)}
+.px{border:0;border-radius:3px;cursor:pointer;padding:0;touch-action:manipulation}.px.p0{background:rgba(246,236,217,.08)}.px.p1{background:var(--gold)}.px.p2{background:#1b1c1f;box-shadow:inset 0 0 0 1px rgba(246,236,217,.25)}
+.pxtools{display:flex;flex-wrap:wrap;gap:6px}
 #choice{position:fixed;left:50%;bottom:122px;translate:-50% 0;width:min(580px,calc(100% - 24px));padding:14px 16px 12px;z-index:7;animation:tin .4s cubic-bezier(.2,.9,.25,1.2) both}
 #choice[hidden]{display:none}
 #choice .ct{font-family:var(--serif);font-size:15.5px;color:var(--ink)}
@@ -352,11 +358,15 @@ body.photo #bar,body.photo #log,body.photo #title,body.photo #hint,body.photo #t
   <div class="head">Ship's Log <i id="logTime">—</i></div>
   <div class="logrow">
     <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#e9b866" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10h14l-1.5-3h-11z"/><path d="M8 10v1a4 4 0 0 0 8 0v-1"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div>
-    <div><label>The Captain</label><p id="capTask">Taking the helm</p><div class="needs" title="How fed and rested the captain is"><em>Fed</em><span><i id="capFood"></i></span><em>Rest</em><span class="e"><i id="capRest"></i></span></div></div>
+    <div><label>The Captain</label><p id="capTask">Taking the helm</p><div class="needs" title="How fed, rested and cheerful the captain is"><em>Fed</em><span><i id="capFood"></i></span><em>Rest</em><span class="e"><i id="capRest"></i></span><em>Mood</em><span class="m"><i id="capMood"></i></span></div></div>
   </div>
   <div class="logrow">
     <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#7cc6d9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l3 5M19 4l-3 5"/><path d="M6 9.5C6 6.5 8.7 5 12 5s6 1.5 6 4.5V14c0 3-2.7 6-6 6s-6-3-6-6z"/><circle cx="9.5" cy="12" r=".6" fill="#7cc6d9"/><circle cx="14.5" cy="12" r=".6" fill="#7cc6d9"/><path d="M11 16h2l-1 1z"/></svg></div>
-    <div><label>Ghost &middot; Husky</label><p id="dogTask">Watching the waves</p><div class="needs" title="How fed and rested Ghost is"><em>Fed</em><span><i id="dogFood"></i></span><em>Rest</em><span class="e"><i id="dogRest"></i></span></div></div>
+    <div><label>Ghost &middot; Husky</label><p id="dogTask">Watching the waves</p><div class="needs" title="How fed, rested and cheerful Ghost is"><em>Fed</em><span><i id="dogFood"></i></span><em>Rest</em><span class="e"><i id="dogRest"></i></span><em>Mood</em><span class="m"><i id="dogMood"></i></span></div></div>
+  </div>
+  <div class="logrow" id="handRow" hidden>
+    <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#9fd69a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5h12"/><path d="M8 9.5c0-2.5 1.8-4 4-4s4 1.5 4 4"/><path d="M8.5 10v1a3.5 3.5 0 0 0 7 0v-1"/><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></div>
+    <div><label id="handName">Deckhand</label><p id="handTask">Settling in</p></div>
   </div>
   <div class="entry"><label>Latest log entry</label><p id="logEntry">Cast off at first light. Fair winds and a following sea.</p></div>
 </aside>
@@ -1634,6 +1644,7 @@ const cabin = {};
     c.fillStyle = '#244a6e'; for (let i = 0; i < 5; i++) { c.beginPath(); c.moveTo(40 + i * 44, h / 2); c.lineTo(58 + i * 44, 30); c.lineTo(76 + i * 44, h / 2); c.lineTo(58 + i * 44, h - 30); c.closePath(); c.fill(); }
     c.fillStyle = '#e3c27a'; for (let x = 4; x < w; x += 8) { c.fillRect(x, 0, 3, 6); c.fillRect(x, h - 6, 3, 6); }
   });
+  cabin.tex = { panel: panelTex, tartan: tartanTex, rug: rugTex, pic: ghostPic };   // repainted by the Shipwright's Cabin tab
   mk(new THREE.PlaneGeometry(1.1, 0.42), new THREE.MeshStandardMaterial({ map: rugTex, roughness: 1 }), Lcabin, -0.3, F + 0.004, 0.02, -Math.PI / 2, 0, 0).castShadow = false;
   box(0.16, 0.14, 0.3, std(0x6e4020), 0.37, F + 0.07, 0.0);
   for (const x of [0.3, 0.44]) box(0.012, 0.145, 0.305, MAT.brass, x, F + 0.07, 0.0);
@@ -2045,8 +2056,8 @@ function makeCaptain() {
   mk(rb(0.23, 0.26, 0.23, 0.3), skin, neck, 0, 0.15, 0);
   for (const s of [1, -1]) mk(rb(0.03, 0.065, 0.05, 0.45), skin, neck, s * 0.118, 0.16, -0.01);   // ears
   for (const s of [1, -1]) mk(rb(0.045, 0.025, 0.01, 0.45), cheek, neck, s * 0.072, 0.152, 0.116); // rosy cheeks
-  mk(rb(0.245, 0.14, 0.12, 0.35), beard, neck, 0, 0.06, 0.07);
-  mk(rb(0.16, 0.06, 0.06, 0.4), beardDk, neck, 0, 0.0, 0.1);                       // chin tuft
+  const beardMesh = mk(rb(0.245, 0.14, 0.12, 0.35), beard, neck, 0, 0.06, 0.07); beardMesh.geometry.translate(0, -0.07, 0); beardMesh.position.y += 0.07;   // (a trimmed beard shortens from the chin)
+  const tuft = mk(rb(0.16, 0.06, 0.06, 0.4), beardDk, neck, 0, 0.0, 0.1);         // chin tuft
   mk(rb(0.15, 0.04, 0.035, 0.4), beard, neck, 0, 0.13, 0.125);                     // moustache
   mk(rb(0.05, 0.065, 0.055, 0.4), std(0xd08f66), neck, 0, 0.18, 0.13);            // nose
   const mouth = mk(new THREE.BoxGeometry(0.07, 0.024, 0.012), std(0x3a1812), neck, 0, 0.095, 0.131);
@@ -2108,7 +2119,7 @@ function makeCaptain() {
   props.note = mk(new THREE.PlaneGeometry(0.16, 0.2), new THREE.MeshStandardMaterial({ color: 0xf0e2bd, side: THREE.DoubleSide, roughness: 0.9 }), R.j.handL, 0, -0.12, 0.05, -Math.PI / 2, 0, 0);
   for (const k in props) props[k].visible = false;
   root.traverse(o => { if (o.isMesh) o.castShadow = true; });
-  return { root, rig: R, glass, beltGlass, eyes, pupils, brows, mouth, pipe, bowl, hat, sw, props, coatMats: [[coat, coat.color.clone()], [coatDk, coatDk.color.clone()]], coatOn: false,
+  return { root, rig: R, glass, beltGlass, eyes, pupils, brows, mouth, pipe, bowl, hat, sw, props, beardParts: [beardMesh, tuft], hairMats: [beard, beardDk], coatMats: [[coat, coat.color.clone()], [coatDk, coatDk.color.clone()]], coatOn: false,
     pos: new THREE.Vector2(-2.75, 0), heading: Math.PI / 2, targetHeading: Math.PI / 2, moving: 0, pose: 'helm', poseT: 0, walkPh: 0, speed: 1.3, mouthOpen: 0,
     tiltR: 0, tiltP: 0, look: null, lookW: 0, fidget: null, fidgetT: 6, talkT: 0, smokeT: 2 };
 }
@@ -2185,7 +2196,7 @@ function makeDog() {
     tailSegs.push(seg); p = seg;
   }
   root.traverse(o => { if (o.isMesh) o.castShadow = true; });
-  return { root, rig: R, eyes, pupils, ears, tailSegs, tongue, vest, mouthItem, pos: new THREE.Vector2(2.2, 0.15), heading: -Math.PI / 2, targetHeading: -Math.PI / 2, moving: 0, pose: 'stand', poseT: 0, walkPh: 0, speed: 1.6, wag: 1,
+  return { root, rig: R, collar, eyes, pupils, ears, tailSegs, tongue, vest, mouthItem, pos: new THREE.Vector2(2.2, 0.15), heading: -Math.PI / 2, targetHeading: -Math.PI / 2, moving: 0, pose: 'stand', poseT: 0, walkPh: 0, speed: 1.6, wag: 1,
     tiltR: 0, tiltP: 0, look: null, lookW: 0, fidget: null, fidgetT: 4 };
 }
 
@@ -2205,7 +2216,8 @@ function poseCaptain(c, t, dt) {
   // defaults: relaxed stance
   R.r('armL', 0.05, 0, 0.1 + breathe); R.r('armR', 0.05, 0, -0.1 - breathe);
   R.r('elbowL', -0.15); R.r('elbowR', -0.15);
-  R.r('spine', breathe, 0, sway); R.r('neck', 0, Math.sin(t * 0.37) * 0.25, 0);
+  const gl = glum(c);   // a glum captain stoops a little
+  R.r('spine', breathe + gl * 0.2, 0, sway); R.r('neck', gl * 0.3, Math.sin(t * 0.37) * 0.25 * (1 - gl * 0.6), 0);
   const brace = Math.min(world.w.waves, 1.8) * 0.06;                    // wider stance in rough seas
   R.r('legL', 0, 0, 0.04 + brace + sway * 0.5); R.r('legR', 0, 0, -0.04 - brace + sway * 0.5);
   let eyes = 1, mouth = 0, brow = 0;
@@ -2216,6 +2228,13 @@ function poseCaptain(c, t, dt) {
       R.r('elbowL', -0.55); R.r('elbowR', -0.55);
       R.r('neck', -0.05, Math.sin(t * 0.21) * 0.3, 0);
       gear.wheel.rotation.x = damp(gear.wheel.rotation.x, st * 2.2 - (world.turnNow || 0) * 2.6, 3, dt);
+      break;
+    }
+    case 'jig': {
+      const a = Math.sin(t * 8), b = Math.max(0, a), c2 = Math.max(0, -a);
+      R.r('armL', -0.2, 0, 0.75); R.r('armR', -0.2, 0, -0.75); R.r('elbowL', -1.7); R.r('elbowR', -1.7);
+      R.r('legL', -b * 0.9, 0, 0.06); R.r('legR', -c2 * 0.9, 0, -0.06); R.r('kneeL', b * 1.2); R.r('kneeR', c2 * 1.2);
+      R.r('spine', 0, Math.sin(t * 4) * 0.15, Math.sin(t * 8) * 0.05); R.r('neck', -0.1, Math.sin(t * 4) * 0.3, 0); mouth = 0.25;
       break;
     }
     case 'climb': {
@@ -2387,7 +2406,7 @@ function poseCaptain(c, t, dt) {
   for (const b of c.brows) b.position.y = damp(b.position.y, 0.256 + brow * 0.025 - (P === 'scold' ? 0.012 : 0), 10, dt);
   for (const p of c.pupils) p.position.x = damp(p.position.x, lookYaw * c.lookW * 0.007, 8, dt);
   // the pipe, and the odd puff of smoke
-  const pipeOK = !(c.props.mug.visible || c.props.harmonica.visible || (c.props.plate && c.props.plate.visible) || P === 'horn' || P === 'scared' || P === 'cower' || P === 'sleep' || P === 'bunk' || P === 'stretch' || P === 'wave');
+  const pipeOK = c.pipeOn !== false && !(c.props.mug.visible || c.props.harmonica.visible || (c.props.plate && c.props.plate.visible) || P === 'horn' || P === 'scared' || P === 'cower' || P === 'sleep' || P === 'bunk' || P === 'stretch' || P === 'wave');
   c.pipe.visible = pipeOK;
   c.smokeT -= dt;
   if (pipeOK && c.smokeT <= 0) {
@@ -2595,7 +2614,6 @@ function planPath(c, bx, bz, ex) {
   return out;
 }
 function* walkTo(c, x, z, speedMul = 1) {
-  const other = c === cap ? dog : cap;
   let path = planPath(c, x, z), blocked = 0, tries = 0;
   if (!path) return;
   while (path.length) {
@@ -2604,12 +2622,13 @@ function* walkTo(c, x, z, speedMul = 1) {
     if (d < 0.02) { path.shift(); continue; }
     c.targetHeading = Math.atan2(dx, dz);
     const err = Math.abs(angDiff(c.heading, c.targetHeading));
-    const sp = c.speed / BOAT_S * speedMul * (err > 1.1 ? 0.12 : 1) * (1 - Math.min(world.w.waves, 1.8) * 0.12);
+    const sp = c.speed / BOAT_S * speedMul * (err > 1.1 ? 0.12 : 1) * (1 - Math.min(world.w.waves, 1.8) * 0.12) * (c.mood !== undefined ? 0.86 + c.mood * 0.2 : 1);
     const st = Math.min(d, sp * DT), nx = c.pos.x + dx / d * st, nz = c.pos.y + dz / d * st;
     // keep personal space: stop, then re-route around the other crew member
-    const sep = c.rad + other.rad + 0.03;
-    const od = Math.hypot(nx - other.pos.x, nz - other.pos.y);
-    if (od < sep && od < Math.hypot(c.pos.x - other.pos.x, c.pos.y - other.pos.y)) {
+    let other = null, od = 1e9;
+    for (const o of CREW) { if (o === c || o.ashore || o.inside || o.aloft || o.hopping) continue; const dd = Math.hypot(nx - o.pos.x, nz - o.pos.y); if (dd < od) { od = dd; other = o; } }
+    const sep = other ? c.rad + other.rad + 0.03 : 0;
+    if (other && od < sep && od < Math.hypot(c.pos.x - other.pos.x, c.pos.y - other.pos.y)) {
       blocked += DT;
       if (blocked > 0.35) {
         blocked = 0;
@@ -2724,6 +2743,7 @@ function* landFish(r) {
   toast(`Caught a <b>${name}</b>! &nbsp;${world.fishCount} in the bucket`); buzz(25);
   flashStat('sFish');
   yield* wait(0.3);
+  cheerUp(cap, 0.12); cheerUp(dog, 0.05);
   cap.pose = 'cheer'; capSay(`Proud of his ${name.toLowerCase()}`);
   yield* wait(1.4);
 }
@@ -2811,7 +2831,7 @@ function* taskPetDog() {
   cap.pose = 'pet';
   yield* wait(rand(4, 5.5));
   cap.pose = 'idle'; dog.released = true;
-  capSay('Who’s a good boy?');
+  capSay('Who’s a good boy?'); cheerUp(cap, 0.18); cheerUp(dog, 0.3);
   yield* wait(0.8);
 }
 function* capSleep() {
@@ -2823,7 +2843,7 @@ function* capSleep() {
     cap.tuneNight = world.dayNum;
     cap.props.harmonica.visible = true; cap.seated = true; cap.pose = 'harmonica';
     capSay('Playing a tune on his harmonica');
-    sfx.harmonica();
+    sfx.harmonica(); cheerUp(cap, 0.15);
     try {
       for (let k = 0; k < 8.5; k += DT) { if (Math.random() < DT * 1.6) floatIcon(cap.rig.j.neck, noteTex, 0.45); yield; }
     } finally { cap.props.harmonica.visible = false; cap.seated = false; }
@@ -2850,7 +2870,7 @@ cap.next = function () {
   const st = world.w.waves, storm = st > 1.1;
   const opts = [[taskHelm, 2.2 + st * 2], [taskTrim, 1.6 + st * 1.2], [taskCheckRod, storm ? 0.4 : 1.5], [taskPetDog, storm ? 0.3 : 1.3],
     [taskSpyglass, 1.5 - Math.min(st, 1.5) * 0.6], [taskMug, 1.0], [taskCoil, 0.7 + st * 0.6], [taskLogbook, 0.9],
-    [taskFetch, storm || dog.busy || dog.sleeping ? 0 : 1.2], [taskBail, storm ? 3.2 : 0], [taskCrowsNest, world.upgrades.nest && st < 0.9 ? 1.3 : 0]]
+    [taskFetch, storm || dog.busy || dog.sleeping ? 0 : 1.2], [taskBail, storm ? 3.2 : 0], [taskCrowsNest, world.upgrades.nest && st < 0.9 ? 1.3 : 0], [taskJig, cap.mood > 0.72 && !storm ? 0.9 : 0], [taskSulk, cap.mood < 0.33 ? 1.6 : 0]]
     .filter(o => o[0] !== lastCapTask && o[1] > 0);
   let tot = opts.reduce((a, o) => a + o[1], 0), r = Math.random() * tot;
   for (const o of opts) { r -= o[1]; if (r <= 0) { lastCapTask = o[0]; return o[0](); } }
@@ -3027,7 +3047,7 @@ dog.next = function () {
   if (world.isNight) return asInside(dogNight());
   const st = world.w.waves;
   const tired = dog.needs.energy < 0.3 ? 4 : 1, hungry = dog.needs.food < 0.35;
-  const opts = [[dogWatch, 2.2], [dogSniff, 1.8], [dogFollow, 1.6], [dogSpin, dog.needs.energy > 0.5 ? 0.6 : 0], [dogNap, st > 1.15 ? 0 : (world.w.cover < 0.9 ? 1.2 : 0.4) * tired],
+  const opts = [[dogWatch, 2.2], [dogSniff, 1.8], [dogFollow, 1.6], [dogSpin, dog.needs.energy > 0.5 ? (dog.mood > 0.75 ? 1.8 : 0.6) : 0], [dogNap, st > 1.15 ? 0 : (world.w.cover < 0.9 ? 1.2 : 0.4) * tired],
     [dogBeg, world.fishCount > 0 || hungry ? (hungry ? 2.5 : 1.0) : 0], [dogHide, st > 1.15 ? 4 : 0],
     [dogSteal, world.fishCount > 0 && !cap.fishing && Math.hypot(cap.pos.x - gear.bucketPos.x, cap.pos.y - gear.bucketPos.z) > 1.5 ? 0.45 : 0]].filter(o => o[0] !== lastDogTask && o[1] > 0);
   let tot = opts.reduce((a, o) => a + o[1], 0), r = Math.random() * tot;
@@ -3892,6 +3912,7 @@ function addLog(text) {
   clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = `${stamp} — ${text}`; el.classList.remove('fade'); }, 300);
 }
 function discover(name, note) {
+  cheerUp(cap, 0.1); cheerUp(dog, 0.04);
   if (world.discoveries.some(d => d.name === name)) return false;
   world.discoveries.push({ name, day: world.dayNum, time: clockStr(world.tod) });
   toast(`New discovery: <b>${name}</b>`);
@@ -4223,7 +4244,7 @@ function* taskFetch() {
       cap.pose = 'crouch'; yield* wait(0.5);
       cap.pose = 'idle';
     }
-    capSay('Good boy, Ghost!');
+    capSay('Good boy, Ghost!'); cheerUp(cap, 0.25); cheerUp(dog, 0.35);
     yield* wait(0.8);
   } finally { st.phase = 'done'; ball.visible = false; Lcrew.add(ball); }
 }
@@ -4896,7 +4917,7 @@ function* capNight() {
     yield* walkTo(cap, ...SIT_SPOT); yield* face(cap, -Math.PI / 2);
     cap.pose = 'sit'; yield* wait(1);
     cap.props.harmonica.visible = true; cap.seated = true; cap.pose = 'harmonica';
-    capSay('Playing a tune on his harmonica'); sfx.harmonica();
+    capSay('Playing a tune on his harmonica'); sfx.harmonica(); cheerUp(cap, 0.15);
     try { for (let k = 0; k < 8.5; k += DT) { if (Math.random() < DT * 1.6) floatIcon(cap.rig.j.neck, noteTex, 0.45); yield; } }
     finally { cap.props.harmonica.visible = false; cap.seated = false; }
     cap.pose = 'stretch'; yield* wait(1.2); cap.pose = 'idle';
@@ -5003,7 +5024,7 @@ system('cabin', (dt, t) => {
   cabin.hourHand.rotation.z = -(h % 12) / 12 * TAU; cabin.minHand.rotation.z = -(h % 1) * TAU;
   // bedding, hat and oilskins
   cabin.blanket.visible = !!cap.inBunk; cabin.folded.visible = !cap.inBunk;
-  cap.hat.visible = !cap.inBunk; cabin.hookHat.visible = !!cap.inBunk;
+  cabin.hookHat.visible = !!cap.inBunk && (look.capHat || 'captain') === 'captain';
   cabin.oilskin.visible = !cap.coatOn;
 });
 
@@ -5064,6 +5085,9 @@ $('pkBack').addEventListener('click', e => { e.stopPropagation(); exitPeek(); })
    Shipwright — repaint and dress the boat. Choices are remembered in this browser.
    ===================================================================== */
 const PAINT = {
+  capCoat: [['#24405f', 'Navy'], ['#8e2a26', 'Red'], ['#2f5a3a', 'Green'], ['#5a3d24', 'Brown'], ['#1d1d22', 'Black'], ['#5b6470', 'Grey']],
+  beardColor: [['#a79c90', 'Grey'], ['#ece8e0', 'White'], ['#c46a2c', 'Ginger'], ['#5a3a22', 'Brown'], ['#26211d', 'Black']],
+  dogCollar: [['#2f7de1', 'Blue'], ['#b5382c', 'Red'], ['#3f7a3a', 'Green'], ['#e9b866', 'Gold'], ['#8e5aa8', 'Purple'], ['#1b1c1f', 'Black']],
   hull: [['#8d5631', 'Walnut'], ['#a8683a', 'Honey oak'], ['#1f3a5f', 'Navy'], ['#2f5d4a', 'Forest'], ['#8e2a26', 'Crimson'], ['#ece6d6', 'Ivory'],
     ['#2a2b2e', 'Charcoal'], ['#2f7f86', 'Teal'], ['#e2b43c', 'Sunflower'], ['#7e93a8', 'Harbour grey'], ['#6b3f7a', 'Plum'], ['#d9826a', 'Coral']],
   bottom: [['wood', 'Bare wood'], ['#9c2f25', 'Antifouling red'], ['#1b1c1f', 'Black'], ['#244c7a', 'Deep blue'], ['#b87333', 'Copper'], ['#2f5d4a', 'Green'], ['#ece6d6', 'White']],
@@ -5078,11 +5102,19 @@ const PAINT = {
   accent: [['#b5382c', 'Red'], ['#1f3a5f', 'Navy'], ['#caa04a', 'Gold'], ['#2f7f86', 'Teal'], ['#ffffff', 'White'], ['#1b1c1f', 'Black'], ['#2b6fd6', 'Blue'], ['#e2b43c', 'Yellow']],
 };
 const CHOICES = {
+  capHat: [['captain', 'Captain’s cap'], ['tricorn', 'Tricorn'], ['straw', 'Straw hat'], ['beanie', 'Knit beanie'], ['none', 'Bare head']],
+  capBeard: [['full', 'Full beard'], ['trimmed', 'Trimmed'], ['moustache', 'Moustache']],
+  dogBandana: [['none', 'None'], ['red', 'Red', '#b5382c'], ['blue', 'Blue', '#2b5fa8'], ['green', 'Green', '#3f7a3a'], ['gold', 'Gold', '#e9b866'], ['black', 'Black', '#1b1c1f']],
+  dogCoat: [['never', 'Never'], ['rain', 'When it rains'], ['always', 'Always']],
+  quilt: [['tartan', 'Red tartan', '#9c2a22'], ['forest', 'Forest', '#2f5a3a'], ['ocean', 'Ocean', '#2b5fa8'], ['cream', 'Cream', '#e8dcc0'], ['patchwork', 'Patchwork', '#e9b866']],
+  rug: [['diamond', 'Diamond weave'], ['stripes', 'Rag stripes'], ['compass', 'Compass rose'], ['sheepskin', 'Sheepskin']],
+  wallpaper: [['panel', 'Varnished panels'], ['whitewash', 'Whitewash'], ['navy', 'Navy paint'], ['sage', 'Sage paint'], ['floral', 'Floral paper']],
+  art: [['ghost', 'Sketch of Ghost'], ['ship', 'The Wanderer'], ['lighthouse', 'Lighthouse'], ['kraken', 'The kraken'], ['map', 'Treasure map']],
   nameFont: [['classic', 'Classic'], ['block', 'Block'], ['script', 'Script'], ['stencil', 'Stencil']],
   deck: [['teak', 'Teak'], ['honey', 'Honey'], ['walnut', 'Walnut'], ['grey', 'Weathered'], ['bleached', 'Bleached'], ['ebony', 'Ebony']],
   pattern: [['seams', 'Panelled'], ['plain', 'Plain'], ['radial', 'Radial cut'], ['stripes', 'Stripes'], ['band', 'Racing band'], ['vertical', 'Vertical'], ['chevron', 'Chevron'], ['split', 'Two-tone'], ['rainbow', 'Rainbow'], ['checker', 'Checker']],
-  emblem: [['none', 'None'], ['anchor', 'Anchor'], ['star', 'Star'], ['compass', 'Compass'], ['paw', 'Paw'], ['heart', 'Heart'], ['sun', 'Sun'], ['moon', 'Moon'], ['wave', 'Wave'], ['skull', 'Skull']],
-  flag: [['pennant', 'Pennant'], ['swallow', 'Swallowtail'], ['burgee', 'Burgee'], ['stripes', 'Stripes'], ['cross', 'Nordic cross'], ['star', 'Star'], ['anchor', 'Anchor'], ['paw', 'Paw print'], ['heart', 'Heart'], ['checker', 'Checker'], ['rainbow', 'Rainbow'], ['jolly', 'Jolly Roger']],
+  emblem: [['none', 'None'], ['custom', 'Your design'], ['anchor', 'Anchor'], ['star', 'Star'], ['compass', 'Compass'], ['paw', 'Paw'], ['heart', 'Heart'], ['sun', 'Sun'], ['moon', 'Moon'], ['wave', 'Wave'], ['skull', 'Skull']],
+  flag: [['custom', 'Your design'], ['pennant', 'Pennant'], ['swallow', 'Swallowtail'], ['burgee', 'Burgee'], ['stripes', 'Stripes'], ['cross', 'Nordic cross'], ['star', 'Star'], ['anchor', 'Anchor'], ['paw', 'Paw print'], ['heart', 'Heart'], ['checker', 'Checker'], ['rainbow', 'Rainbow'], ['jolly', 'Jolly Roger']],
   figurehead: [['none', 'None'], ['star', 'Gilded star'], ['dolphin', 'Dolphin'], ['ghost', 'Ghost'], ['eagle', 'Eagle'], ['kraken', 'Kraken']],
   lantern: [['amber', 'Amber', '#ffb24e'], ['candle', 'Candle', '#ffe6b8'], ['emerald', 'Emerald', '#5dff9a'], ['rose', 'Rose', '#ff6f9a'], ['sea', 'Sea blue', '#6fc6ff'], ['violet', 'Violet', '#b48cff']],
   lights: [['off', 'Off'], ['warm', 'Warm'], ['party', 'Party'], ['icy', 'Icy']],
@@ -5090,6 +5122,8 @@ const CHOICES = {
 const LANTERN = { amber: [0xffb24e, 0xffa850], candle: [0xffe2b0, 0xffeccc], emerald: [0x4dff8c, 0x6dffa8], rose: [0xff5f8f, 0xff80a6], sea: [0x5fbfff, 0x7ad0ff], violet: [0xa47cff, 0xbe9cff] };
 const STAIN = { teak: { h: 27, s: 44, l: 46 }, honey: { h: 34, s: 58, l: 56 }, walnut: { h: 22, s: 42, l: 30 }, grey: { h: 32, s: 7, l: 56 }, bleached: { h: 38, s: 26, l: 74 }, ebony: { h: 20, s: 14, l: 19 } };
 const DEFAULT_LOOK = {
+  capCoat: '#24405f', capHat: 'captain', capBeard: 'full', beardColor: '#a79c90', pipe: true, dogCollar: '#2f7de1', dogBandana: 'none', dogCoat: 'rain',
+  quilt: 'tartan', rug: 'diamond', wallpaper: 'panel', art: 'ghost', trophies: true, pixels: '0001100000100100000110000001100001111110000110001001100101111110',
   name: 'Wanderer', nameFont: 'classic', nameColor: '#f0e2c0', hull: '#8d5631', bottom: 'wood', stripe: '#f1e7d0', sheer: 'none', rail: '#b27b4a', bowName: true, hullPorts: false,
   deck: 'teak', cabin: '#b27b4a', roof: '#8a5632', trim: '#5a351c', flowers: false,
   sail: '#f8f4ea', pattern: 'seams', patternColor: '#b5382c', emblem: 'none', emblemColor: '#1f3a5f',
@@ -5129,6 +5163,7 @@ function star(c, x, y, r, n = 5, inner = 0.45, rot = -Math.PI / 2) {
   c.beginPath(); for (let i = 0; i < n * 2; i++) { const a = rot + i * Math.PI / n, rr = i % 2 ? r * inner : r; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.closePath();
 }
 function emblem(c, kind, x, y, r, col, bg) {
+  if (kind === 'custom') { drawPixels(c, x, y, r * 2.1, look.pixels, col, lum(col) > 0.55 ? '#1b1c1f' : '#f1ede4'); return; }
   c.save(); c.fillStyle = col; c.strokeStyle = col; c.lineCap = 'round'; c.lineJoin = 'round';
   if (kind === 'star') { star(c, x, y, r); c.fill(); }
   else if (kind === 'anchor') {
@@ -5376,13 +5411,18 @@ const TABS = [
     ['bowName', 'Name on the bows', 'toggle'], ['hullPorts', 'Hull portholes', 'toggle']]],
   ['Deck & Cabin', [['deck', 'Deck planks', 'chips'], ['cabin', 'Cabin walls', 'swatch', PAINT.cabin], ['roof', 'Cabin roof', 'swatch', PAINT.roof], ['trim', 'Door & trim', 'swatch', PAINT.trim], ['flowers', 'Flower pots on the roof', 'toggle']]],
   ['Sails', [['sail', 'Sailcloth', 'swatch', PAINT.sail], ['pattern', 'Pattern', 'chips'], ['patternColor', 'Pattern colour', 'swatch', PAINT.accent], ['emblem', 'Mainsail emblem', 'chips'], ['emblemColor', 'Emblem colour', 'swatch', PAINT.accent]]],
-  ['Flag', [['flag', 'Design', 'chips'], ['flagColor', 'Main colour', 'swatch', PAINT.accent], ['flagColor2', 'Second colour', 'swatch', [['#f1e7d0', 'Cream'], ...PAINT.accent]]]],
+  ['Flag', [['flag', 'Design', 'chips'], ['flagColor', 'Main colour', 'swatch', PAINT.accent], ['flagColor2', 'Second colour', 'swatch', [['#f1e7d0', 'Cream'], ...PAINT.accent]], ['pixels', 'Your own emblem', 'pixels']]],
   ['Bow & Lights', [['figurehead', 'Figurehead', 'chips'], ['lantern', 'Lantern glow', 'chips'], ['lights', 'String lights', 'chips'], ['bunting', 'Bunting', 'toggle']]],
+  ['Crew', [['capCoat', 'Captain’s coat', 'swatch', PAINT.capCoat], ['capHat', 'Hat', 'chips'], ['capBeard', 'Beard', 'chips'], ['beardColor', 'Beard & hair', 'swatch', PAINT.beardColor], ['pipe', 'Pipe', 'toggle'],
+    ['dogCollar', 'Ghost’s collar', 'swatch', PAINT.dogCollar], ['dogBandana', 'Ghost’s bandana', 'chips'], ['dogCoat', 'Ghost’s raincoat', 'chips']]],
+  ['Cabin', [['peek', 'Look inside', 'peek'], ['quilt', 'Quilt on the bunk', 'chips'], ['rug', 'Rug', 'chips'], ['wallpaper', 'Walls', 'chips'], ['art', 'Picture over the bunk', 'chips'], ['trophies', 'Treasure trophies on the sea chest', 'toggle']]],
   ['Themes', []],
 ];
 let yardTab = 0;
 function rowHTML([key, label, type, opts]) {
   const v = look[key];
+  if (type === 'pixels') return pixelRowHTML();
+  if (type === 'peek') return `<div class="yrow"><button class="ybtn gold" data-peek="1">Peek inside the cabin</button></div>`;
   if (type === 'text') return `<div class="yrow"><label for="yName">${label}</label><input id="yName" class="ytext" maxlength="16" spellcheck="false" autocomplete="off" value="${String(v).replace(/"/g, '&quot;')}"></div>`;
   if (type === 'toggle') return `<div class="yrow inline"><label>${label}</label><button class="tg${v ? ' on' : ''}" role="switch" aria-checked="${!!v}" data-k="${key}" data-t="toggle"><i></i></button></div>`;
   if (type === 'chips') return `<div class="yrow"><label>${label}</label><div class="chips">${CHOICES[key].map(([val, name, dot]) => `<button class="chip${val === v ? ' on' : ''}" data-k="${key}" data-v="${val}">${dot ? `<i style="background:${dot};box-shadow:0 0 8px ${dot}"></i>` : ''}${name}</button>`).join('')}</div></div>`;
@@ -5429,10 +5469,11 @@ function onTap(root, sel, fn) {
 }
 const OPT_LABEL = {}; for (const [, rows] of TABS) for (const [k, label] of rows) OPT_LABEL[k] = label;
 function optName(k, v) { const o = (SWATCH_OPTS[k] || CHOICES[k] || []).find(o => String(o[0]) === String(v)); return o ? o[1] : v; }
+onTap($('yardBody'), '[data-peek]', () => { openYard(false); enterPeek(CABIN.windows[0]); });
 onTap($('yardTabs'), '[data-tab]', b => { yardTab = +b.dataset.tab; renderYard(); $('yardBody').scrollTop = 0; });
 onTap($('yardBody'), '[data-theme], [data-k]:not(input)', b => {
   sfx.init();
-  if (b.dataset.theme !== undefined) { const T = THEMES[+b.dataset.theme]; look = { ...DEFAULT_LOOK, ...T.look }; applyLook(look); saveLook(); toast(`Refitted as <b>${T.name}</b>`); sfx.chime(); return; }
+  if (b.dataset.theme !== undefined) { const T = THEMES[+b.dataset.theme]; look = { ...DEFAULT_LOOK, ...keepKeys(look), ...T.look }; applyLook(look); saveLook(); toast(`Refitted as <b>${T.name}</b>`); sfx.chime(); return; }
   const k = b.dataset.k;
   if (b.dataset.t === 'toggle') { setLook({ [k]: !look[k] }); toast(`${OPT_LABEL[k]}: <b>${look[k] ? 'on' : 'off'}</b>`); }
   else if (b.dataset.v !== undefined) { setLook({ [k]: b.dataset.v }); toast(`${OPT_LABEL[k]}: <b>${optName(k, b.dataset.v)}</b>`); }
@@ -5914,6 +5955,7 @@ function* goAshore(c, I, land) {
   c.root.getWorldPosition(_hp); scene.attach(c.root); c.hopping = true; c.pose = c === dog ? 'stand' : 'idle';
   const T = c === dog ? 0.85 : 1.3, to = I.m.localToWorld(V3(land[0], ISL.deck, land[1]));
   for (let k = 0; k < T; k += DT) { const f = k / T; c.root.position.lerpVectors(_hp, to, smooth(f)); c.root.position.y += Math.sin(f * Math.PI) * (c === dog ? 0.7 : 0.55); c.walking = true; yield; }
+  cheerUp(c, 0.35);
   I.m.attach(c.root); c.ashore = I; c.hopping = false; c.floorY = undefined; c.pos.set(land[0], land[1]); c.heading = c.targetHeading = 0;
   if (c === dog) sfx.bark();
 }
@@ -7044,13 +7086,13 @@ $('optsNew').addEventListener('click', () => {
 function saveVoyage() {
   if (world.noSave) return;
   const data = { v: 1, dayNum: world.dayNum, tod: world.tod, offset: world.offset, fishCount: world.fishCount, treasure: world.treasure, pantry: world.pantry,
-    discoveries: world.discoveries, log: world.logEntries.slice(-40), weatherIdx: world.weatherIdx, needs: { cap: cap.needs, dog: dog.needs }, krakenSeen: KR.seen, gold: world.gold, upgrades: world.upgrades, krakenFriend: world.krakenFriend, course: nav.course };
+    discoveries: world.discoveries, log: world.logEntries.slice(-40), weatherIdx: world.weatherIdx, needs: { cap: cap.needs, dog: dog.needs }, krakenSeen: KR.seen, gold: world.gold, upgrades: world.upgrades, krakenFriend: world.krakenFriend, course: nav.course, hand: world.hand || null };
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) { /* storage unavailable */ }
 }
 function loadVoyage() {
   let d = null; try { d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { /* storage unavailable */ }
   if (!d || d.v !== 1) return false;
-  Object.assign(world, { dayNum: d.dayNum || 1, tod: d.tod ?? 9.5, offset: d.offset || 0, fishCount: Math.min(d.fishCount || 0, d.upgrades && d.upgrades.bucket ? 12 : 6), gold: d.gold || 0, upgrades: d.upgrades || {}, krakenFriend: d.krakenFriend || 0, course: d.course || 0, treasure: d.treasure || 0, discoveries: d.discoveries || [], logEntries: d.log || [] });
+  Object.assign(world, { dayNum: d.dayNum || 1, tod: d.tod ?? 9.5, offset: d.offset || 0, fishCount: Math.min(d.fishCount || 0, d.upgrades && d.upgrades.bucket ? 12 : 6), gold: d.gold || 0, upgrades: d.upgrades || {}, krakenFriend: d.krakenFriend || 0, course: d.course || 0, hand: d.hand || null, treasure: d.treasure || 0, discoveries: d.discoveries || [], logEntries: d.log || [] });
   world.pantry = { bread: 0, veg: 0, ...(d.pantry || {}) };
   world.weatherIdx = clamp(d.weatherIdx || 0, 0, WEATHER.length - 1); Object.assign(world.w, WEATHER[world.weatherIdx]);
   if (d.needs) { Object.assign(cap.needs, d.needs.cap); Object.assign(dog.needs, d.needs.dog); }
@@ -7223,7 +7265,7 @@ function buildUpgrade(id) {
 function buyUpgrade(id) {
   const U = UPGRADES.find(u => u.id === id);
   if (!U || world.upgrades[id] || world.gold < U.price || !atMarket()) return;
-  world.gold -= U.price; world.upgrades[id] = true; buildUpgrade(id);
+  world.gold -= U.price; world.upgrades[id] = true; buildUpgrade(id); cheerUp(cap, 0.15);
   sfx.coins(); sfx.chime(); flashStat('sPurse');
   toast(`The shipwright fits the <b>${U.name.toLowerCase()}</b>`);
   addLog(`Spent ${U.price} gold on ${U.name.toLowerCase()} at ${harbour.d ? harbour.d.I.name : 'the harbour'}.`);
@@ -7252,6 +7294,7 @@ function renderMarket() {
   $('mktBody').innerHTML =
     `<div class="yrow"><label>Sell</label>${row('Fish', `${nf} in the tub · ${PRICES.fish} gold each`, 'fish', nf ? `+${nf * PRICES.fish}` : 'None', m && nf)}${row('Treasure chests', `${nc} aboard · ${PRICES.chest} gold each`, 'chest', nc ? `+${nc * PRICES.chest}` : 'None', m && nc)}</div>` +
     `<div class="yrow"><label>Provisions</label>${row('Fresh bread', `${world.pantry.bread || 0} in the galley`, 'bread', `${PRICES.bread} gold`, m && world.gold >= PRICES.bread)}${row('Vegetables', `${world.pantry.veg || 0} in the galley`, 'veg', `${PRICES.veg} gold`, m && world.gold >= PRICES.veg)}</div>` +
+    (hand.v ? `<div class="yrow"><label>Crew</label><div class="mrow got"><div><b>${hand.v.hname}</b><small>Your deckhand. Swabs, mends nets and keeps a lookout.</small></div><span class="fitted">Aboard</span></div></div>` : (() => { const cd = candidate(); return `<div class="yrow"><label>Crew</label>${row(`Hire ${cd.name} as deckhand`, `A sailor from ${cd.isle}. Swabs the deck, mends nets, keeps a lookout and spoils Ghost.`, 'hire', `${HAND_PRICE} gold`, m && world.gold >= HAND_PRICE)}</div>`; })()) +
     `<div class="yrow"><label>Upgrades <em>fitted by the harbour shipwright</em></label>${UPGRADES.map(U => world.upgrades[U.id]
       ? `<div class="mrow got"><div><b>${U.name}</b><small>${U.note}</small></div><span class="fitted">Fitted</span></div>`
       : row(U.name, U.note, 'up:' + U.id, `${U.price} gold`, m && world.gold >= U.price)).join('')}</div>` +
@@ -7266,6 +7309,7 @@ $('bMarket').addEventListener('click', () => { sfx.init(); openMarket(); });
 $('mktClose').addEventListener('click', () => openMarket(false));
 onTap($('mktBody'), '[data-m]', b => {
   const a = b.dataset.m;
+  if (a === 'hire') { if (!hand.v && atMarket() && world.gold >= HAND_PRICE) { world.gold -= HAND_PRICE; const cd = candidate(); hireHand(cd.seed, cd.name); flashStat('sPurse'); sfx.coins(); saveVoyage(); renderMarket(); } return; }
   if (a === 'fish') sellFish(); else if (a === 'chest') sellChests(); else if (a === 'bread' || a === 'veg') buyFood(a);
   else if (a.startsWith('up:')) buyUpgrade(a.slice(3));
 });
@@ -7330,7 +7374,7 @@ function* capSalute(d) {
   UP.swivel.rotation.y = yaw;
   cap.pose = 'crouch'; capSay('Lighting the fuse…'); yield* wait(1.1);
   cap.pose = 'scared'; yield* wait(0.25);
-  fireCannon(_v2.set(0.35, 0, side).normalize());
+  fireCannon(_v2.set(0.35, 0, side).normalize()); cheerUp(cap, 0.2);
   capSay('BOOM! A salute to fine sailors'); cap.pose = 'cheer';
   yield* wait(1.6);
   // they answer
@@ -7561,7 +7605,7 @@ function startEscort() {
   const T = KR.tents[0];
   Object.assign(T, { L: 15, r0: 1.15, a0: Math.PI / 2 - 0.15, curl: 1.5, sway: 0.42, f: 1.6, ph: 0, slamAt: -1, slamSide: 1, slammed: false });
   T.m.visible = true; KR.head.visible = true; krSuckers.visible = false;
-  toast('Our friend the <b>kraken</b> surfaces alongside to keep us company!');
+  toast('Our friend the <b>kraken</b> surfaces alongside to keep us company!'); cheerUp(cap, 0.3); cheerUp(dog, 0.3);
   if (!dog.busy && !dog.ashore && !dog.inside && !dog.sleeping) dogCommand(dogBarkAt(ESC.side, 'the kraken'));
   if (capFree()) { interrupt(cap); resetProps(); cap.task = capGreetKraken(ESC.side); }
   if (!ESC.seen) { ESC.seen = true; discover('Kraken Escort', 'The kraken swam beside us for the better part of an hour, waving one great arm as if to say hello. Ghost wagged himself silly.'); }
@@ -7609,6 +7653,368 @@ function krakenGift(small) {
 
 nav.course = world.course || 0; syncWaves();
 for (const id in world.upgrades) if (world.upgrades[id]) buildUpgrade(id);
+
+/* =====================================================================
+   Crew life — moods, a hired deckhand, the captain's wardrobe and Ghost's kit, cabin decorating,
+   and a pixel emblem you can draw for the flag and the mainsail
+   ===================================================================== */
+const CREW = [cap, dog];
+
+/* ---------- mood: food, rest, weather and fun ---------- */
+for (const c of [cap, dog]) { c.fun = c.fun ?? 0.6; c.mood = c.mood ?? 0.7; }
+function cheerUp(c, a) { if (c && c.fun !== undefined) c.fun = clamp(c.fun + a, 0, 1); }
+let moodHud = 0;
+system('mood', dt => {
+  const gloom = clamp(world.w.rain * 0.7 + Math.max(0, world.w.waves - 0.9) * 0.55 + world.w.dark * 0.2, 0, 1);
+  for (const c of [cap, dog]) {
+    c.fun = Math.max(0, c.fun - dt * 0.0032);
+    const target = 0.3 * c.needs.food + 0.24 * c.needs.energy + 0.3 * c.fun + 0.16 * (1 - gloom * (c === dog ? 0.6 : 1));
+    c.mood = damp(c.mood, clamp(target, 0, 1), 0.12, dt);
+  }
+  if ((moodHud -= dt) > 0) return; moodHud = 0.5;
+  for (const [c, id] of [[cap, 'capMood'], [dog, 'dogMood']]) {
+    const el = $(id); if (!el) continue;
+    el.style.width = `${Math.round(c.mood * 100)}%`; el.style.background = `hsl(${Math.round(8 + c.mood * 105)}, 62%, 58%)`;
+    el.parentElement.title = c.mood > 0.72 ? 'In high spirits' : c.mood < 0.35 ? 'Feeling glum' : 'Content';
+  }
+});
+function glum(c) { return clamp((0.4 - (c.mood ?? 0.7)) / 0.4, 0, 1); }
+function* taskJig() {
+  capSay(pick(['Dancing a little hornpipe', 'Whistling a sea shanty', 'Doing a happy jig on deck']));
+  yield* walkTo(cap, 1.3, -0.1); cap.pose = 'jig';
+  for (let k = 0; k < 6; k += DT) { if (Math.random() < DT * 2) floatIcon(cap.rig.j.neck, noteTex, 0.45); yield; }
+  cap.pose = 'cheer'; yield* wait(0.8); cap.pose = 'idle';
+  if (!dog.busy && !dog.sleeping && !dog.ashore && !dog.inside && !dog.aloft) dogCommand(dogHappy());
+}
+function* dogComfort() {
+  dog.busy = true;
+  try {
+    dogSay('Trotting over to cheer the captain up');
+    yield* walkTo(dog, cap.pos.x + 0.22, cap.pos.y + 0.12, 1.2); yield* faceTo(dog, cap.pos.x, cap.pos.y, 0.6);
+    dog.pose = 'sit'; dog.happy = true; yield* wait(4);
+  } finally { dog.busy = false; dog.happy = false; }
+  dog.pose = 'stand';
+}
+function* taskSulk() {
+  capSay(pick(['Feeling a bit glum…', 'Missing dry land', 'Could do with some cheering up']));
+  yield* walkTo(cap, ...SIT_SPOT); yield* face(cap, -Math.PI / 2);
+  cap.pose = 'sit'; yield* wait(2.5);
+  if (!dog.busy && !dog.sleeping && !dog.ashore && !dog.inside && !dog.aloft) {
+    dogCommand(dogComfort()); yield* waitUntil(() => dog.happy, 8);
+    if (dog.happy) { cap.pose = 'pet'; capSay('Ghost always knows how to cheer him up'); yield* wait(3); cheerUp(cap, 0.3); cheerUp(dog, 0.2); }
+  } else { yield* wait(3); cheerUp(cap, 0.1); }
+  cap.pose = 'stretch'; yield* wait(1.2); cap.pose = 'idle';
+}
+
+/* ---------- the deckhand ---------- */
+const HAND_NAMES = ['Pip', 'Rosa', 'Tam', 'Maren', 'Jory', 'Nell', 'Bram', 'Ida', 'Finn', 'Wren', 'Ned', 'Lotte'];
+const hand = { v: null };
+const HAND_PRICE = 50;
+const handSay = t => setLog('handTask', t);
+function candidate() { const I = harbour.d && harbour.d.I; let seed = 99; if (I) for (const ch of I.name) seed = (seed * 31 + ch.charCodeAt(0)) % 100003; return { seed, name: HAND_NAMES[seed % HAND_NAMES.length], isle: I ? I.name : 'the harbour' }; }
+const _qLie = new THREE.Quaternion().setFromAxisAngle(V3(1, 0, 0), -Math.PI / 2);
+const bedroll = new THREE.Group(); bedroll.visible = false; Lgear.add(bedroll);
+{
+  const g = lifeGroup(bedroll, 1.62, deckY(1.62), 0.6); g.rotation.y = Math.PI / 2;
+  mk(new RoundedBoxGeometry(0.62, 0.07, 1.85, 2, 0.03), std(0x5e7a54, { roughness: 1 }), g, 0, 0.035, 0);
+  mk(new THREE.CylinderGeometry(0.1, 0.1, 0.55, 10), std(0xe9e2d2, { roughness: 1 }), g, 0, 0.1, -0.78, 0, 0, Math.PI / 2);
+}
+function hireHand(seed, name, quiet) {
+  if (hand.v) return;
+  const v = makeVillager(mulberry(seed), 'fisher');
+  Object.assign(v, { pos: new THREE.Vector2(ISL.exit[0] + 0.3, 0.2), heading: 0, targetHeading: 0, moving: 0, walkPh: 0, speed: 1.25, tiltR: 0, tiltP: 0, rad: 0.24 / BOAT_S, task: null, pose: 'idle', isHand: true, seed, hname: name });
+  v.name = name; v.grid = makeNavGrid(v.rad); v.obstN = OBST.length;
+  v.root.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  Lcrew.add(v.root); hand.v = v; CREW.push(v);
+  world.hand = { seed, name };
+  $('handRow').hidden = false; $('handName').textContent = `Deckhand · ${name}`;
+  if (!quiet) {
+    toast(`<b>${name}</b> signs on as deckhand!`); sfx.chime();
+    addLog(`Took on a deckhand at ${candidate().isle}: ${name}, who knows a bowline from a reef knot. Ghost approves.`);
+    handSay('Stowing a sea bag and settling in');
+  }
+}
+const H_SPOTS = [[1.3, 0.4], [2.2, 0.2], [-1.9, 0.5], [-2.7, -0.4], [0.9, -0.85], [2.6, -0.05], [-0.6, -0.75], [-3.2, 0.45]];
+function* handSwab(v) {
+  handSay('Swabbing the deck');
+  for (let n = 0; n < 3; n++) {
+    const s = pick(H_SPOTS); yield* walkTo(v, s[0] + rand(-0.15, 0.15), s[1] + rand(-0.15, 0.15));
+    v.pose = 'sweep'; yield* wait(rand(3.5, 5)); v.pose = 'idle';
+  }
+}
+function* handLookout(v) {
+  const sd = Math.random() < 0.5 ? 1 : -1, x = pick([2.4, 1.0, -1.4]);
+  handSay('Keeping a lookout at the rail');
+  yield* walkTo(v, x, sd * rail(x)); yield* face(v, sd > 0 ? 0 : Math.PI, 0.6);
+  for (let k = 0; k < 6; k += DT) { v.targetHeading = (sd > 0 ? 0 : Math.PI) + Math.sin(k * 0.6) * 0.6; yield; }
+  if (Math.random() < 0.25) { spawnPod(true); handSay('Dolphins off the bow!'); v.pose = 'wave'; dogEvent('dolphins', 0); yield* wait(2.5); v.pose = 'idle'; }
+}
+function* handMend(v) {
+  handSay('Mending a fishing net by the crates');
+  yield* walkTo(v, 2.45 - 0.18, -0.42 + 0.22); yield* face(v, Math.PI * 0.75, 0.6);
+  v.seatH = 0.42; v.pose = 'mend'; yield* wait(rand(8, 11)); v.pose = 'idle';
+}
+function* handChat(v) {
+  if (!capFree() || cap.aloft) return;
+  handSay('Swapping sea stories with the captain');
+  yield* walkTo(v, cap.pos.x + (cap.pos.x > 0 ? -0.3 : 0.3), cap.pos.y + 0.12);
+  for (let k = 0; k < 7; k += DT) {
+    v.targetHeading = Math.atan2(cap.pos.x - v.pos.x, cap.pos.y - v.pos.y); v.pose = 'talk'; v.talkT = 0.5;
+    if (Math.random() < DT * 0.4) say(v.rig.j.neck, pick(['Saw a whale once, big as an island!', 'My gran swore by a red sky…', 'Is it true about the kraken?', 'Ghost stole my sandwich again.']), 2.6, 0.78);
+    yield;
+  }
+  v.pose = 'idle'; cheerUp(cap, 0.12);
+}
+function* handTreat(v) {
+  if (dog.busy || dog.sleeping || dog.ashore || dog.inside || dog.aloft) return;
+  handSay('Slipping Ghost a biscuit');
+  yield* walkTo(v, dog.pos.x + 0.28, dog.pos.y);
+  yield* faceTo(v, dog.pos.x, dog.pos.y, 0.6);
+  v.pose = 'give'; dog.targetHeading = Math.atan2(v.pos.x - dog.pos.x, v.pos.y - dog.pos.y);
+  if (!dog.busy) dogCommand(dogHappy());
+  yield* wait(2.4); v.pose = 'idle'; cheerUp(dog, 0.2);
+}
+function* handSleep(v) {
+  handSay('Unrolling a bedroll on the foredeck');
+  yield* walkTo(v, 1.62, 0.6 - 0.75 / BOAT_S); yield* face(v, Math.PI, 0.6);
+  bedroll.visible = true; v.lie = true; v.pose = 'idle'; handSay('Snoring softly on the foredeck');
+  try { yield* waitUntil(() => !world.isNight || KR.active && !krFriendly()); } finally { v.lie = false; }
+  handSay('Rolling up the bedroll'); yield* wait(1); bedroll.visible = false;
+}
+function* handKraken(v) {
+  if (krFriendly()) { handSay('Waving at the friendly kraken!'); const sd = Math.sin(KR.ang) >= 0 ? 1 : -1; yield* walkTo(v, -0.4, sd * rail(-0.4)); v.pose = 'wave'; yield* waitUntil(() => !KR.active, 25); v.pose = 'idle'; return; }
+  handSay('Diving behind the cabin!');
+  const [hx, hz] = krakenHide(-0.3); yield* walkTo(v, hx, hz, 1.8);
+  v.pose = 'clap'; yield* waitUntil(() => !KR.active || KR.t > 21, 30); v.pose = 'idle';
+  handSay('That was… something.');
+}
+function* handHarbour(v) {
+  handSay('Minding the boat while the others go ashore');
+  yield* walkTo(v, ISL.exit[0] + 0.5, Math.sign(harbour.d.z) * rail(ISL.exit[0] + 0.5)); yield* face(v, harbour.d.z > 0 ? 0 : Math.PI, 0.6);
+  v.pose = 'wave'; yield* wait(3); v.pose = 'idle';
+  yield* waitUntil(() => harbour.phase !== 'shore', 25);
+}
+let lastHandTask = null;
+function handNext(v) {
+  if (world.isNight && !KR.active) return handSleep(v);
+  if (KR.active) return handKraken(v);
+  if (harbour.phase === 'shore' || harbour.phase === 'docked') return harbour.d ? handHarbour(v) : handSwab(v);
+  const opts = [[handSwab, 2], [handLookout, 1.6], [handMend, 1.1], [handChat, capFree() ? 0.9 : 0], [handTreat, 0.8]].filter(o => o[0] !== lastHandTask);
+  let tot = opts.reduce((a, o) => a + o[1], 0), r = Math.random() * tot;
+  for (const o of opts) { r -= o[1]; if (r <= 0) { lastHandTask = o[0]; return o[0](v); } }
+  return handSwab(v);
+}
+system('deckhand', (dt, t) => {
+  const v = hand.v; if (!v) return;
+  if (v.obstN !== OBST.length) { v.obstN = OBST.length; v.grid = makeNavGrid(v.rad); }
+  // the kraken and the night change plans at once
+  if (v.task && ((KR.active && !v.krSeen) || (world.isNight !== v.night))) { const tk = v.task; v.task = null; tk.return(); v.pose = 'idle'; }
+  v.krSeen = KR.active; v.night = world.isNight;
+  if (!v.task) v.task = handNext(v);
+  const r = v.task.next(); if (r.done) v.task = null;
+  updateMover(v, dt, 6);
+  if (v.lie) { v.root.quaternion.multiply(_qLie); v.root.position.y += 0.15; }
+  v.talkT = Math.max(0, (v.talkT || 0) - dt);
+  poseVillager(v, t, dt);
+});
+
+/* ---------- the captain's wardrobe and Ghost's kit ---------- */
+{
+  // move the original cap into its own subgroup so the other hats can sit beside it
+  const capHat = new THREE.Group(); for (const ch of [...cap.hat.children]) capHat.add(ch); cap.hat.add(capHat);
+  cap.hats = { captain: capHat };
+}
+function buildHat(kind) {
+  if (cap.hats[kind] || kind === 'none') return cap.hats[kind];
+  const g = new THREE.Group(); cap.hat.add(g); cap.hats[kind] = g;
+  if (kind === 'tricorn') {
+    const blk = std(0x17171a), gold = MAT.brass;
+    const brim = new THREE.CylinderGeometry(0.27, 0.27, 0.07, 3); mk(brim, blk, g, 0, 0.32, 0.01, 0, Math.PI, 0).scale.set(1, 1, 0.92);
+    mk(new THREE.CylinderGeometry(0.135, 0.15, 0.13, 14), blk, g, 0, 0.38, 0);
+    mk(new THREE.TorusGeometry(0.27, 0.008, 3, 3), gold, g, 0, 0.36, 0.01, Math.PI / 2, 0, Math.PI / 6);
+  } else if (kind === 'straw') {
+    const straw = std(0xe2c27a, { roughness: 0.9 });
+    mk(new THREE.CylinderGeometry(0.3, 0.3, 0.02, 18), straw, g, 0, 0.3, 0);
+    mk(new THREE.CylinderGeometry(0.13, 0.15, 0.12, 14), straw, g, 0, 0.37, 0);
+    mk(new THREE.CylinderGeometry(0.152, 0.152, 0.03, 14), std(0xb5382c), g, 0, 0.33, 0);
+  } else if (kind === 'beanie') {
+    const knit = std(0x2f7f86, { roughness: 1 });
+    mk(new THREE.SphereGeometry(0.155, 14, 8, 0, TAU, 0, Math.PI / 2), knit, g, 0, 0.26, -0.01).scale.set(1, 1.08, 1.05);
+    mk(new THREE.TorusGeometry(0.15, 0.03, 6, 16), knit, g, 0, 0.27, -0.01, Math.PI / 2, 0, 0);
+    mk(new THREE.SphereGeometry(0.045, 8, 6), std(0xf1ede4, { roughness: 1 }), g, 0, 0.43, -0.01);
+  }
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  return g;
+}
+const bandana = new THREE.Group(); bandana.visible = false; dog.rig.j.body.add(bandana);
+const bandanaMat = std(0xb5382c, { roughness: 0.8, side: THREE.DoubleSide });
+{
+  const tri = new THREE.BufferGeometry(); tri.setAttribute('position', new THREE.Float32BufferAttribute([-0.11, 0, 0, 0.11, 0, 0, 0, -0.13, 0.03], 3)); tri.computeVertexNormals();
+  mk(tri, bandanaMat, bandana, 0, 0.11, 0.6, -0.35, 0, 0);
+  mk(new THREE.TorusGeometry(0.125, 0.024, 5, 16), bandanaMat, bandana, 0, 0.13, 0.52, Math.PI / 2 - 0.5, 0, 0).scale.set(1, 1.15, 1);
+  for (let i = 0; i < 4; i++) mk(new THREE.SphereGeometry(0.011, 5, 4), std(0xf1ede4), bandana, -0.05 + i * 0.033, 0.06 - (i % 2) * 0.03, 0.62);
+}
+const raincoat = new THREE.Group(); raincoat.visible = false; dog.rig.j.body.add(raincoat);
+{
+  const y = std(0xf2b61f, { roughness: 0.45 });
+  mk(rb(0.35, 0.18, 0.46, 0.35), y, raincoat, 0, 0.12, 0.22);
+  for (const s of [-1, 1]) mk(rb(0.03, 0.16, 0.44, 0.4), y, raincoat, s * 0.17, 0.02, 0.22);
+  mk(new THREE.TorusGeometry(0.11, 0.02, 4, 12), std(0x22252a), raincoat, 0, 0.15, 0.47, Math.PI / 2 - 0.5, 0, 0);
+  for (const z of [0.12, 0.32]) mk(new THREE.BoxGeometry(0.06, 0.012, 0.03), std(0x22252a), raincoat, 0, 0.215, z);
+}
+system('dogKit', (dt, t) => {
+  const mode = look.dogCoat || 'never', vest = dog.vest.visible;
+  raincoat.visible = !vest && (mode === 'always' || mode === 'rain' && world.w.rain > 0.22);
+});
+const BEARD = { full: [1, true], trimmed: [0.55, false], moustache: [0, false] };
+function applyCrewLook(L) {
+  const cc = C(L.capCoat || '#24405f');
+  cap.coatMats[0][1].copy(cc); cap.coatMats[1][1].copy(cc).multiplyScalar(0.72);
+  for (const k in cap.hats) cap.hats[k].visible = false;
+  const h = buildHat(L.capHat || 'captain'); if (h) h.visible = true;
+  const [bs, tuft] = BEARD[L.capBeard] || BEARD.full;
+  cap.beardParts[0].visible = bs > 0; cap.beardParts[0].scale.y = bs || 1; cap.beardParts[1].visible = tuft;
+  cap.hairMats[0].color.set(L.beardColor || '#a79c90'); cap.hairMats[1].color.copy(cap.hairMats[0].color).multiplyScalar(0.86);
+  cap.pipeOn = L.pipe !== false;
+  dog.collar.material.color.set(L.dogCollar || '#2f7de1');
+  bandana.visible = (L.dogBandana || 'none') !== 'none';
+  if (bandana.visible) bandanaMat.color.set({ red: '#b5382c', blue: '#2b5fa8', green: '#3f7a3a', gold: '#e9b866', black: '#1b1c1f' }[L.dogBandana] || '#b5382c');
+  cabin.hookHat.visible = cabin.hookHat.visible && (L.capHat || 'captain') === 'captain';
+}
+
+/* ---------- cabin decorating ---------- */
+const QUILT = { tartan: ['#9c2a22', 'rgba(20,40,60,.55)', 'rgba(240,200,90,.6)'], forest: ['#2f5a3a', 'rgba(10,20,10,.5)', 'rgba(230,80,60,.55)'], ocean: ['#2b5fa8', 'rgba(255,255,255,.35)', 'rgba(20,30,60,.5)'], cream: ['#e8dcc0', 'rgba(150,60,40,.35)', 'rgba(60,90,120,.4)'] };
+function drawQuilt(c, w, h, kind) {
+  if (kind === 'patchwork') {
+    const cols = ['#b5382c', '#e9b866', '#2b5fa8', '#3f7a3a', '#e8dcc0', '#8e5aa8'];
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { c.fillStyle = cols[(i * 3 + j * 5) % 6]; c.fillRect(i * w / 4, j * h / 4, w / 4, h / 4); c.strokeStyle = 'rgba(255,255,255,.5)'; c.setLineDash([3, 3]); c.strokeRect(i * w / 4 + 2, j * h / 4 + 2, w / 4 - 4, h / 4 - 4); c.setLineDash([]); }
+    return;
+  }
+  const [base, a, b] = QUILT[kind] || QUILT.tartan;
+  c.fillStyle = base; c.fillRect(0, 0, w, h);
+  c.fillStyle = a; for (let i = 0; i < 4; i++) { c.fillRect(i * 32 + 8, 0, 10, h); c.fillRect(0, i * 32 + 8, w, 10); }
+  c.fillStyle = b; for (let i = 0; i < 4; i++) { c.fillRect(i * 32 + 24, 0, 2, h); c.fillRect(0, i * 32 + 24, w, 2); }
+}
+function drawRug(c, w, h, kind) {
+  if (kind === 'stripes') { const cols = ['#e8dcc0', '#2b5fa8', '#b5382c', '#e8dcc0', '#3f7a3a']; for (let i = 0; i < 10; i++) { c.fillStyle = cols[i % 5]; c.fillRect(i * w / 10, 0, w / 10 + 1, h); } }
+  else if (kind === 'compass') {
+    c.fillStyle = '#1f3a5f'; c.fillRect(0, 0, w, h); c.strokeStyle = '#e3c27a'; c.lineWidth = 4; c.strokeRect(8, 8, w - 16, h - 16);
+    c.save(); c.translate(w / 2, h / 2); c.fillStyle = '#e3c27a';
+    for (let k = 0; k < 8; k++) { c.rotate(Math.PI / 4); c.beginPath(); c.moveTo(0, 0); c.lineTo(k % 2 ? 7 : 10, 0); c.lineTo(0, k % 2 ? -32 : -52); c.lineTo(k % 2 ? -7 : -10, 0); c.closePath(); c.fill(); }
+    c.restore();
+  } else if (kind === 'sheepskin') {
+    c.fillStyle = '#f2ece0'; c.fillRect(0, 0, w, h);
+    for (let i = 0; i < 260; i++) { c.fillStyle = `rgba(${200 + (i % 40)},${190 + (i % 35)},${170 + (i % 30)},.5)`; c.beginPath(); c.arc((i * 73) % w, (i * 37) % h, 3 + (i % 4), 0, TAU); c.fill(); }
+  } else {
+    c.fillStyle = '#8c2f2a'; c.fillRect(0, 0, w, h); c.strokeStyle = '#e3c27a'; c.lineWidth = 6; c.strokeRect(10, 10, w - 20, h - 20);
+    c.fillStyle = '#244a6e'; for (let i = 0; i < 5; i++) { c.beginPath(); c.moveTo(40 + i * 44, h / 2); c.lineTo(58 + i * 44, 30); c.lineTo(76 + i * 44, h / 2); c.lineTo(58 + i * 44, h - 30); c.closePath(); c.fill(); }
+    c.fillStyle = '#e3c27a'; for (let x = 4; x < w; x += 8) { c.fillRect(x, 0, 3, 6); c.fillRect(x, h - 6, 3, 6); }
+  }
+}
+function drawWalls(c, w, h, kind) {
+  const planks = (hue, sat, lit) => { for (let i = 0; i < 10; i++) { const x = i * w / 10; c.fillStyle = `hsl(${hue}, ${sat + (i * 7) % 9}%, ${lit + (i * 13) % 8}%)`; c.fillRect(x + 1, 0, w / 10 - 2, h); c.fillStyle = 'rgba(40,30,20,.35)'; c.fillRect(x, 0, 2, h); } };
+  if (kind === 'whitewash') { c.fillStyle = '#e9e3d6'; c.fillRect(0, 0, w, h); planks(40, 18, 80); }
+  else if (kind === 'navy') { c.fillStyle = '#1f3a5f'; c.fillRect(0, 0, w, h); planks(212, 38, 26); }
+  else if (kind === 'sage') { c.fillStyle = '#8fa88a'; c.fillRect(0, 0, w, h); planks(110, 14, 56); }
+  else if (kind === 'floral') {
+    c.fillStyle = '#efe4cc'; c.fillRect(0, 0, w, h);
+    for (let i = 0; i < 40; i++) { const x = (i * 53) % w, y = (i * 97) % h; c.fillStyle = ['#c9605a', '#5a82b8', '#e3b54a'][i % 3]; for (let k = 0; k < 5; k++) { c.beginPath(); c.arc(x + Math.cos(k * 1.26) * 4, y + Math.sin(k * 1.26) * 4, 3, 0, TAU); c.fill(); } c.fillStyle = '#7a9a5a'; c.fillRect(x - 1, y + 5, 2, 8); }
+  } else { c.fillStyle = '#a8703f'; c.fillRect(0, 0, w, h); planks(28, 40, 38); }
+  c.fillStyle = '#5a3418'; c.fillRect(0, h * 0.62, w, 7); c.fillStyle = 'rgba(255,220,170,.18)'; c.fillRect(0, h * 0.62, w, 2);
+}
+function drawArt(c, w, h, kind) {
+  c.fillStyle = '#efe4c8'; c.fillRect(0, 0, w, h);
+  const sea = () => { c.fillStyle = '#4f7f9c'; c.fillRect(0, h * 0.62, w, h * 0.3); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 2; for (let i = 0; i < 4; i++) { c.beginPath(); c.moveTo(10, h * 0.68 + i * 9); c.quadraticCurveTo(w / 2, h * 0.64 + i * 9, w - 10, h * 0.68 + i * 9); c.stroke(); } };
+  const caption = t => { c.fillStyle = '#5a3a1e'; c.font = 'italic 15px Georgia'; c.textAlign = 'center'; c.fillText(t, w / 2, h - 8); };
+  if (kind === 'ship') {
+    c.fillStyle = '#cfe0ea'; c.fillRect(0, 0, w, h * 0.62); sea();
+    c.fillStyle = '#6e4020'; c.beginPath(); c.moveTo(28, 96); c.lineTo(100, 96); c.lineTo(90, 108); c.lineTo(36, 108); c.fill();
+    c.fillStyle = '#fbf7ee'; c.beginPath(); c.moveTo(64, 30); c.lineTo(64, 92); c.lineTo(30, 92); c.fill(); c.beginPath(); c.moveTo(68, 36); c.lineTo(68, 92); c.lineTo(96, 92); c.fill();
+    caption('Wanderer');
+  } else if (kind === 'lighthouse') {
+    c.fillStyle = '#f2c4a0'; c.fillRect(0, 0, w, h * 0.62); sea();
+    c.fillStyle = '#7a7366'; c.beginPath(); c.ellipse(64, 104, 40, 10, 0, 0, TAU); c.fill();
+    for (let i = 0; i < 4; i++) { c.fillStyle = i % 2 ? '#f6f3ee' : '#c23a2c'; c.fillRect(54 - i, 40 + i * 14, 20 + i * 2, 14); }
+    c.fillStyle = '#ffe28a'; c.fillRect(56, 30, 16, 10); c.fillStyle = '#222'; c.fillRect(54, 26, 20, 4);
+    caption('Home light');
+  } else if (kind === 'kraken') {
+    c.fillStyle = '#d8e6ec'; c.fillRect(0, 0, w, h * 0.62); sea();
+    c.fillStyle = '#8e2d57'; c.beginPath(); c.ellipse(64, 80, 24, 30, 0, Math.PI, 0); c.fill();
+    c.lineWidth = 7; c.strokeStyle = '#8e2d57'; for (const s of [-1, 1]) { c.beginPath(); c.moveTo(64 + s * 20, 92); c.quadraticCurveTo(64 + s * 50, 70, 64 + s * 40, 40); c.stroke(); }
+    c.fillStyle = '#ffb53a'; for (const s of [-1, 1]) { c.beginPath(); c.arc(64 + s * 9, 72, 4, 0, TAU); c.fill(); }
+    caption('An old friend');
+  } else if (kind === 'map') {
+    c.fillStyle = '#e8d6a8'; c.fillRect(6, 6, w - 12, h - 12);
+    c.fillStyle = '#a8c49a'; c.beginPath(); c.ellipse(44, 54, 22, 14, 0.4, 0, TAU); c.fill(); c.beginPath(); c.ellipse(88, 96, 18, 22, -0.3, 0, TAU); c.fill();
+    c.strokeStyle = '#9c2a22'; c.setLineDash([4, 4]); c.lineWidth = 2; c.beginPath(); c.moveTo(44, 60); c.bezierCurveTo(70, 90, 40, 110, 88, 100); c.stroke(); c.setLineDash([]);
+    c.strokeStyle = '#9c2a22'; c.lineWidth = 3; c.beginPath(); c.moveTo(82, 94); c.lineTo(94, 106); c.moveTo(94, 94); c.lineTo(82, 106); c.stroke();
+    caption('X marks the spot');
+  } else {
+    c.fillStyle = '#5b6b7c'; c.beginPath(); c.ellipse(64, 86, 40, 44, 0, 0, TAU); c.fill();
+    c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(64, 98, 30, 34, 0, 0, TAU); c.fill();
+    c.fillStyle = '#5b6b7c'; for (const s of [-1, 1]) { c.beginPath(); c.moveTo(64 + s * 18, 52); c.lineTo(64 + s * 36, 18); c.lineTo(64 + s * 42, 62); c.fill(); }
+    c.fillStyle = '#7ab8e8'; for (const s of [-1, 1]) { c.beginPath(); c.arc(64 + s * 15, 84, 5, 0, TAU); c.fill(); }
+    c.fillStyle = '#222'; c.beginPath(); c.ellipse(64, 104, 8, 6, 0, 0, TAU); c.fill();
+    c.fillStyle = '#2b6fd6'; c.fillRect(34, 128, 60, 8);
+    caption('Ghost');
+  }
+}
+const redraw = (tex, fn, kind) => { if (!tex) return; const cv = tex.image, c = cv.getContext('2d'); c.clearRect(0, 0, cv.width, cv.height); fn(c, cv.width, cv.height, kind); tex.needsUpdate = true; };
+// trophies on the sea chest at the end of the aisle: they pile up as the voyage grows richer
+const trophies = new THREE.Group(); cabinRoom.add(trophies);
+{
+  const F = CABIN.floor, gold = std(0xe9c25a, { roughness: 0.3, metalness: 0.85 }), y = F + 0.145;
+  const items = [];
+  { const g = new THREE.Group(); for (let i = 0; i < 6; i++) mk(new THREE.CylinderGeometry(0.018, 0.018, 0.005, 10), gold, g, (i % 3) * 0.012, i * 0.006, (i % 2) * 0.01); g.position.set(0.34, y, -0.09); items.push(g); }
+  { const g = new THREE.Group(); mk(new THREE.CylinderGeometry(0.02, 0.012, 0.035, 10, 1, true), gold, g, 0, 0.05, 0); mk(new THREE.CylinderGeometry(0.004, 0.004, 0.03, 5), gold, g, 0, 0.018, 0); mk(new THREE.CylinderGeometry(0.014, 0.014, 0.004, 10), gold, g, 0, 0.002, 0); g.position.set(0.4, y, 0.06); items.push(g); }
+  { const g = new THREE.Group(); mk(new THREE.SphereGeometry(0.016, 10, 8), std(0xf4efe6, { roughness: 0.15, metalness: 0.3 }), g, 0, 0.016, 0); mk(new THREE.CylinderGeometry(0.02, 0.022, 0.006, 10), std(0x3a2a5e), g, 0, 0.002, 0); g.position.set(0.32, y, 0.1); items.push(g); }
+  { const g = new THREE.Group(); mk(new THREE.BoxGeometry(0.05, 0.03, 0.035), std(0x6e4020), g, 0, 0.015, 0); mk(new THREE.BoxGeometry(0.052, 0.006, 0.037), gold, g, 0, 0.03, 0); g.position.set(0.41, y, -0.03); g.rotation.y = 0.4; items.push(g); }
+  { const g = new THREE.Group(); const cr = new THREE.CylinderGeometry(0.022, 0.022, 0.018, 8, 1, true); mk(cr, gold, g, 0, 0.009, 0); for (let k = 0; k < 6; k++) mk(new THREE.ConeGeometry(0.006, 0.014, 4), gold, g, Math.cos(k) * 0.021, 0.024, Math.sin(k) * 0.021); g.position.set(0.36, y, 0.02); items.push(g); }
+  for (const g of items) { g.visible = false; trophies.add(g); }
+  trophies.userData.items = items;
+}
+system('trophies', () => {
+  const n = look.trophies === false ? 0 : Math.min(5, Math.floor(world.gold / 40) + (world.treasure || 0) + (world.krakenFriend >= 3 ? 1 : 0) + (hand.v ? 1 : 0));
+  trophies.userData.items.forEach((g, i) => g.visible = i < n);
+});
+function applyCabinLook(L) {
+  redraw(cabin.tex.tartan, drawQuilt, L.quilt || 'tartan');
+  redraw(cabin.tex.rug, drawRug, L.rug || 'diamond');
+  redraw(cabin.tex.panel, drawWalls, L.wallpaper || 'panel');
+  redraw(cabin.tex.pic, drawArt, L.art || 'ghost');
+}
+
+/* ---------- your own emblem: an 8×8 pixel design for the flag and the mainsail ---------- */
+function drawPixels(c, x, y, size, px, c1, c2) {
+  const s = size / 8; px = (px || '').padEnd(64, '0');
+  for (let i = 0; i < 64; i++) { const v = px[i]; if (v === '0') continue; c.fillStyle = v === '1' ? c1 : c2; c.fillRect(Math.round(x - size / 2 + (i % 8) * s), Math.round(y - size / 2 + ((i / 8) | 0) * s), Math.ceil(s) + 0.5, Math.ceil(s) + 0.5); }
+}
+function lum(hex) { const c = C(hex); return 0.3 * c.r + 0.59 * c.g + 0.11 * c.b; }
+function pixelRowHTML() {
+  const px = (look.pixels || '').padEnd(64, '0');
+  return `<div class="yrow"><label>Draw your own emblem <em>tap squares: blank → colour → dark</em></label><div class="pxwrap"><div class="pxgrid">${[...px].map((v, i) => `<button class="px p${v}" data-px="${i}" aria-label="Square ${i + 1}"></button>`).join('')}</div>` +
+    `<div class="pxtools"><button class="chip" data-pxa="flag">Fly it on the flag</button><button class="chip" data-pxa="sail">Paint it on the mainsail</button><button class="chip" data-pxa="invert">Invert</button><button class="chip" data-pxa="clear">Clear</button></div></div></div>`;
+}
+function syncPixels() {
+  const px = (look.pixels || '').padEnd(64, '0');
+  for (const b of $('yardBody').querySelectorAll('[data-px]')) b.className = `px p${px[+b.dataset.px]}`;
+}
+onTap($('yardBody'), '[data-px], [data-pxa]', b => {
+  let px = [...(look.pixels || '').padEnd(64, '0')];
+  if (b.dataset.px !== undefined) { const i = +b.dataset.px; px[i] = String((+px[i] + 1) % 3); setLook({ pixels: px.join('') }); syncPixels(); return; }
+  const a = b.dataset.pxa;
+  if (a === 'clear') px = px.map(() => '0'); else if (a === 'invert') px = px.map(v => v === '0' ? '1' : '0');
+  if (a === 'flag') { setLook({ pixels: px.join(''), flag: 'custom' }); toast('Flying <b>your own design</b>'); }
+  else if (a === 'sail') { setLook({ pixels: px.join(''), emblem: 'custom' }); toast('Your design is painted on the <b>mainsail</b>'); }
+  else { setLook({ pixels: px.join('') }); }
+  syncPixels();
+});
+const KEEP_KEYS = ['capCoat', 'capHat', 'capBeard', 'beardColor', 'pipe', 'dogCollar', 'dogBandana', 'dogCoat', 'quilt', 'rug', 'wallpaper', 'art', 'trophies', 'pixels'];
+const keepKeys = L => Object.fromEntries(KEEP_KEYS.filter(k => k in L).map(k => [k, L[k]]));
+function applyExtras(L) { applyCrewLook(L); applyCabinLook(L); }
+{ const base = applyLook; applyLook = L => { base(L); applyExtras(L); }; }
+applyExtras(look);
+if (world.hand) hireHand(world.hand.seed, world.hand.name, true);
 
 /* =====================================================================
    HUD
@@ -7757,7 +8163,7 @@ function pausedTick(dt) {
   updateHUD(dt);
 }
 renderer.setAnimationLoop(frame);
-window.__atsea = { nav, UP, buildUpgrade, buyUpgrade, openMarket, openChart, startEscort, ESC, setTarget, renderChart, taskCrowsNest, capSalute, dogDinghyNap, sellFish, settings, applySettings, togglePhoto, photo, saveVoyage, loadVoyage, openOpts, SEASONS, setSeason: m => { world.seasonMode = m; }, season, spawnOrcas, spawnManta, spawnOtters, spawnSerpent, strike, sky2, rainbow, life, SERP, storm, choice, pickKraken, taskGalley, ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
+window.__atsea = { hand, hireHand, setLook, cheerUp, taskJig, taskSulk, nav, UP, buildUpgrade, buyUpgrade, openMarket, openChart, startEscort, ESC, setTarget, renderChart, taskCrowsNest, capSalute, dogDinghyNap, sellFish, settings, applySettings, togglePhoto, photo, saveVoyage, loadVoyage, openOpts, SEASONS, setSeason: m => { world.seasonMode = m; }, season, spawnOrcas, spawnManta, spawnOtters, spawnSerpent, strike, sky2, rainbow, life, SERP, storm, choice, pickKraken, taskGalley, ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
   PERCHES, tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
 </script>
 </body>
