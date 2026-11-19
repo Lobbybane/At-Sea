@@ -75,7 +75,7 @@ canvas#c:active{cursor:grabbing}
 #timeCtl button svg{width:13px;height:13px}#timeCtl button:hover{color:var(--ink)}#timeCtl button.on{background:var(--gold);color:#1a1208}
 #pausedTag{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:5;padding:8px 16px;border-radius:999px;font:700 11px var(--sans);letter-spacing:.2em;text-transform:uppercase;color:#ffe6ad;cursor:pointer;border:1px solid var(--edge)}
 #pausedTag[hidden]{display:none}
-@media (max-width:820px){#timeCtl button{min-width:26px;padding:0 6px;height:28px}}
+@media (max-width:820px){#timeCtl button{min-width:26px;padding:0 6px;height:28px}#tools{flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 28px)}#timeCtl{order:-1}}
 .tool{width:42px;height:42px;padding:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--ink);pointer-events:auto}
 .tool svg{width:18px;height:18px}
 .tool:hover{border-color:var(--edge-hi)}
@@ -7679,8 +7679,10 @@ let moodHud = 0;
 system('mood', dt => {
   const gloom = clamp(world.w.rain * 0.7 + Math.max(0, world.w.waves - 0.9) * 0.55 + world.w.dark * 0.2, 0, 1);
   for (const c of [cap, dog]) {
-    c.fun = Math.max(0, c.fun - dt * 0.0032);
-    const target = 0.3 * c.needs.food + 0.24 * c.needs.energy + 0.3 * c.fun + 0.16 * (1 - gloom * (c === dog ? 0.6 : 1));
+    c.fun = Math.max(0, c.fun - dt * (c === dog ? 0.0018 : 0.0032));
+    // a husky is cheerful by nature: Ghost's mood starts higher and weather barely touches it
+    const target = c === dog ? 0.18 + 0.24 * c.needs.food + 0.18 * c.needs.energy + 0.3 * c.fun + 0.1 * (1 - gloom * 0.5)
+      : 0.3 * c.needs.food + 0.24 * c.needs.energy + 0.3 * c.fun + 0.16 * (1 - gloom);
     c.mood = damp(c.mood, clamp(target, 0, 1), 0.12, dt);
   }
   if ((moodHud -= dt) > 0) return; moodHud = 0.5;
