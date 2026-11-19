@@ -214,7 +214,27 @@ body.yard #log{opacity:0;visibility:hidden}
 .ctime i{display:block;height:100%;background:var(--gold);transform-origin:left}
 @media (max-width:620px){.copts{grid-template-columns:1fr}#choice{bottom:96px}#choice .k{display:none}}
 #opts{position:fixed;right:24px;top:24px;bottom:176px;width:356px;display:flex;flex-direction:column;z-index:6;overflow:hidden}
-#opts[hidden],#shot[hidden]{display:none}
+#opts[hidden],#shot[hidden],#market[hidden],#chart[hidden]{display:none}
+#market{position:fixed;right:24px;top:24px;bottom:176px;width:356px;display:flex;flex-direction:column;z-index:6;overflow:hidden}
+#market .yhead{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 18px 12px;border-bottom:1px solid var(--edge)}
+#market h3,#chart h3{font-family:var(--serif);font-weight:500;font-size:25px;letter-spacing:.04em;color:#f3e3c4;margin:0}
+#market .yhead p,#chart .chhead p{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-top:4px}
+#market .ybody{flex:1;overflow-y:auto;padding:14px 18px 20px;display:flex;flex-direction:column;gap:17px;scrollbar-width:thin}
+.purse{display:flex;align-items:center;gap:10px}.purse b{font:600 15px var(--sans);color:#ffe6ad;white-space:nowrap}
+.mrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(246,236,217,.07)}
+.mrow b{display:block;font:600 13px var(--sans);color:var(--ink)}.mrow small{display:block;font-size:11.5px;color:var(--ink-dim);line-height:1.35;margin-top:2px}
+.mrow .ybtn{flex:none;min-width:74px}.mrow .ybtn:disabled{opacity:.38;cursor:default}
+.mrow .fitted{flex:none;font:700 10px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:#9fd69a}
+.tool.glow{box-shadow:0 0 0 2px var(--gold),0 0 18px rgba(233,184,102,.55)}
+#chart{position:fixed;left:24px;bottom:120px;width:270px;max-height:calc(100vh - 150px);display:flex;flex-direction:column;z-index:6;overflow:hidden;padding-bottom:10px}
+#chart .chhead{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px 8px}
+#chartCv{width:238px;height:238px;margin:0 auto;display:block;cursor:pointer;touch-action:manipulation}
+.chsteer{display:flex;gap:6px;padding:10px 12px 4px}.chsteer .ybtn{flex:1;padding-left:4px;padding-right:4px;font-size:12px;touch-action:none;user-select:none}
+#chList{overflow-y:auto;padding:4px 14px 0;scrollbar-width:thin}
+.crow{display:flex;flex-direction:column;gap:6px;padding:8px 0;border-top:1px solid rgba(246,236,217,.07)}
+.crow b{font:600 13px var(--sans);color:var(--ink)}.crow small{display:block;font-size:11px;color:var(--ink-dim)}
+body.opting #chart{opacity:0;visibility:hidden}
+body.charting #title{opacity:0;visibility:hidden}
 #opts .yhead{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 18px 12px;border-bottom:1px solid var(--edge)}
 #opts h3{font-family:var(--serif);font-weight:500;font-size:25px;letter-spacing:.04em;color:#f3e3c4;margin:0}
 #opts .yhead p{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-top:4px}
@@ -238,7 +258,7 @@ body.photo #bar,body.photo #log,body.photo #title,body.photo #hint,body.photo #t
 #shot{position:fixed;left:50%;top:50%;translate:-50% -50%;width:min(560px,calc(100% - 24px));padding:12px;z-index:9;display:flex;flex-direction:column;gap:10px}
 #shot img{width:100%;border-radius:10px;display:block}
 #shot a.ybtn{text-decoration:none;text-align:center}
-@media (max-width:820px){#opts{left:10px;right:10px;top:auto;bottom:10px;width:auto;height:min(54vh,520px)} body.opting #bar,body.opting #tools{opacity:0;visibility:hidden} #photoBar{bottom:10px}}
+@media (max-width:820px){#opts,#market{left:10px;right:10px;top:auto;bottom:10px;width:auto;height:min(54vh,520px)} #chart{left:10px;right:10px;width:auto;bottom:96px;max-height:58vh} body.opting #bar,body.opting #tools{opacity:0;visibility:hidden} #photoBar{bottom:10px}}
 @media (max-width:600px) and (orientation:portrait){
   #log{display:flex !important;width:205px;padding:10px 12px;gap:8px;transform:scale(.82);transform-origin:top right;right:10px;top:12px}
   #log .entry,#log .head{display:none}
@@ -322,6 +342,8 @@ body.photo #bar,body.photo #log,body.photo #title,body.photo #hint,body.photo #t
     <div><label>Discoveries</label><b id="sFinds">0 found</b></div>
     <div><label>Treasure</label><b id="sGold">None yet</b></div>
     <div><label>Season</label><b id="sSeason">Spring</b></div>
+    <div><label>Purse</label><b id="sPurse">0 gold</b></div>
+    <div><label>Kraken</label><b id="sKraken">A stranger</b></div>
   </div>
   </div></div>
 </header>
@@ -343,6 +365,8 @@ body.photo #bar,body.photo #log,body.photo #title,body.photo #hint,body.photo #t
 <button id="perf" class="panel" title="Graphics quality (Q) — click to change"><i id="fpsDot"></i><span id="fpsTxt">-- fps</span><em id="qTxt">Auto</em></button>
 <button id="bPhoto" class="panel tool" title="Photo mode (P)" aria-label="Photo mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5 15.5 10M20.5 12l-7 1M16 19.5l-4.5-5.5M7 19.5l2.5-6.5M3.5 11l6.5-1M8 4.5l3.5 6"/></svg></button>
 <button id="bOpts" class="panel tool" title="Settings (O)" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+<button id="bChart" class="panel tool" title="Sea chart & steering (N) — arrow keys steer" aria-label="Sea chart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M14.8 9.2 13 13l-3.8 1.8L11 11z"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2"/></svg></button>
+<button id="bMarket" class="panel tool" title="Market & upgrades (U)" aria-label="Market and upgrades"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="7" rx="6.5" ry="2.8"/><path d="M5.5 7v5c0 1.5 2.9 2.8 6.5 2.8s6.5-1.3 6.5-2.8V7"/><path d="M5.5 12v5c0 1.5 2.9 2.8 6.5 2.8s6.5-1.3 6.5-2.8v-5"/></svg></button>
 <button id="bYard" class="panel tool" title="Shipwright — customise the boat (B)" aria-label="Open the Shipwright"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.4 3.6a2.1 2.1 0 0 1 3 3L12 16l-4 1 1-4z"/><path d="M3 21c1.5-.3 3-1.4 3-3.2 0-1.3 1-2.3 2.3-2.3"/></svg></button>
 <button id="sound" class="panel tool" title="Toggle sound (M)" aria-label="Toggle sound">
   <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
@@ -356,6 +380,16 @@ body.photo #bar,body.photo #log,body.photo #title,body.photo #hint,body.photo #t
   <div class="ytabs" id="yardTabs"></div>
   <div class="ybody" id="yardBody"></div>
   <div class="yfoot"><button id="yardRandom" class="ybtn gold">Surprise me</button><button id="yardReset" class="ybtn">Reset</button></div>
+</aside>
+<aside id="market" class="panel" hidden aria-label="Market and upgrades">
+  <div class="yhead"><div><h3>Market</h3><p id="mktSub">Tie up at a harbour island to trade</p></div><div class="purse"><b id="mktPurse">0 gold</b><button id="mktClose" class="xbtn" aria-label="Close the market">&times;</button></div></div>
+  <div class="ybody" id="mktBody"></div>
+</aside>
+<aside id="chart" class="panel" hidden aria-label="Sea chart">
+  <div class="chhead"><div><h3>Sea Chart</h3><p id="chHead">Heading 090° E</p></div><button id="chClose" class="xbtn" aria-label="Close the chart">&times;</button></div>
+  <canvas id="chartCv" aria-label="Chart of the waters around the boat; tap an island to steer for it"></canvas>
+  <div class="chsteer"><button id="chPort" class="ybtn" aria-label="Steer to port">&#9664; Port</button><button id="chHold" class="ybtn">Hold course</button><button id="chStbd" class="ybtn" aria-label="Steer to starboard">Starboard &#9654;</button></div>
+  <div id="chList"></div>
 </aside>
 <aside id="opts" class="panel" hidden aria-label="Settings">
   <div class="yhead"><div><h3>Settings</h3><p>Sound, time, the sea and the screen</p></div><button id="optsClose" class="xbtn" aria-label="Close settings">&times;</button></div>
@@ -373,7 +407,7 @@ body.photo #bar,body.photo #log,body.photo #title,body.photo #hint,body.photo #t
   <div class="copts">
     <button data-c="fish" id="cFish"><span class="k">1</span><b>Offer it a fish</b><small id="cFishSub">From the bucket</small></button>
     <button data-c="horn"><span class="k">2</span><b>Sound the foghorn</b><small>Scare it back down</small></button>
-    <button data-c="hide"><span class="k">3</span><b>Hide!</b><small>Take cover and watch</small></button>
+    <button data-c="hide"><span class="k">3</span><b id="cHideB">Hide!</b><small id="cHideS">Take cover and watch</small></button>
   </div>
   <div class="ctime"><i id="cTimer"></i></div>
 </div>
@@ -804,7 +838,7 @@ function updateLightning(dt) {
    ===================================================================== */
 const WAVES = [ // dir.x, dir.z, wavelength, amplitude weight
   [1.0, 0.22, 27, 0.56], [0.78, -0.62, 15.5, 0.32], [0.28, 1.0, 9.2, 0.2], [-0.5, 0.86, 5.4, 0.11], [0.96, -0.28, 3.3, 0.065],
-].map(w => { const l = Math.hypot(w[0], w[1]); return [w[0] / l, w[1] / l, w[2], w[3]]; });
+].map(w => { const l = Math.hypot(w[0], w[1]); return [w[0] / l, w[1] / l, w[2], w[3], 0]; });   // [4]: phase, set by the course (see Steering)
 const WAVE_SPEED = 0.85;
 // Ocean grid: vertices are packed near the boat (spacing 2*OCEAN_A/n there). Waves too short for the
 // grid to draw are faded out identically on the GPU and in the buoyancy maths, so the hull always
@@ -823,7 +857,7 @@ function gerstner(px, pz, t, out) {
   const amp = world.waveAmp, st = world.steep;
   for (let i = 0; i < WAVES.length; i++) {
     const w = WAVES[i], k = TAU / w[2], om = Math.sqrt(9.8 * k) * WAVE_SPEED;
-    const A = w[3] * amp * WAVE_RES[i], th = k * (w[0] * px + w[1] * pz) - om * t;
+    const A = w[3] * amp * WAVE_RES[i], th = k * (w[0] * px + w[1] * pz) + w[4] - om * t;
     const c = Math.cos(th) * st * A;
     dx += w[0] * c; dz += w[1] * c; dy += A * Math.sin(th);
   }
@@ -831,7 +865,7 @@ function gerstner(px, pz, t, out) {
 }
 const _g = V3();
 function waveHeight(x, z) {
-  const t = world.time, px = x + world.offset;
+  const t = world.time, px = x;
   let qx = px, qz = z;
   for (let i = 0; i < 3; i++) { gerstner(qx, qz, t, _g); qx = px - _g.x; qz = z - _g.z; }
   return gerstner(qx, qz, t, _g).y;
@@ -856,7 +890,7 @@ function makeOceanGeo(n) {
 }
 
 const oceanU = {
-  uTime: { value: 0 }, uAmp: { value: 0.3 }, uSteep: { value: 0.35 }, uOff: { value: 0 }, uSp: { value: 2 * OCEAN_A / 256 },
+  uTime: { value: 0 }, uAmp: { value: 0.3 }, uSteep: { value: 0.35 }, uOff: { value: 0 }, uPh: { value: [0, 0, 0, 0, 0] }, uSp: { value: 2 * OCEAN_A / 256 },
   uWaves: { value: WAVES.map(w => new THREE.Vector4(...w)) },
   uDeep: { value: C(0x0d4a6e) }, uCrest: { value: C(0x2c97b8) }, uFoamCol: { value: C(0xeef6f8) },
   uFoam: { value: 0.2 }, uFoamTh: { value: 0.82 }, uCrestAmt: { value: 0.45 }, uSkyCol: { value: C(0xbfdbec) }, uRefl: { value: 0.5 },
@@ -866,7 +900,7 @@ oceanMat.onBeforeCompile = sh => {
   Object.assign(sh.uniforms, oceanU);
   sh.vertexShader = sh.vertexShader
     .replace('#include <common>', `#include <common>
-      uniform float uTime, uAmp, uSteep, uOff, uSp; uniform vec4 uWaves[5];
+      uniform float uTime, uAmp, uSteep, uOff, uSp; uniform vec4 uWaves[5]; uniform float uPh[5];
       varying float vWH; varying float vDist;
       vec3 gerst(vec2 p, float dist){
         vec3 d = vec3(0.0);
@@ -874,7 +908,7 @@ oceanMat.onBeforeCompile = sh => {
           vec4 w = uWaves[i];
           float k = 6.2831853 / w.z; float om = sqrt(9.8 * k) * ${WAVE_SPEED.toFixed(3)};
           float A = w.w * uAmp * (1.0 - smoothstep(w.z * 3.0, w.z * 7.5, dist)) * smoothstep(uSp * 2.5, uSp * 4.0, w.z);
-          float th = k * dot(w.xy, p) - om * uTime;
+          float th = k * dot(w.xy, p) + uPh[i] - om * uTime;
           d.xz += w.xy * (uSteep * A * cos(th));
           d.y += A * sin(th);
         }
@@ -882,7 +916,7 @@ oceanMat.onBeforeCompile = sh => {
       }`)
     .replace('#include <begin_vertex>', `#include <begin_vertex>
       float dist0 = length(position.xz);
-      vec3 gd = gerst(position.xz + vec2(uOff, 0.0), dist0);
+      vec3 gd = gerst(position.xz, dist0);
       transformed += gd;
       vWH = gd.y / max(uAmp * 1.25, 0.05);
       vDist = dist0;`);
@@ -2181,7 +2215,14 @@ function poseCaptain(c, t, dt) {
       R.r('armL', -1.05, 0, -0.25 + st * 0.3); R.r('armR', -1.05, 0, 0.25 + st * 0.3);
       R.r('elbowL', -0.55); R.r('elbowR', -0.55);
       R.r('neck', -0.05, Math.sin(t * 0.21) * 0.3, 0);
-      gear.wheel.rotation.x = damp(gear.wheel.rotation.x, st * 2.2, 3, dt);
+      gear.wheel.rotation.x = damp(gear.wheel.rotation.x, st * 2.2 - (world.turnNow || 0) * 2.6, 3, dt);
+      break;
+    }
+    case 'climb': {
+      const a = Math.sin(t * 6), b = Math.sin(t * 6 + Math.PI);
+      R.r('armL', -2.6 + a * 0.45, 0, -0.15); R.r('armR', -2.6 + b * 0.45, 0, 0.15); R.r('elbowL', -0.5 - Math.max(0, a) * 0.6); R.r('elbowR', -0.5 - Math.max(0, b) * 0.6);
+      R.r('legL', -0.7 - Math.max(0, b) * 0.6, 0, 0.08); R.r('legR', -0.7 - Math.max(0, a) * 0.6, 0, -0.08); R.r('kneeL', 1.0 + Math.max(0, b) * 0.6); R.r('kneeR', 1.0 + Math.max(0, a) * 0.6);
+      R.r('neck', -0.35, 0, 0); R.r('spine', 0.15, 0, 0);
       break;
     }
     case 'lookUp': R.r('neck', -0.62, Math.sin(t * 0.5) * 0.2, 0); R.r('armL', 0, 0, 0.55); R.r('elbowL', -1.9, 0, 0); R.r('armR', 0, 0, -0.55); R.r('elbowR', -1.9); break;
@@ -2609,6 +2650,7 @@ const _qT = new THREE.Quaternion(), _qY = new THREE.Quaternion(), _eT = new THRE
 function runTask(c, dt) {
   if (c.ashore && c.task && !c.task.shore) c.task = asShore(chainTasks(returnAboard(c, c.ashore), c.task));
   if (c.inside && c.task && !c.task.inside) c.task = asInside(chainTasks(exitCabin(c, true), c.task));
+  if (c.aloft && c.task && c.task !== c.aloftTask && !c.task.aloft) { const nt = chainTasks(climbDown(c), c.task); Object.assign(nt, { inside: c.task.inside, shore: c.task.shore, helm: c.task.helm, aloft: true }); c.task = nt; }
   if (c.task) { const r = c.task.next(); if (r.done) c.task = null; }
   if (!c.task) c.task = c.next();
 }
@@ -2672,6 +2714,7 @@ function* landFish(r) {
   yield* faceTo(cap, gear.bucketPos.x, gear.bucketPos.z);
   cap.pose = 'crouch'; yield* wait(0.75);
   scene.add(gear.hooked); gear.hooked.visible = false;
+  if (world.fishCount >= fishCap()) { splash(gear.bucketPos.x * BOAT_S, gear.bucketPos.z * BOAT_S + 4, 0.3); toast(`The tub is full — he lets it go. <b>Sell your catch</b> at a harbour market${world.upgrades.bucket ? '' : ' or buy a bigger tub'}`); cap.pose = 'shrug'; yield* wait(1.2); return; }
   world.fishCount++;
   gear.bucketFish.forEach((f, i) => f.visible = i < world.fishCount);
   gear.bucket.getWorldPosition(_v1);
@@ -2703,7 +2746,7 @@ function* taskHelm() {
 function* taskTrim() {
   const storm = world.w.waves > 1.1;
   capSay('Checking the sails');
-  yield* walkTo(cap, 0.6, 0.3);
+  yield* walkTo(cap, 0.68, 0.62);
   yield* faceTo(cap, MAST_X, 0);
   cap.pose = 'lookUp'; yield* wait(1.8);
   capSay(storm ? 'Reefing the mainsail against the gale' : 'Trimming the sheets for the breeze');
@@ -2807,7 +2850,7 @@ cap.next = function () {
   const st = world.w.waves, storm = st > 1.1;
   const opts = [[taskHelm, 2.2 + st * 2], [taskTrim, 1.6 + st * 1.2], [taskCheckRod, storm ? 0.4 : 1.5], [taskPetDog, storm ? 0.3 : 1.3],
     [taskSpyglass, 1.5 - Math.min(st, 1.5) * 0.6], [taskMug, 1.0], [taskCoil, 0.7 + st * 0.6], [taskLogbook, 0.9],
-    [taskFetch, storm || dog.busy || dog.sleeping ? 0 : 1.2], [taskBail, storm ? 3.2 : 0]]
+    [taskFetch, storm || dog.busy || dog.sleeping ? 0 : 1.2], [taskBail, storm ? 3.2 : 0], [taskCrowsNest, world.upgrades.nest && st < 0.9 ? 1.3 : 0]]
     .filter(o => o[0] !== lastCapTask && o[1] > 0);
   let tot = opts.reduce((a, o) => a + o[1], 0), r = Math.random() * tot;
   for (const o of opts) { r -= o[1]; if (r <= 0) { lastCapTask = o[0]; return o[0](); } }
@@ -2881,6 +2924,7 @@ function* dogSniff() {
   dog.pose = 'stand';
 }
 function* dogNap() {
+  if (UP.dinghy && Math.random() < 0.7) { yield* dogDinghyNap(); return; }
   dogSay('Looking for a comfy spot');
   yield* walkTo(dog, 2.05, 0.25);
   yield* face(dog, rand(-3, 3));
@@ -3155,6 +3199,8 @@ const sfx = (() => {
       burst(2.6, 'lowpass', 420, 0.6, v * 0.5, 0.2, delay + 0.25);
     },
     bark() { tone('sawtooth', 620, 300, 0.13, 0.16, 0, ['bandpass', 1100, 2]); tone('sawtooth', 560, 280, 0.12, 0.12, 0.17, ['bandpass', 1000, 2]); },
+    coins() { for (let i = 0; i < 4; i++) tone('triangle', 2200 + i * 260, 2100 + i * 240, 0.12, 0.05, i * 0.06, ['highpass', 1500, 1]); },
+    boom(dist = 0) { const v = clamp(1.1 - dist / 220, 0.2, 0.9), dl = dist / 330; burst(0.35, 'lowpass', 900, 0.7, v * 0.6, 0.002, dl); burst(1.6, 'lowpass', 160, 0.9, v, 0.01, dl); tone('sine', 85, 38, 0.7, v * 0.35, dl); },
     chime() { tone('sine', 880, 878, 1.2, 0.12); tone('sine', 1320, 1318, 1.0, 0.07, 0.12); tone('sine', 1760, 1758, 0.9, 0.05, 0.24); },
     plink() { tone('triangle', 1500, 1200, 0.12, 0.05); },
     whoosh() { const b = burst(0.5, 'bandpass', 600, 1.5, 0.12, 0.05); if (b) b.frequency.exponentialRampToValueAtTime(2400, ctx.currentTime + 0.4); },
@@ -3318,7 +3364,7 @@ function updateBoat(dt, t) {
   world.shake = Math.max(0, (world.shake || 0) - dt * 2.5);
   const sh = (world.shake || 0) * 0.02 * (world.reduced ? 0.12 : 1);
   boat.position.set(PH.sx, PH.y, PH.sz);
-  boat.rotation.set(PH.roll + Math.sin(t * 47) * sh, PH.yaw + Math.sin(t * 0.07) * 0.05, PH.pitch + Math.sin(t * 53) * sh);
+  boat.rotation.set(PH.roll + Math.sin(t * 47) * sh - (world.steerYaw || 0) * 0.6, PH.yaw + Math.sin(t * 0.07) * 0.05 + (world.steerYaw || 0), PH.pitch + Math.sin(t * 53) * sh);
   bs.heave = PH.y + 0.14 * BOAT_S; bs.pitch = PH.pitch; bs.roll = PH.roll;
 }
 
@@ -3367,7 +3413,7 @@ function updateEnv(dt, t) {
   w.waves = damp(w.waves, W.waves, 0.28, dt);
   world.waveAmp = w.waves * (0.86 + 0.2 * Math.sin(t * 0.043) * Math.sin(t * 0.027 + 2) + 0.06 * Math.sin(t * 0.11));
   world.steep = 0.32 + 0.38 * sstep(0.3, 1.8, w.waves);
-  world.speed = world.speedOverride ?? damp(world.speed, 1.6 + w.wind * 0.1, 0.5, dt);
+  world.speed = world.speedOverride ?? damp(world.speed, (1.6 + w.wind * 0.1) * (world.upgrades && world.upgrades.sail ? 1.3 : 1), 0.5, dt);
   world.offset += world.speed * dt;
   // auto weather drift
   if (t > world.nextAutoWeather) {
@@ -3406,7 +3452,7 @@ function updateEnv(dt, t) {
   scene.fog.color.copy(hor);
   scene.fog.density = w.fog * (1 + n * 0.25) + fogBankDensity();
   // sun & moon follow the clock across the sky
-  const az = 0.85 + (world.tod - 12) / 12 * 1.5;
+  const az = 0.85 + (world.tod - 12) / 12 * 1.5 - (world.course || 0);
   sunDir.set(Math.cos(sunEl) * Math.cos(az), Math.sin(sunEl), Math.cos(sunEl) * Math.sin(az));
   const mel = 0.15 - sunEl * 0.85, maz = az + Math.PI;
   moonDir.set(Math.cos(mel) * Math.cos(maz), Math.sin(mel), Math.cos(mel) * Math.sin(maz)).normalize();
@@ -3976,7 +4022,7 @@ const BOTTLE_NOTES = [
 const dests = [];
 let nextDest = 35;
 let villageSeed = Math.floor(Math.random() * 1000);
-function spawnDest(kind) {
+function spawnDest(kind, twin = false) {
   const K = DEST_KINDS[kind];
   let side = Math.random() < 0.5 ? -1 : 1, I = null;
   if (kind === 'village') { I = makeVillage(++villageSeed); const busy = dests.find(d => d.x > 150 && d.kind !== 'bottle'); if (busy) side = -busy.side; I.side = side; }
@@ -3987,9 +4033,10 @@ function spawnDest(kind) {
   if (kind !== 'bottle') m.rotation.y = rand(0, TAU);
   if (K.ship) m.rotation.y = Math.PI;
   if (K.crew) crewOnShip(d, K.crew[0], K.crew[1].map(([x, y, z]) => [x, y, z]), K.ghost);
-  if (I) { d.I = I; d.z = side * ISL.Zc; m.position.z = d.z; m.rotation.y = side > 0 ? 0 : Math.PI; d.name = I.name; d.note = `Sighted ${I.name}, a little island with a jetty and cottages.`; }
+  if (I) { d.I = I; d.z = side * (twin ? rand(60, 110) : rand(ISL.Zc, 80)); m.position.z = d.z; m.rotation.y = side > 0 ? 0 : Math.PI; d.name = I.name; d.note = `Sighted ${I.name}, a little island with a jetty and cottages.`; }
   else { const near = dests.find(o => o.I && Math.abs(o.x - d.x) < 140 && o.side === side); if (near) { d.side = side = -side; d.z = -d.z; m.position.z = d.z; } }
   scene.add(m); dests.push(d);
+  if (kind === 'village' && !twin && Math.random() < 0.4) { const d2 = spawnDest('village', true); d2.x += rand(50, 100); d2.m.position.x = d2.x; }   // sometimes two to choose between
   return d;
 }
 system('destinations', (dt, t) => {
@@ -4619,8 +4666,8 @@ function makeKrakenHead() {
 }
 KR.head = makeKrakenHead(); KR.head.scale.setScalar(1.5); KR.head.visible = false; scene.add(KR.head);
 function spawnKraken(summoned) {
-  if (KR.active) return;
-  const ang = rand(0, TAU);
+  if (KR.active || ESC.on) return;
+  const ang = rand(0, TAU), kind = krFriendly();
   Object.assign(KR, { active: true, t: 0, ang, hx: Math.cos(ang) * 40, hz: Math.sin(ang) * 40, bubbles: 0, rate: 1, shown: false, gift: false }); choice.picked = null;
   KR.tents.forEach((T, i) => {
     const a = ang + (i - 3) * rand(0.24, 0.32) + rand(-0.08, 0.08);
@@ -4628,7 +4675,7 @@ function spawnKraken(summoned) {
     const L = rand(15, 20), d = ext + L * 0.55 + rand(3, 6);              // keep every tip well clear of the hull
     Object.assign(T, { bx: Math.cos(a) * d, bz: Math.sin(a) * d, L, dx: -Math.cos(a), dz: -Math.sin(a), r0: rand(1.1, 1.5),
       a0: Math.PI / 2 - rand(0.05, 0.25), curl: rand(1.1, 1.8), sway: rand(0.12, 0.24), f: rand(1.1, 1.8), ph: rand(0, TAU),
-      delay: 1.3 + i * rand(0.25, 0.45) + rand(0, 0.5), slamAt: Math.random() < 0.55 ? rand(9, 15.5) : -1, slamSide: Math.random() < 0.5 ? -1 : 1, slammed: false });
+      delay: 1.3 + i * rand(0.25, 0.45) + rand(0, 0.5), slamAt: !kind && Math.random() < 0.55 ? rand(9, 15.5) : -1, slamSide: Math.random() < 0.5 ? -1 : 1, slammed: false });
     T.m.visible = true;
   });
   KR.head.visible = true; KR.head.position.set(KR.hx, -20, KR.hz); KR.head.rotation.y = Math.atan2(-KR.hx, -KR.hz);
@@ -4637,8 +4684,10 @@ function spawnKraken(summoned) {
   toast('Something enormous stirs beneath the waves…');
   setTimeout(() => { if (KR.active) toast('<b>THE KRAKEN</b> rises from the deep!'); }, 2300);
   // a summoned kraken is loud enough to wake a sleeping crew
-  if (summoned || !cap.sleeping) { interrupt(cap); resetProps(); cap.task = capScared(); }
-  if (summoned || !dog.sleeping) { interrupt(dog); dog.task = dogScared(); }
+  const ks = Math.sin(ang) >= 0 ? 1 : -1;
+  if (kind) setTimeout(() => { if (KR.active) toast('It’s our friend the kraken! The crew wave hello'); }, 4200);
+  if (summoned || !cap.sleeping) { interrupt(cap); resetProps(); cap.task = kind ? capGreetKraken(ks) : capScared(); }
+  if (summoned || !dog.sleeping) { interrupt(dog); dog.task = kind ? dogBarkAt(ks, 'the kraken') : dogScared(); }
 }
 const _km = new THREE.Matrix4(), _kq = new THREE.Quaternion(), _kv = V3(), _ks = V3();
 function poseTentacle(T, t, rise, slam) {
@@ -4673,7 +4722,7 @@ system('kraken', (dt, t) => {
   if (!KR.active) {
     if (t > KR.next) {
       KR.next = t + rand(170, 330) * Math.min(krakenFactor(), 5);
-      if (world.day > 0.75 && !world.isNight && world.w.waves < 1.7 && !cap.fishing && harbour.phase === 'none' && settings.kraken !== 'never') spawnKraken();
+      if (world.day > 0.75 && !world.isNight && world.w.waves < 1.7 && !cap.fishing && harbour.phase === 'none' && settings.kraken !== 'never') { if (world.krakenFriend >= 5 && Math.random() < 0.6) startEscort(); else spawnKraken(); }
     }
     return;
   }
@@ -5910,7 +5959,7 @@ function* converse(I, v) {
     if (gift) {
       v.pose = 'give'; yield* wait(1.1);
       cap.pose = 'reach'; yield* wait(0.6); cap.pose = 'idle'; v.pose = 'idle';
-      if (gift === 'fish') world.fishCount++; else world.pantry[gift] = (world.pantry[gift] || 0) + 1;
+      if (gift === 'fish') world.fishCount = Math.min(fishCap(), world.fishCount + 1); else world.pantry[gift] = (world.pantry[gift] || 0) + 1;
       toast(`${v.short} gave the captain ${gift === 'fish' ? 'a fresh <b>fish</b>' : gift === 'bread' ? 'a warm <b>loaf of bread</b>' : 'a bunch of <b>carrots</b>'}`);
       if (gift === 'fish') { gear.bucketFish.forEach((f, i) => f.visible = i < world.fishCount); flashStat('sFish'); }
       sfx.chime();
@@ -6118,7 +6167,7 @@ const deckChest = new THREE.Group(); deckChest.position.set(3.0, deckY(3.0), -0.
 let chestObst = false;
 function addDeckChestObstacle() {
   if (chestObst) return; chestObst = true;
-  OBST.push({ box: [3.0 - 0.2 * HS, 3.0 + 0.2 * HS, -0.32 - 0.14 * HS, -0.32 + 0.14 * HS] }); cap.grid = makeNavGrid(cap.rad); dog.grid = makeNavGrid(dog.rad);
+  OBST.push({ chest: true, box: [3.0 - 0.2 * HS, 3.0 + 0.2 * HS, -0.32 - 0.14 * HS, -0.32 + 0.14 * HS] }); cap.grid = makeNavGrid(cap.rad); dog.grid = makeNavGrid(dog.rad);
 }
 // the captain's roasting stick (fish, bread or carrots on the end)
 const cooking = {};
@@ -6140,9 +6189,12 @@ system('harbour', (dt, t) => {
   const H = harbour, d = H.d;
   harbour.waveT = Math.max(0, harbour.waveT - dt);
   if (H.phase === 'none') {
-    const v = dests.find(d => d.kind === 'village' && !d.visited && d.x < 165 && d.x > 40);
+    for (const o of dests) if (o.kind === 'village' && !o.visited && o.x < 40) o.visited = true;   // sailed past
+    const tv = nav.target && nav.target.kind === 'village' ? nav.target : null;
+    const v = dests.find(d => d.kind === 'village' && !d.visited && d.x < 165 && d.x > 40 && (tv ? d === tv : d.visit !== false && Math.abs(d.z) < 70));
     if (v) {
-      v.visited = true;
+      v.visited = true; if (nav.target === v) nav.target = null;
+      v.side = v.I.side = Math.sign(v.z) || 1;
       const ok = world.tod > 6.4 && world.tod < 15.8 && !world.isNight && world.w.waves < 1.0 && !KR.active && !cap.fishing && !peek.on;
       if (ok) {
         Object.assign(H, { phase: 'approach', d: v, base: Math.max(world.speed, 1.2), t: 0, recall: false, crewBack: false });
@@ -6154,10 +6206,11 @@ system('harbour', (dt, t) => {
   }
   const I = d.I, side = I.side;
   if (H.phase === 'approach') {
-    const dist = d.x - ISL.stopX;
+    const dist = d.x - ISL.stopX, al = 1 - Math.exp(-0.35 * dt);
+    d.z += (side * ISL.Zc - d.z) * al; d.m.position.z = d.z; d.m.rotation.y += angDiff(d.m.rotation.y, side > 0 ? 0 : Math.PI) * al;   // the pilot lines her up with the jetty
     world.speedOverride = Math.min(H.base, Math.sqrt(2 * 0.11 * Math.max(dist, 0)) + 0.03);
     rig.furl = damp(rig.furl || 0, dist < 22 ? 1 : 0, 0.8, dt);
-    if (dist < 0.03) { d.x = ISL.stopX; d.m.position.x = d.x; world.speedOverride = 0; H.phase = 'docked'; H.t = 0; harbour.waveAt = I; harbour.waveT = 3.5; toast(`Tied up alongside the jetty at <b>${I.name}</b>`); sfx.creak(1); }
+    if (dist < 0.03) { d.x = ISL.stopX; d.m.position.x = d.x; d.z = side * ISL.Zc; d.m.position.z = d.z; d.m.rotation.y = side > 0 ? 0 : Math.PI; world.speedOverride = 0; H.phase = 'docked'; H.t = 0; harbour.waveAt = I; harbour.waveT = 3.5; toast(`Tied up alongside the jetty at <b>${I.name}</b>`); sfx.creak(1); }
   } else if (H.phase === 'docked') {
     H.t += dt; world.speedOverride = 0;
     if (H.t > 2.2) { H.phase = 'shore'; H.t = 0; interrupt(cap); resetProps(); cap.task = asShore(capShore(I)); dogCommand(asShore(dogShore(I))); }
@@ -6321,6 +6374,7 @@ function openKrakenChoice() {
   const fish = world.fishCount > 0, bread = world.pantry.bread > 0;
   $('cFish').disabled = !(fish || bread);
   $('cFishSub').textContent = fish ? `${world.fishCount} in the bucket` : bread ? 'Toss it the baker’s bread' : 'Nothing to spare';
+  $('cHideB').textContent = krFriendly() ? 'Wave hello' : 'Hide!'; $('cHideS').textContent = krFriendly() ? 'It’s an old friend' : 'Take cover and watch';
   $('choice').hidden = false; choice.open = true; choice.t = 9; choice.picked = null;
   $('choice').style.animation = 'none'; void $('choice').offsetWidth; $('choice').style.animation = '';
 }
@@ -6329,6 +6383,7 @@ function pickKraken(c) {
   if (!choice.open || !KR.active) return;
   if (c === 'fish' && $('cFish').disabled) return;
   closeKrakenChoice(); choice.picked = c; sfx.init();
+  if (c === 'hide' && krFriendly()) { interrupt(cap); resetProps(); cap.task = capGreetKraken(Math.sin(KR.ang) >= 0 ? 1 : -1); return; }
   if (c === 'hide') { toast('Everyone take cover!'); return; }
   interrupt(cap); resetProps();
   cap.task = c === 'fish' ? capFeedKraken() : capFoghorn();
@@ -6370,18 +6425,14 @@ function* capFeedKraken() {
   best.slamAt = KR.t + 0.1; best.slamSide = Math.random() < 0.5 ? -1 : 1; best.slammed = false;
   yield* wait(1.4);
   toast('The kraken gulps down the offering… and seems pleased');
-  cap.pose = 'cheer'; capSay('It took the fish!'); yield* wait(1.6);
-  KR.t = Math.max(KR.t, 17.2); KR.rate = 1.3; KR.gift = Math.random() < 0.55;
+  cap.pose = 'cheer'; capSay('It took the fish!'); befriendKraken(); yield* wait(1.6);
+  KR.t = Math.max(KR.t, 17.2); KR.rate = 1.3; KR.gift = Math.random() < (krFriendly() ? 0.85 : 0.55);
   cap.pose = 'idle'; yield* waitUntil(() => !KR.active || KR.t > 21, 12);
   if (!KR.seen) { KR.seen = true; discover('The Kraken', 'A KRAKEN rose beside us. I tossed it a fish and it went on its way, calm as you like.'); }
   else addLog('Fed the kraken a fish. We are on good terms, it seems.');
-  if (KR.gift) {
-    world.treasure = (world.treasure || 0) + 1; deckChest.visible = true; addDeckChestObstacle(); flashStat('sGold'); sfx.chime();
-    toast('A tentacle leaves a <b>barnacled chest</b> on the deck — a gift from the deep!');
-    addLog('As it sank, the kraken set a chest of old gold on our deck. A thank-you, I suppose.');
-    cap.pose = 'cheer'; capSay('A gift from the kraken!'); yield* wait(1.8);
-  }
+  if (KR.gift) { krakenGift(false); cap.pose = 'cheer'; capSay('A gift from the kraken!'); yield* wait(1.8); }
   cap.pose = 'idle';
+  if (world.krakenFriend >= 5 && Math.random() < 0.5) { yield* waitUntil(() => !KR.active, 8); if (!KR.active) startEscort(); }
 }
 function* capFoghorn() {
   capSay('Running for the foghorn!');
@@ -6393,6 +6444,7 @@ function* capFoghorn() {
     yield* wait(1.3);
   }
   KR.t = Math.max(KR.t, 17.5); KR.rate = 2.2;
+  if (world.krakenFriend > 0) { world.krakenFriend--; setTimeout(() => toast('The kraken looked rather hurt by that…'), 2500); }
   toast('The foghorn booms across the water — the kraken flinches and dives!');
   for (const T of KR.tents) if (Math.random() < 0.6) { T.slamAt = KR.t + rand(0, 0.4); T.slammed = false; }
   cap.pose = 'cheer'; capSay('And stay down there!'); yield* wait(1.8);
@@ -6716,6 +6768,7 @@ function* capHail(d) {
   if (speaker) { say(speaker.rig.j.neck, reply, 3.6, 0.8); speaker.talkT = 3; }
   if (d.kind === 'pirate') { yield* wait(1.4); d.m.localToWorld(_v1.copy(d.m.userData.cannon)); for (let i = 0; i < 40; i++) emit(_v1.x, _v1.y, _v1.z, rand(-1.5, 1.5), rand(0.5, 2), rand(-1.5, 1.5) - Math.sign(d.z) * 3, rand(1.5, 2.5), rand(0.4, 0.8), 'rise', [0.75, 0.75, 0.75]); sfx.thunder(30); toast('The pirates fire a cannon salute!'); }
   yield* wait(2.8);
+  if (world.upgrades.cannon && d.kind !== 'ghostship') yield* capSalute(d);
   cap.pose = d.kind === 'ghostship' ? 'shrug' : 'cheer'; capSay(d.kind === 'ghostship' ? 'A chill runs down his spine…' : 'They waved back!'); yield* wait(1.6);
   cap.pose = 'idle';
 }
@@ -6975,6 +7028,7 @@ onTap($('optsBody'), '[data-k]:not(input)', b => {
 $('optsBody').addEventListener('input', e => { if (e.target.type !== 'range') return; settings[e.target.dataset.k] = +e.target.value; applySettings(e.target.dataset.k); e.target.previousElementSibling.querySelector('em').textContent = `${Math.round(e.target.value * 100)}%`; });
 function openOpts(on = $('opts').hidden) {
   if (on && !$('yard').hidden) openYard(false);
+  if (on && !$('market').hidden) openMarket(false);
   $('opts').hidden = !on; document.body.classList.toggle('opting', on); $('bOpts').classList.toggle('on', on);
   if (on) renderOpts();
 }
@@ -6990,13 +7044,13 @@ $('optsNew').addEventListener('click', () => {
 function saveVoyage() {
   if (world.noSave) return;
   const data = { v: 1, dayNum: world.dayNum, tod: world.tod, offset: world.offset, fishCount: world.fishCount, treasure: world.treasure, pantry: world.pantry,
-    discoveries: world.discoveries, log: world.logEntries.slice(-40), weatherIdx: world.weatherIdx, needs: { cap: cap.needs, dog: dog.needs }, krakenSeen: KR.seen };
+    discoveries: world.discoveries, log: world.logEntries.slice(-40), weatherIdx: world.weatherIdx, needs: { cap: cap.needs, dog: dog.needs }, krakenSeen: KR.seen, gold: world.gold, upgrades: world.upgrades, krakenFriend: world.krakenFriend, course: nav.course };
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) { /* storage unavailable */ }
 }
 function loadVoyage() {
   let d = null; try { d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { /* storage unavailable */ }
   if (!d || d.v !== 1) return false;
-  Object.assign(world, { dayNum: d.dayNum || 1, tod: d.tod ?? 9.5, offset: d.offset || 0, fishCount: Math.min(d.fishCount || 0, 6), treasure: d.treasure || 0, discoveries: d.discoveries || [], logEntries: d.log || [] });
+  Object.assign(world, { dayNum: d.dayNum || 1, tod: d.tod ?? 9.5, offset: d.offset || 0, fishCount: Math.min(d.fishCount || 0, d.upgrades && d.upgrades.bucket ? 12 : 6), gold: d.gold || 0, upgrades: d.upgrades || {}, krakenFriend: d.krakenFriend || 0, course: d.course || 0, treasure: d.treasure || 0, discoveries: d.discoveries || [], logEntries: d.log || [] });
   world.pantry = { bread: 0, veg: 0, ...(d.pantry || {}) };
   world.weatherIdx = clamp(d.weatherIdx || 0, 0, WEATHER.length - 1); Object.assign(world.w, WEATHER[world.weatherIdx]);
   if (d.needs) { Object.assign(cap.needs, d.needs.cap); Object.assign(dog.needs, d.needs.dog); }
@@ -7081,6 +7135,482 @@ applySettings();
 if (camera.aspect < 0.8) { camera.fov = 62; camera.position.multiplyScalar(1.3); camera.updateProjectionMatrix(); }
 
 /* =====================================================================
+   Trade, steering and the kraken's friendship
+   - a purse of gold: sell fish and treasure at harbour markets, buy provisions and upgrades
+   - steer with the arrow keys (or the chart's buttons); the sea chart shows what lies around
+     and lets you pick which island to make for
+   - feed the kraken often enough and it turns friendly, then escorts the boat and brings gifts
+   ===================================================================== */
+world.gold = world.gold || 0; world.upgrades = world.upgrades || {}; world.krakenFriend = world.krakenFriend || 0;
+const PRICES = { fish: 3, chest: 40, bread: 2, veg: 2 };
+const UPGRADES = [
+  { id: 'sail', name: 'Racing canvas', note: 'A new suit of sails. Thirty percent faster under way.', price: 60 },
+  { id: 'bucket', name: 'Bigger fish tub', note: 'Holds twelve fish instead of six.', price: 30 },
+  { id: 'nest', name: 'Crow’s nest', note: 'A lookout high on the mast. The captain climbs up and spots land sooner.', price: 80 },
+  { id: 'cannon', name: 'Saluting cannon', note: 'A little swivel gun on the bow to salute passing ships. They answer.', price: 50 },
+  { id: 'dinghy', name: 'Ship’s dinghy', note: 'A rowing boat stowed on deck. Ghost has his eye on it for naps.', price: 70 },
+];
+const fishCap = () => world.upgrades.bucket ? 12 : 6;
+const atMarket = () => harbour.phase === 'docked' || harbour.phase === 'shore';
+const FRIEND = ['A stranger', 'Curious', 'Curious', 'Friendly', 'Friendly', 'Old friend'];
+const krFriendly = () => world.krakenFriend >= 3;
+const friendName = () => FRIEND[Math.min(world.krakenFriend, FRIEND.length - 1)];
+function addGold(n, why) {
+  world.gold += n; flashStat('sPurse'); sfx.coins();
+  if (why) toast(`${why} &nbsp;<b>+${n} gold</b>`);
+}
+
+/* ---------- the upgrades themselves (built life-size, in metres, inside groups drawn 1/BOAT_S) ---------- */
+const NEST_Y = MAST_BASE + 5.02;                    // sits on the spreaders
+const UP = {};
+function lifeGroup(parent, x, y, z) { const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(1 / BOAT_S); parent.add(g); return g; }
+function buildUpgrade(id) {
+  if (UP[id]) return;
+  const wood = MAT.wood, dark = MAT.woodDark, iron = MAT.iron;
+  if (id === 'nest') {
+    const g = UP.nest = lifeGroup(Lmast, MAST_X, NEST_Y, 0);
+    mk(new THREE.CylinderGeometry(0.82, 0.78, 0.08, 18), dark, g, 0, 0, 0);
+    const wall = new THREE.CylinderGeometry(0.82, 0.8, 0.95, 18, 1, true);
+    mk(wall, new THREE.MeshStandardMaterial({ color: 0x8a5632, roughness: 0.85, side: THREE.DoubleSide, flatShading: true }), g, 0, 0.5, 0);
+    for (const h of [0.12, 0.5, 0.94]) mk(new THREE.TorusGeometry(0.825, 0.03, 4, 20), h > 0.9 ? MAT.woodLight : iron, g, 0, h, 0, Math.PI / 2, 0, 0);
+    for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + 0.4; beam(V3(Math.cos(a) * 0.75, -0.02, Math.sin(a) * 0.75), V3(Math.cos(a) * 0.12, -0.9, Math.sin(a) * 0.12), 0.035, dark, g, 4); }
+    g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  } else if (id === 'cannon') {
+    const g = UP.cannon = lifeGroup(Lgear, 2.95, deckY(2.95), -0.2);
+    mk(new THREE.CylinderGeometry(0.09, 0.12, 0.6, 8), dark, g, 0, 0.3, 0);
+    const sw = UP.swivel = new THREE.Group(); sw.position.set(0, 0.66, 0); g.add(sw);
+    mk(new THREE.BoxGeometry(0.18, 0.12, 0.22), iron, sw, 0, -0.02, 0);
+    const brl = new THREE.CylinderGeometry(0.065, 0.1, 0.95, 12); brl.rotateZ(-Math.PI / 2); brl.translate(0.3, 0.06, 0);
+    mk(brl, MAT.brass, sw, 0, 0, 0);
+    mk(new THREE.TorusGeometry(0.075, 0.02, 5, 12), MAT.brass, sw, 0.78, 0.06, 0, 0, Math.PI / 2, 0);
+    mk(new THREE.SphereGeometry(0.1, 10, 8), MAT.brass, sw, -0.2, 0.06, 0);
+    mk(new THREE.CylinderGeometry(0.012, 0.012, 0.32, 5), MAT.woodDark, sw, -0.38, 0.1, 0, 0, 0, 1.2);
+    UP.muzzle = new THREE.Object3D(); UP.muzzle.position.set(0.82, 0.06, 0); sw.add(UP.muzzle);
+    g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    OBST.push({ c: [2.95, -0.2], r: 0.16 / BOAT_S + 0.02 });
+  } else if (id === 'dinghy') {
+    // athwartships between the cabin and the mast, on two chocks
+    const g = UP.dinghy = lifeGroup(Lgear, 0.4, deckY(0.4), 0); g.rotation.y = Math.PI / 2;
+    const L = 2.4, W = 1.05, hull = new THREE.BufferGeometry(), P = [], S = 14, R = 7;
+    // u runs stem to stern, v from the keel up to the gunwale
+    const half = (u, v) => { const w = Math.pow(Math.max(0, 1 - Math.abs(u) ** 2.6), 0.55) * W / 2; return [u * L / 2, 0.2 + 0.36 * (1 - Math.cos(v * Math.PI / 2)) + Math.abs(u) ** 3 * 0.12 * v, w * Math.sin(v * Math.PI / 2)]; };
+    for (let i = 0; i < S; i++) for (let j = 0; j < R; j++) for (const sd of [-1, 1]) {
+      const u0 = i / S * 2 - 1, u1 = (i + 1) / S * 2 - 1, v0 = j / R, v1 = (j + 1) / R;
+      const q = [half(u0, v0), half(u1, v0), half(u1, v1), half(u0, v1)].map(([x, y, z]) => [x, y, z * sd]);
+      P.push(...q[0], ...q[1], ...q[2], ...q[0], ...q[2], ...q[3]);
+    }
+    hull.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); hull.computeVertexNormals();
+    mk(hull, new THREE.MeshStandardMaterial({ color: 0xe9e2d2, roughness: 0.7, side: THREE.DoubleSide, flatShading: true }), g, 0, 0, 0);
+    mk(new THREE.BoxGeometry(L * 0.86, 0.04, 0.05), MAT.red, g, 0, 0.56, W / 2 - 0.02);
+    mk(new THREE.BoxGeometry(L * 0.86, 0.04, 0.05), MAT.red, g, 0, 0.56, -W / 2 + 0.02);
+    for (const x of [-0.45, 0.35]) mk(new THREE.BoxGeometry(0.22, 0.04, W * 0.88), MAT.woodLight, g, x, 0.42, 0);
+    mk(new THREE.BoxGeometry(L * 0.7, 0.03, 0.5), MAT.woodPale, g, 0, 0.22, 0);
+    for (const x of [-0.75, 0.75]) mk(new THREE.BoxGeometry(0.16, 0.2, 0.9), dark, g, x, 0.1, 0);
+    for (const s of [-1, 1]) mk(new THREE.CylinderGeometry(0.022, 0.022, 2.1, 6), MAT.woodLight, g, 0.1, 0.46, s * 0.2, 0, 0.05 * s, Math.PI / 2);
+    g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    OBST.push({ box: [0.4 - 0.55 / BOAT_S, 0.4 + 0.55 / BOAT_S, -1.22 / BOAT_S, 1.22 / BOAT_S] });
+  } else if (id === 'bucket') {
+    gear.bucket.scale.set(HS * 1.25, HS * 1.1, HS * 1.25);
+    for (let i = 6; i < 12; i++) {
+      const f = makeFish(...FISH_COLORS[i % FISH_COLORS.length], 0.42), a = i * 1.7;
+      f.position.set(Math.cos(a) * 0.1, 0.27 + (i - 6) * 0.012, Math.sin(a) * 0.1); f.rotation.set(-1.1, a, 0.3);
+      f.visible = false; gear.bucket.add(f); gear.bucketFish.push(f);
+    }
+    updateBucket();
+  }
+  if (id === 'cannon' || id === 'dinghy') { cap.grid = makeNavGrid(cap.rad); dog.grid = makeNavGrid(dog.rad); }
+}
+function buyUpgrade(id) {
+  const U = UPGRADES.find(u => u.id === id);
+  if (!U || world.upgrades[id] || world.gold < U.price || !atMarket()) return;
+  world.gold -= U.price; world.upgrades[id] = true; buildUpgrade(id);
+  sfx.coins(); sfx.chime(); flashStat('sPurse');
+  toast(`The shipwright fits the <b>${U.name.toLowerCase()}</b>`);
+  addLog(`Spent ${U.price} gold on ${U.name.toLowerCase()} at ${harbour.d ? harbour.d.I.name : 'the harbour'}.`);
+  saveVoyage(); renderMarket();
+}
+
+/* ---------- the market panel ---------- */
+function sellFish() { const n = world.fishCount; if (!n || !atMarket()) return; world.fishCount = 0; updateBucket(); addGold(n * PRICES.fish, `Sold ${n} fish at the market`); renderMarket(); }
+function sellChests() {
+  const n = world.treasure || 0; if (!n || !atMarket()) return;
+  world.treasure = 0; deckChest.visible = false; removeDeckChestObstacle();
+  addGold(n * PRICES.chest, `Sold ${n} treasure chest${n > 1 ? 's' : ''} to the harbourmaster`); addLog(`Traded ${n} chest${n > 1 ? 's' : ''} of old gold for coin.`); renderMarket();
+}
+function buyFood(k) { if (!atMarket() || world.gold < PRICES[k]) return; world.gold -= PRICES[k]; world.pantry[k] = (world.pantry[k] || 0) + 1; sfx.coins(); flashStat('sPurse'); renderMarket(); }
+function removeDeckChestObstacle() {
+  const i = OBST.findIndex(o => o.chest); if (i < 0) return;
+  OBST.splice(i, 1); chestObst = false; cap.grid = makeNavGrid(cap.rad); dog.grid = makeNavGrid(dog.rad);
+}
+function renderMarket() {
+  if ($('market').hidden) return;
+  const m = atMarket(), port = harbour.d && harbour.d.I ? harbour.d.I.name : null;
+  $('mktSub').textContent = m ? `The market at ${port}` : 'Tie up at a harbour island to trade';
+  $('mktPurse').textContent = `${world.gold} gold`;
+  const row = (title, sub, act, label, ok) => `<div class="mrow"><div><b>${title}</b><small>${sub}</small></div><button class="ybtn${ok ? ' gold' : ''}" data-m="${act}"${ok ? '' : ' disabled'}>${label}</button></div>`;
+  const nf = world.fishCount, nc = world.treasure || 0;
+  $('mktBody').innerHTML =
+    `<div class="yrow"><label>Sell</label>${row('Fish', `${nf} in the tub · ${PRICES.fish} gold each`, 'fish', nf ? `+${nf * PRICES.fish}` : 'None', m && nf)}${row('Treasure chests', `${nc} aboard · ${PRICES.chest} gold each`, 'chest', nc ? `+${nc * PRICES.chest}` : 'None', m && nc)}</div>` +
+    `<div class="yrow"><label>Provisions</label>${row('Fresh bread', `${world.pantry.bread || 0} in the galley`, 'bread', `${PRICES.bread} gold`, m && world.gold >= PRICES.bread)}${row('Vegetables', `${world.pantry.veg || 0} in the galley`, 'veg', `${PRICES.veg} gold`, m && world.gold >= PRICES.veg)}</div>` +
+    `<div class="yrow"><label>Upgrades <em>fitted by the harbour shipwright</em></label>${UPGRADES.map(U => world.upgrades[U.id]
+      ? `<div class="mrow got"><div><b>${U.name}</b><small>${U.note}</small></div><span class="fitted">Fitted</span></div>`
+      : row(U.name, U.note, 'up:' + U.id, `${U.price} gold`, m && world.gold >= U.price)).join('')}</div>` +
+    `<div class="yrow"><label>The kraken</label><p class="onote">${friendName()} · fed ${world.krakenFriend} time${world.krakenFriend === 1 ? '' : 's'}. ${world.krakenFriend >= 5 ? 'It swims alongside now and then, bringing gifts.' : krFriendly() ? 'It no longer frightens the crew. A few more fish and it may keep you company.' : 'Offer it fish when it rises and it may warm to you.'}</p></div>`;
+}
+function openMarket(on = $('market').hidden) {
+  if (on) { if (!$('yard').hidden) openYard(false); if (!$('opts').hidden) openOpts(false); }
+  $('market').hidden = !on; document.body.classList.toggle('opting', on); $('bMarket').classList.toggle('on', on);
+  if (on) renderMarket();
+}
+$('bMarket').addEventListener('click', () => { sfx.init(); openMarket(); });
+$('mktClose').addEventListener('click', () => openMarket(false));
+onTap($('mktBody'), '[data-m]', b => {
+  const a = b.dataset.m;
+  if (a === 'fish') sellFish(); else if (a === 'chest') sellChests(); else if (a === 'bread' || a === 'veg') buyFood(a);
+  else if (a.startsWith('up:')) buyUpgrade(a.slice(3));
+});
+let mktWas = false;
+system('market', () => {
+  const m = atMarket();
+  if (m !== mktWas) {
+    mktWas = m; $('bMarket').classList.toggle('glow', m);
+    if (m && harbour.phase === 'docked') toast(`The market is open at <b>${harbour.d.I.name}</b> — tap the coin to trade`);
+    renderMarket();
+  }
+});
+
+/* ---------- the crow's nest: the captain climbs the ratlines for a look around ---------- */
+const asAloft = g => { g.aloft = true; return g; };
+function* climbMast(up) {
+  const x = MAST_X - 0.17, y0 = deckY(x), y1 = NEST_Y + 0.04 / BOAT_S, ys = cap.floorY ?? y0, ye = up ? y1 : y0, T = Math.max(0.3, Math.abs(ye - ys) * BOAT_S / 1.5);
+  cap.targetHeading = Math.PI / 2;
+  for (let k = 0; k < T; k += DT) { cap.pos.set(x, 0); cap.floorY = lerp(ys, ye, k / T); cap.pose = 'climb'; yield; }
+  cap.floorY = up ? y1 : undefined; cap.pose = 'idle';
+}
+function* climbDown(c) {
+  if (c === dog) { yield* dinghyHopOut(); return; }
+  cap.glass.visible = false; cap.beltGlass.visible = true;
+  yield* climbMast(false); cap.aloft = false;
+}
+function* taskCrowsNest() {
+  capSay('Climbing up to the crow’s nest');
+  yield* walkTo(cap, MAST_X - 0.2, 0); yield* face(cap, Math.PI / 2, 0.6);
+  cap.aloft = true; cap.aloftTask = cap.task;   // (another task replacing this one climbs down first)
+  try {
+    yield* climbMast(true);
+    cap.beltGlass.visible = false; cap.glass.visible = true; cap.pose = 'spyglass';
+    const look = rand(0, TAU); cap.targetHeading = look;
+    capSay('Keeping a lookout from the crow’s nest');
+    for (let k = 0; k < 7; k += DT) { cap.targetHeading = look + Math.sin(k * 0.5) * 1.6; yield; }
+    const d = dests.find(d => !d.spotted && !d.gone && d.kind !== 'bottle');
+    if (d) { capSay(`Land ho! ${d.I ? d.I.name : d.K.name} off the ${d.z > 0 ? 'starboard' : 'port'} bow`); toast(`From the crow’s nest: <b>${d.I ? d.I.name : d.K.name}</b> on the horizon`); }
+    else if (Math.random() < 0.5) { spawnPod(true); capSay('Dolphins ahead!'); toast('The lookout spots <b>dolphins</b> ahead!'); }
+    else { nextDest = Math.min(nextDest, world.time + 4); capSay('Something on the horizon…'); }
+    yield* wait(2.5);
+    cap.glass.visible = false; cap.beltGlass.visible = true;
+    yield* climbMast(false);
+  } finally { if (cap.aloft && !cap.floorY) cap.aloft = false; }
+  cap.aloft = false; cap.pose = 'idle';
+}
+
+/* ---------- the saluting cannon ---------- */
+function fireCannon(dir) {
+  UP.muzzle.getWorldPosition(_v1);
+  for (let i = 0; i < 46; i++) emit(_v1.x, _v1.y, _v1.z, rand(-0.8, 0.8) + dir.x * rand(2, 6), rand(0.3, 1.6), rand(-0.8, 0.8) + dir.z * rand(2, 6), rand(1.6, 2.8), rand(0.35, 0.8), 'rise', [0.82, 0.82, 0.82]);
+  for (let i = 0; i < 10; i++) emit(_v1.x, _v1.y, _v1.z, dir.x * rand(4, 8), rand(0, 1), dir.z * rand(4, 8), rand(0.15, 0.3), rand(0.12, 0.2), false, [3, 1.8, 0.6]);
+  sfx.boom(0); world.shake = Math.max(world.shake || 0, 0.45); buzz([40, 30, 60]);
+}
+function* capSalute(d) {
+  if (!UP.cannon) return;
+  const side = Math.sign(d.z) || 1;
+  capSay('Off to fire a salute!');
+  yield* walkTo(cap, 2.95 - 0.28, -0.2 - side * 0.12, 1.3); yield* faceTo(cap, 2.95, -0.2, 0.5);
+  const yaw = Math.atan2(-side, 0.35);   // swing the muzzle out toward the ship
+  for (let k = 0; k < 0.8; k += DT) { UP.swivel.rotation.y = lerp(UP.swivel.rotation.y, yaw, 0.12); yield; }
+  UP.swivel.rotation.y = yaw;
+  cap.pose = 'crouch'; capSay('Lighting the fuse…'); yield* wait(1.1);
+  cap.pose = 'scared'; yield* wait(0.25);
+  fireCannon(_v2.set(0.35, 0, side).normalize());
+  capSay('BOOM! A salute to fine sailors'); cap.pose = 'cheer';
+  yield* wait(1.6);
+  // they answer
+  d.m.getWorldPosition(_v3); const dist = _v3.length();
+  for (let i = 0; i < 40; i++) emit(_v3.x + rand(-2, 2), _v3.y + rand(2, 4), _v3.z - side * 2, rand(-1.5, 1.5), rand(0.5, 2), -side * rand(1, 3), rand(1.6, 2.6), rand(0.5, 0.9), 'rise', [0.8, 0.8, 0.8]);
+  sfx.boom(dist); d.waveT = 5;
+  toast(`The ${d.K.name.toLowerCase()} answers with a salute of her own!`);
+  yield* wait(1.4); cap.pose = 'idle';
+  for (let k = 0; k < 1; k += DT) { UP.swivel.rotation.y *= 0.92; yield; }
+}
+
+/* ---------- Ghost naps in the dinghy ---------- */
+const DINGHY_FLOOR = () => deckY(0.4) + 0.3 / BOAT_S;
+function* dinghyHop(c, from, to, y0, y1) {
+  const T = 0.6;
+  c.targetHeading = Math.atan2(to[0] - from[0], to[1] - from[1]);
+  for (let k = 0; k < T; k += DT) { const f = k / T; c.pos.set(lerp(from[0], to[0], f), lerp(from[1], to[1], f)); c.floorY = lerp(y0, y1, f) + Math.sin(f * Math.PI) * 0.55 / BOAT_S; c.walking = true; yield; }
+  c.pos.set(...to); c.floorY = y1;
+}
+function* dinghyHopOut() {
+  dog.pose = 'stand'; dog.sleeping = false;
+  yield* dinghyHop(dog, [dog.pos.x, dog.pos.y], [0.4, 0.6], dog.floorY ?? DINGHY_FLOOR(), deckY(0.4));
+  dog.floorY = undefined; dog.aloft = false;
+}
+function* dogDinghyNap() {
+  dogSay('Hopping into the dinghy for a nap');
+  yield* walkTo(dog, 0.4, 0.6); yield* face(dog, Math.PI, 0.6);
+  if (Math.hypot(dog.pos.x - 0.4, dog.pos.y - 0.6) > 0.15) return;
+  dog.aloft = true; dog.aloftTask = dog.task;
+  try {
+    yield* dinghyHop(dog, [0.4, 0.6], [0.4, 0.05], deckY(0.4), DINGHY_FLOOR());
+    let a = 0; while (a < TAU) { a += DT * 4.5; dog.targetHeading = dog.heading = dog.heading + DT * 4.5; dog.walking = true; dog.walkSpd = 0.6; yield; }
+    dog.pose = 'lie'; yield* wait(1.2);
+    dog.pose = 'sleep'; dog.sleeping = true; dogSay(world.w.cover < 0.5 ? 'Snoozing in the dinghy in the sun' : 'Curled up in the dinghy');
+    yield* wait(rand(9, 14)); dog.sleeping = false; feed(dog, 0, 0.4);
+    dog.pose = 'stand'; yield* wait(0.6);
+    yield* dinghyHopOut();
+  } finally { if (dog.aloft && dog.floorY === undefined) dog.aloft = false; }
+}
+
+/* ---------- steering and the sea chart ---------- */
+// The boat always points along +x in the scene; steering swings the sea around her instead: the wave field,
+// sun and moon, everything on the horizon and the orbit camera all turn together, so on screen the boat turns.
+const nav = { course: 0, keyL: false, keyR: false, hold: 0, turn: 0, target: null, tside: 1, lastInput: -1e9, bx: world.offset, bz: 0, track: [], trackT: 0, warnT: 0, auto: false };
+const WAVES_SEA = WAVES.map(w => [w[0], w[1]]);
+function syncWaves() {
+  const c = Math.cos(nav.course), s = Math.sin(nav.course);
+  WAVES.forEach((w, i) => {
+    const [wx, wz] = WAVES_SEA[i], k = TAU / w[2];
+    w[0] = wx * c + wz * s; w[1] = -wx * s + wz * c;
+    w[4] = (k * (wx * nav.bx + wz * nav.bz)) % TAU;
+    oceanU.uWaves.value[i].x = w[0]; oceanU.uWaves.value[i].y = w[1]; oceanU.uPh.value[i] = w[4];
+  });
+}
+syncWaves();
+function swingWorld(da) {
+  const c = Math.cos(da), s = Math.sin(da);
+  for (const d of dests) {
+    if (d.held) continue;
+    const x = d.x, z = d.z; d.x = x * c + z * s; d.z = -x * s + z * c;
+    d.m.position.x = d.x; d.m.position.z = d.z; if (!d.K.ship) d.m.rotation.y += da;
+    d.side = d.z >= 0 ? 1 : -1; if (d.I && !d.visited) d.I.side = d.side;
+  }
+  if (camMode === 0 && !peek.on) for (const v of [camera.position, controls.target]) { const x = v.x, z = v.z; v.x = x * c + z * s; v.z = -x * s + z * c; }
+  stars.rotation.y += da;
+}
+const steerBlocked = () => harbour.phase !== 'none' ? 'Tied up in harbour — no steering until we cast off' : KR.active ? 'The kraken has us — hold her steady!' : null;
+function setTarget(d, auto = false) {
+  nav.target = d; nav.tside = Math.sign(d.z) || 1; nav.auto = auto;
+  if (d.kind === 'village') d.visit = true;
+  const name = d.I ? d.I.name : d.K.name;
+  toast(auto ? `The captain sets a course for <b>${name}</b>` : `Course set for <b>${name}</b>`);
+  takeHelm(auto ? `Setting a course for ${name}` : `Steering for ${name}`);
+  renderChart(true);
+}
+const capFree = () => !cap.ashore && !cap.inside && !cap.fishing && !cap.sleeping && !cap.scared && !cap.aloft && !cap.busyBrace && harbour.phase === 'none' && !KR.active;
+function takeHelm(say) {
+  if (!capFree() || cap.task && cap.task.helm) return;
+  interrupt(cap); resetProps(); cap.task = capSteer(say);
+}
+function* capSteerGen(say) {
+  capSay(say || 'Taking the wheel');
+  yield* walkTo(cap, HELM_X - 0.55 * HS, 0, 1.3); yield* face(cap, Math.PI / 2, 0.6);
+  cap.pose = 'helm'; capSay(say ? say : 'At the wheel');
+  yield* waitUntil(() => world.time - nav.lastInput > 5 && Math.abs(nav.turn) < 0.05, 120);
+  cap.pose = 'idle';
+}
+const capSteer = say => { const g = capSteerGen(say); g.helm = true; return g; };
+addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input, textarea, select')) return;
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    if (e.key === 'ArrowLeft') nav.keyL = true; else nav.keyR = true;
+    e.preventDefault();
+  }
+});
+addEventListener('keyup', e => { if (e.key === 'ArrowLeft') nav.keyL = false; if (e.key === 'ArrowRight') nav.keyR = false; });
+addEventListener('blur', () => { nav.keyL = nav.keyR = false; nav.hold = 0; });
+system('steer', (dt, t) => {
+  let want = (nav.keyR ? 1 : 0) - (nav.keyL ? 1 : 0) + nav.hold;
+  const blocked = steerBlocked();
+  if (want) {
+    if (blocked) { if (t > nav.warnT) { nav.warnT = t + 4; toast(blocked); } want = 0; }
+    else { if (nav.target) { nav.target = null; renderChart(true); if (cap.task && cap.task.helm) capSay('Steering by hand'); } nav.lastInput = t; takeHelm(); }
+  }
+  // the captain makes for a harbour island on his own if you leave the wheel alone for a while
+  if (!nav.target && !blocked && t - nav.lastInput > 40) {
+    const v = dests.find(d => d.kind === 'village' && !d.visited && d.visit !== false && d.x > 90 && !d.gone);
+    if (v) setTarget(v, true);
+  }
+  if (nav.target) {
+    const d = nav.target;
+    if (d.gone || d.visited && d.kind === 'village' || d.x < 45) { nav.target = null; renderChart(true); }
+    else if (!want && !blocked) {
+      const lat = d.kind === 'village' ? ISL.Zc : d.K.ship ? 30 : 26;
+      const err = Math.atan2(d.z - nav.tside * lat, Math.max(d.x, 30));
+      want = Math.abs(err) < 0.004 ? 0 : clamp(err * 6, -1, 1);
+    }
+  }
+  nav.turn = damp(nav.turn, clamp(want, -1, 1), 2.2, dt);
+  world.turnNow = nav.turn;
+  world.steerYaw = damp(world.steerYaw || 0, -nav.turn * 0.09, 1.5, dt);
+  if (Math.abs(nav.turn) > 1e-4) {
+    const da = nav.turn * 0.075 * dt * clamp(world.speed / 2, 0.4, 1.3);
+    nav.course += da; swingWorld(da);
+  }
+  nav.bx += Math.cos(nav.course) * world.speed * dt; nav.bz += Math.sin(nav.course) * world.speed * dt;
+  syncWaves();
+  nav.trackT -= dt;
+  if (nav.trackT <= 0) { nav.trackT = 4; nav.track.push([nav.bx, nav.bz]); if (nav.track.length > 90) nav.track.shift(); }
+  if (!$('chart').hidden) renderChart();
+});
+const heading = () => ((90 + nav.course * 180 / Math.PI) % 360 + 360) % 360;
+const COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+const DEST_ICON = { village: ['#7fc36a', 'isle'], palms: ['#7fc36a', 'isle'], lighthouse: ['#e66b5b', 'isle'], wreck: ['#b08a5a', 'wreck'], pirate: ['#2a2a2a', 'ship'], trawler: ['#d9a441', 'ship'], ship: ['#f1ede4', 'ship'], ghostship: ['#9ff0d0', 'ship'] };
+let chartT = 0;
+function renderChart(force) {
+  if ($('chart').hidden) return;
+  const now = performance.now(); if (!force && now - chartT < 220) return; chartT = now;
+  const cv = $('chartCv'), dpr = Math.min(devicePixelRatio || 1, 2), W = cv.clientWidth || 230, H = W;
+  if (cv.width !== W * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const cx = W / 2, cy = H / 2, R = W / 2 - 6, sc = R / 380;
+  const P = (x, z) => [cx + z * sc, cy - x * sc];
+  const grd = g.createRadialGradient(cx, cy, 10, cx, cy, R); grd.addColorStop(0, '#1d5a78'); grd.addColorStop(1, '#0d3148');
+  g.clearRect(0, 0, W, H); g.fillStyle = grd; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.fill();
+  g.save(); g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.clip();
+  g.strokeStyle = 'rgba(233,220,190,.16)'; g.lineWidth = 1; g.font = '9px Inter, sans-serif'; g.fillStyle = 'rgba(233,220,190,.45)';
+  for (const r of [100, 200, 300]) { g.beginPath(); g.arc(cx, cy, r * sc, 0, TAU); g.stroke(); g.fillText(`${r} m`, cx + 3, cy - r * sc + 10); }
+  // north, turning as the boat turns
+  const hn = -heading() * Math.PI / 180;
+  g.save(); g.translate(cx, cy); g.rotate(hn); g.strokeStyle = 'rgba(233,184,102,.5)'; g.setLineDash([3, 4]); g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -R); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#e9b866'; g.font = '700 11px Inter, sans-serif'; g.textAlign = 'center'; g.fillText('N', 0, -R + 14); g.restore();
+  // our wake on the chart
+  const c = Math.cos(nav.course), s = Math.sin(nav.course);
+  g.fillStyle = 'rgba(240,248,255,.5)';
+  for (const [bx, bz] of nav.track) { const dx = bx - nav.bx, dz = bz - nav.bz, x = dx * c + dz * s, z = -dx * s + dz * c; const [px, py] = P(x, z); g.fillRect(px - 1, py - 1, 2, 2); }
+  // what lies around
+  g.textAlign = 'center'; g.font = '600 10px Inter, sans-serif';
+  nav.marks = [];
+  for (const d of dests) {
+    if (d.gone || d.kind === 'bottle' || d.held) continue;
+    const [px, py] = P(d.x, d.z), [col, shape] = DEST_ICON[d.kind] || ['#fff', 'isle'];
+    if (Math.hypot(px - cx, py - cy) > R + 4) continue;
+    nav.marks.push({ d, px, py });
+    g.fillStyle = col; g.strokeStyle = '#0b1a26'; g.lineWidth = 1.5;
+    if (shape === 'isle') { g.beginPath(); g.arc(px, py, d.kind === 'village' ? 7 : 6, 0, TAU); g.fill(); g.stroke(); if (d.kind === 'village') { g.fillStyle = '#b5382c'; g.fillRect(px - 2.5, py - 3, 5, 4); } }
+    else if (shape === 'ship') { g.save(); g.translate(px, py); g.rotate(d.vx ? Math.PI / 2 : 0); g.beginPath(); g.moveTo(0, -6); g.lineTo(4, 5); g.lineTo(-4, 5); g.closePath(); g.fill(); g.stroke(); g.restore(); }
+    else { g.beginPath(); g.moveTo(px - 5, py + 4); g.lineTo(px + 5, py + 4); g.lineTo(px + 1, py - 5); g.closePath(); g.fill(); g.stroke(); }
+    if (nav.target === d) { g.strokeStyle = '#e9b866'; g.lineWidth = 2; g.beginPath(); g.arc(px, py, 11, 0, TAU); g.stroke(); g.setLineDash([4, 4]); g.beginPath(); g.moveTo(cx, cy); g.lineTo(px, py); g.stroke(); g.setLineDash([]); }
+    g.fillStyle = 'rgba(246,236,217,.85)'; g.fillText(d.I ? d.I.name : d.K.name.replace(' Island', ''), px, py - 11);
+  }
+  if (ESC.on) { const [px, py] = P(KR.head.position.x, KR.head.position.z); g.fillStyle = '#c0507a'; g.beginPath(); g.arc(px, py, 4, 0, TAU); g.fill(); }
+  g.restore();
+  // the boat, always pointing up the chart
+  g.fillStyle = '#f6ecd9'; g.strokeStyle = '#0b1a26'; g.lineWidth = 1.5;
+  g.beginPath(); g.moveTo(cx, cy - 9); g.lineTo(cx + 4.5, cy + 6); g.lineTo(cx, cy + 3.5); g.lineTo(cx - 4.5, cy + 6); g.closePath(); g.fill(); g.stroke();
+  g.strokeStyle = 'rgba(233,184,102,.6)'; g.lineWidth = 2; g.beginPath(); g.arc(cx, cy, R, 0, TAU); g.stroke();
+  const h = heading();
+  $('chHead').textContent = `Heading ${String(Math.round(h)).padStart(3, '0')}° ${COMPASS[Math.round(h / 45) % 8]}`;
+  // the island list
+  const isles = dests.filter(d => !d.gone && (d.kind === 'village' || d.kind === 'palms' || d.kind === 'lighthouse' || d.kind === 'wreck') && Math.hypot(d.x, d.z) < 420);
+  const list = isles.map(d => {
+    const dist = Math.hypot(d.x, d.z), oc = Math.round(((Math.atan2(d.z, d.x) * 180 / Math.PI) / 30 + 12) % 12) || 12;
+    const name = d.I ? d.I.name : d.K.name, tgt = nav.target === d;
+    const btns = d.kind === 'village' && !d.visited
+      ? `<button class="chip${tgt ? ' on' : ''}" data-n="go" data-i="${dests.indexOf(d)}">${tgt ? 'Making for it' : 'Visit'}</button><button class="chip${d.visit === false ? ' on' : ''}" data-n="past" data-i="${dests.indexOf(d)}">Sail past</button>`
+      : `<button class="chip${tgt ? ' on' : ''}" data-n="go" data-i="${dests.indexOf(d)}">${tgt ? 'Heading there' : 'Steer for it'}</button>`;
+    return `<div class="crow"><div><b>${name}</b><small>${Math.round(dist)} m · ${oc} o’clock${d.visited ? ' · visited' : ''}</small></div><div class="chips">${btns}</div></div>`;
+  }).join('');
+  const key = list + (nav.target ? 't' : '');
+  if ($('chList').dataset.k !== key) { $('chList').dataset.k = key; $('chList').innerHTML = list || '<p class="onote">Nothing on the chart yet. Keep a lookout.</p>'; }
+}
+function openChart(on = $('chart').hidden) {
+  $('chart').hidden = !on; $('bChart').classList.toggle('on', on); document.body.classList.toggle('charting', on);
+  if (on) renderChart(true);
+}
+$('bChart').addEventListener('click', () => { sfx.init(); openChart(); });
+$('chClose').addEventListener('click', () => openChart(false));
+$('chartCv').addEventListener('click', e => {
+  const r = e.target.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  let best = null, bd = 18; for (const m of nav.marks || []) { const d = Math.hypot(m.px - x, m.py - y); if (d < bd) { bd = d; best = m.d; } }
+  if (best) { const b = steerBlocked(); if (b) toast(b); else setTarget(best); }
+});
+onTap($('chList'), '[data-n]', b => {
+  const d = dests[+b.dataset.i]; if (!d) return;
+  if (b.dataset.n === 'go') { const bl = steerBlocked(); if (bl) toast(bl); else setTarget(d); }
+  else { d.visit = d.visit === false ? true : false; if (d.visit === false && nav.target === d) nav.target = null; toast(d.visit === false ? `We’ll sail past <b>${d.I.name}</b>` : `We may call at <b>${d.I.name}</b> after all`); renderChart(true); }
+});
+for (const [id, dir] of [['chPort', -1], ['chStbd', 1]]) {
+  const b = $(id);
+  b.addEventListener('pointerdown', e => { e.preventDefault(); b.setPointerCapture(e.pointerId); nav.hold = dir; });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, () => { if (nav.hold === dir) nav.hold = 0; });
+}
+$('chHold').addEventListener('click', () => { nav.target = null; nav.lastInput = world.time; toast('Holding our course'); renderChart(true); });
+
+/* ---------- the kraken's friendship ---------- */
+const ESC = { on: false, t: 0, side: 1, dur: 80, giftT: 25, gifted: false };
+function befriendKraken() {
+  world.krakenFriend++;
+  const n = world.krakenFriend;
+  if (n === 3) { toast('The kraken has taken a liking to you — <b>it’s friendly now</b>'); addLog('The kraken knows us now. It came up gentle as a lamb and took the fish from the air.'); }
+  else if (n === 5) { toast('You and the kraken are <b>old friends</b> — it may swim with us'); addLog('Our friend the kraken, I should say. It lingered by the boat like an old dog.'); }
+  else toast(`The kraken seems to like you <b>(${friendName().toLowerCase()})</b>`);
+}
+function startEscort() {
+  if (ESC.on || KR.active) return;
+  Object.assign(ESC, { on: true, t: 0, side: Math.random() < 0.5 ? -1 : 1, dur: rand(70, 100), giftT: rand(22, 34), gifted: false, gift2: rand(48, 60) });
+  const T = KR.tents[0];
+  Object.assign(T, { L: 15, r0: 1.15, a0: Math.PI / 2 - 0.15, curl: 1.5, sway: 0.42, f: 1.6, ph: 0, slamAt: -1, slamSide: 1, slammed: false });
+  T.m.visible = true; KR.head.visible = true; krSuckers.visible = false;
+  toast('Our friend the <b>kraken</b> surfaces alongside to keep us company!');
+  if (!dog.busy && !dog.ashore && !dog.inside && !dog.sleeping) dogCommand(dogBarkAt(ESC.side, 'the kraken'));
+  if (capFree()) { interrupt(cap); resetProps(); cap.task = capGreetKraken(ESC.side); }
+  if (!ESC.seen) { ESC.seen = true; discover('Kraken Escort', 'The kraken swam beside us for the better part of an hour, waving one great arm as if to say hello. Ghost wagged himself silly.'); }
+}
+function* capGreetKraken(side) {
+  capSay('It’s our old friend the kraken!');
+  const x = 0.9 + rand(-0.5, 0.5);
+  yield* walkTo(cap, x, side * rail(x), 1.2);
+  const hx = () => (ESC.on ? KR.head.position.x : KR.hx) / BOAT_S, hz = () => (ESC.on ? KR.head.position.z : KR.hz) / BOAT_S;
+  yield* faceTo(cap, hx(), hz(), 0.6);
+  cap.pose = 'wave'; capSay('Waving to the kraken');
+  for (let k = 0; k < 5; k += DT) { cap.targetHeading = Math.atan2(hx() - cap.pos.x, hz() - cap.pos.y); yield; }
+  cap.pose = 'cheer'; yield* wait(1.2); cap.pose = 'idle';
+}
+system('krakenEscort', (dt, t) => {
+  if (!ESC.on) return;
+  ESC.t += dt; const k = ESC.t, up = sstep(0, 5, k) * (1 - sstep(ESC.dur - 6, ESC.dur, k));
+  const H = KR.head, x = 3 + Math.sin(k * 0.11) * 9, z = ESC.side * (19 + Math.sin(k * 0.07) * 2.5);
+  H.position.set(x, lerp(-20, -0.6, up) + Math.sin(t * 0.9) * 0.3, z); H.rotation.y = Math.atan2(-x, -z); H.rotation.z = Math.sin(t * 0.5) * 0.05;
+  for (const l of H.userData.lids) l.scale.y = damp(l.scale.y, (k % 3.8) < 0.18 ? 1 : 0.15, 18, dt);
+  const T = KR.tents[0];
+  Object.assign(T, { bx: x + 4, bz: z - ESC.side * 4.5, dx: -0.2, dz: -ESC.side });
+  const n = Math.hypot(T.dx, T.dz); T.dx /= n; T.dz /= n;
+  poseTentacle(T, t, up, 0);
+  if (up > 0.2 && Math.random() < dt * 10) { const a = rand(0, TAU); emit(x + Math.cos(a) * 6.5, 0, z + Math.sin(a) * 6.5, -world.speed * 0.5, 0, Math.sin(a) * 0.4, rand(1.5, 2.6), rand(0.5, 1), true); }
+  // now and then it flicks something aboard
+  if (!ESC.gifted && k > ESC.giftT && up > 0.95) { ESC.gifted = true; krakenGift(true); }
+  if (ESC.gift2 && k > ESC.gift2 && up > 0.95) { ESC.gift2 = 0; if (Math.random() < 0.6) krakenGift(true); }
+  if (k > ESC.dur) { ESC.on = false; H.visible = false; T.m.visible = false; toast('The kraken waves one last time and slips beneath the waves'); }
+});
+function krakenGift(small) {
+  const r = Math.random();
+  if (small && r < 0.5 && world.fishCount < fishCap()) {
+    world.fishCount++; updateBucket(); flashStat('sFish'); sfx.plop();
+    toast('A tentacle flicks a <b>fat fish</b> right into the bucket!');
+  } else if (small || r < 0.6) {
+    const n = small ? 15 : 25; addGold(n, `The kraken leaves a <b>pearl</b> the size of an egg on the deck`);
+    addLog('A gift from the deep: a pearl, warm from the sea. Worth a fair bit of gold.');
+  } else {
+    world.treasure = (world.treasure || 0) + 1; deckChest.visible = true; addDeckChestObstacle(); flashStat('sGold'); sfx.chime();
+    toast('A tentacle leaves a <b>barnacled chest</b> on the deck — a gift from the deep!');
+    addLog('As it sank, the kraken set a chest of old gold on our deck. A thank-you, I suppose.');
+  }
+}
+
+nav.course = world.course || 0; syncWaves();
+for (const id in world.upgrades) if (world.upgrades[id]) buildUpgrade(id);
+
+/* =====================================================================
    HUD
    ===================================================================== */
 function toast(html) {
@@ -7111,6 +7641,8 @@ function updateHUD(dt) {
     fe.style.width = `${Math.round(c.needs.food * 100)}%`; re.style.width = `${Math.round(c.needs.energy * 100)}%`;
     fe.classList.toggle('low', c.needs.food < 0.3); re.classList.toggle('low', c.needs.energy < 0.25);
   }
+  setText('sPurse', `${world.gold} gold`); setText('sKraken', friendName());
+  world.course = nav.course;
   setText('sGold', world.treasure ? `${world.treasure} chest${world.treasure > 1 ? 's' : ''}` : 'None yet');
   setText('logTime', `Day ${world.dayNum} · ${clockStr(world.tod)}`);
   setText('subDay', world.todAnim ? (world.isNight ? 'Dusk falling…' : 'Dawn rising…') : phaseOf(world.tod));
@@ -7162,6 +7694,8 @@ addEventListener('keydown', e => {
   if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === 'Escape' && !$('yard').hidden) { openYard(false); return; }
   if (e.key === 'Escape' && !$('opts').hidden) { openOpts(false); return; }
+  if (e.key === 'Escape' && !$('market').hidden) { openMarket(false); return; }
+  if (e.key === 'Escape' && !$('chart').hidden) { openChart(false); return; }
   if (e.key === 'Escape' && photo.on) { if (!$('shot').hidden) $('shot').hidden = true; else togglePhoto(false); return; }
   if (photo.on && e.key === ' ') { photo.capture = true; e.preventDefault(); return; }
   const k = e.key.toLowerCase();
@@ -7173,6 +7707,8 @@ addEventListener('keydown', e => {
   else if (k === 'p') { sfx.init(); togglePhoto(); }
   else if (k === 'o') { sfx.init(); openOpts(); }
   else if (k === 'q') cycleQuality();
+  else if (k === 'n') { sfx.init(); openChart(); }
+  else if (k === 'u') { sfx.init(); openMarket(); }
 });
 addEventListener('pointerdown', () => sfx.init(), { once: false, passive: true });
 
@@ -7181,7 +7717,10 @@ addEventListener('pointerdown', () => sfx.init(), { once: false, passive: true }
    ===================================================================== */
 let nextCreak = 4, started = false;
 function frame() {
-  tick(Math.min(clock.getDelta(), 0.05) * (world.timeScale ?? 1));
+  // time runs at the chosen speed in steps of at most 1/20 s; when paused only the camera and HUD move
+  const raw = Math.min(clock.getDelta(), 0.05), sc = world.timeScale ?? 1;
+  if (sc > 0) { let rem = raw * sc; while (rem > 1e-6) { const d = Math.min(rem, 0.05); tick(d); rem -= d; } }
+  else pausedTick(raw);
   renderer.render(scene, camera);
   if (photo.capture) { photo.capture = false; capturePhoto(); }
   if (!started) { started = true; setTimeout(() => { $('intro').classList.add('gone'); setTimeout(() => toast(resumed ? `Welcome back — <b>Day ${world.dayNum}</b> of the voyage` : `Welcome aboard the <b>${nameText({ ...look, nameFont: 'classic' })}</b>`), 1100); }, 500); }
@@ -7212,8 +7751,13 @@ function tick(dt) {
   updateBubbles(dt);
   updateHUD(dt);
 }
+function pausedTick(dt) {
+  updateCamera(dt, world.time);
+  updateCrewCard(dt);
+  updateHUD(dt);
+}
 renderer.setAnimationLoop(frame);
-window.__atsea = { settings, applySettings, togglePhoto, photo, saveVoyage, loadVoyage, openOpts, SEASONS, setSeason: m => { world.seasonMode = m; }, season, spawnOrcas, spawnManta, spawnOtters, spawnSerpent, strike, sky2, rainbow, life, SERP, storm, choice, pickKraken, taskGalley, ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
+window.__atsea = { nav, UP, buildUpgrade, buyUpgrade, openMarket, openChart, startEscort, ESC, setTarget, renderChart, taskCrowsNest, capSalute, dogDinghyNap, sellFish, settings, applySettings, togglePhoto, photo, saveVoyage, loadVoyage, openOpts, SEASONS, setSeason: m => { world.seasonMode = m; }, season, spawnOrcas, spawnManta, spawnOtters, spawnSerpent, strike, sky2, rainbow, life, SERP, storm, choice, pickKraken, taskGalley, ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
   PERCHES, tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
 </script>
 </body>
