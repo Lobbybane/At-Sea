@@ -70,6 +70,12 @@ canvas#c:active{cursor:grabbing}
 .logrow p.fade{opacity:0}
 
 #tools{position:fixed;right:24px;bottom:118px;display:flex;align-items:center;gap:8px;z-index:3}
+#timeCtl{display:flex;align-items:center;gap:2px;padding:4px;border-radius:999px}
+#timeCtl button{border:0;background:transparent;color:var(--ink-dim);font:700 11.5px/1 var(--sans);height:30px;min-width:30px;padding:0 8px;border-radius:999px;cursor:pointer;display:grid;place-items:center;touch-action:manipulation}
+#timeCtl button svg{width:13px;height:13px}#timeCtl button:hover{color:var(--ink)}#timeCtl button.on{background:var(--gold);color:#1a1208}
+#pausedTag{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:5;padding:8px 16px;border-radius:999px;font:700 11px var(--sans);letter-spacing:.2em;text-transform:uppercase;color:#ffe6ad;cursor:pointer;border:1px solid var(--edge)}
+#pausedTag[hidden]{display:none}
+@media (max-width:820px){#timeCtl button{min-width:26px;padding:0 6px;height:28px}}
 .tool{width:42px;height:42px;padding:0;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--ink);pointer-events:auto}
 .tool svg{width:18px;height:18px}
 .tool:hover{border-color:var(--edge-hi)}
@@ -372,6 +378,7 @@ body.photo #bar,body.photo #log,body.photo #title,body.photo #hint,body.photo #t
 </aside>
 
 <div id="tools">
+<div id="timeCtl" class="panel" role="group" aria-label="Speed of time"><button data-ts="0" title="Pause (Space)" aria-label="Pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/></svg></button><button data-ts="1" class="on" title="Normal speed (T cycles)">1×</button><button data-ts="2" title="Double speed">2×</button><button data-ts="5" title="Five times speed">5×</button></div>
 <button id="perf" class="panel" title="Graphics quality (Q) — click to change"><i id="fpsDot"></i><span id="fpsTxt">-- fps</span><em id="qTxt">Auto</em></button>
 <button id="bPhoto" class="panel tool" title="Photo mode (P)" aria-label="Photo mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5 15.5 10M20.5 12l-7 1M16 19.5l-4.5-5.5M7 19.5l2.5-6.5M3.5 11l6.5-1M8 4.5l3.5 6"/></svg></button>
 <button id="bOpts" class="panel tool" title="Settings (O)" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
@@ -385,6 +392,7 @@ body.photo #bar,body.photo #log,body.photo #title,body.photo #hint,body.photo #t
 </div>
 
 <div id="toasts" aria-live="polite"></div>
+<button id="pausedTag" class="panel" hidden>Paused · tap to resume</button>
 <aside id="yard" class="panel" hidden aria-label="Shipwright">
   <div class="yhead"><div><h3>Shipwright</h3><p id="yardSub">Make the Wanderer your own</p></div><button id="yardClose" class="xbtn" aria-label="Close the Shipwright">&times;</button></div>
   <div class="ytabs" id="yardTabs"></div>
@@ -4399,6 +4407,7 @@ const camLookAt = V3(0, 2.4, 0), _ct = V3(), _cp = V3(), _cq = new THREE.Quatern
 let seaAng = 0, cine = { i: -1, t: 99 };
 function setCamMode(i) {
   camMode = (i + CAM_MODES.length) % CAM_MODES.length;
+  underwaterMode(camMode === 4);
   controls.enabled = camMode === 0;
   controls.autoRotate = false;
   if (camMode === 0) {
@@ -4410,7 +4419,7 @@ function setCamMode(i) {
   }
   if (camMode === 1) { deckLook.yaw = 0; deckLook.pitch = -0.24; }
   if (camMode === 3) cine = { i: -1, t: 99 };
-  camera.fov = camMode === 1 ? 60 : camera.aspect < 0.8 ? 62 : 42; camera.updateProjectionMatrix();
+  camera.fov = camMode === 1 || camMode === 4 ? 60 : camera.aspect < 0.8 ? 62 : 42; camera.updateProjectionMatrix();
   toast(`Camera: <b>${CAM_MODES[camMode]}</b>`);
 }
 function seaLifeTarget(out) {
@@ -4444,6 +4453,7 @@ const SHOTS = [
 ];
 function updateCamera(dt, t) {
   if (peek.on || peek.k > 0) { camLabel = 'Peeking inside'; updatePeek(dt); return; }
+  if (camMode === 4) { camLabel = 'Underwater'; updateUnderwater(dt, t); return; }
   if (camMode === 0) {
     camLabel = 'Orbit';
     if (!interacting && t - lastInteract > 6) controls.autoRotate = true;
@@ -7430,8 +7440,10 @@ function syncWaves() {
   });
 }
 syncWaves();
+const SWING = [];   // other things that turn with the sea (the sea floor below)
 function swingWorld(da) {
   const c = Math.cos(da), s = Math.sin(da);
+  for (const f of SWING) f(c, s, da);
   for (const d of dests) {
     if (d.held) continue;
     const x = d.x, z = d.z; d.x = x * c + z * s; d.z = -x * s + z * c;
@@ -8017,6 +8029,221 @@ applyExtras(look);
 if (world.hand) hireHand(world.hand.seed, world.hand.name, true);
 
 /* =====================================================================
+   Time controls, holidays and the view beneath the waves
+   ===================================================================== */
+/* ---------- pause, 1×, 2×, 5× ---------- */
+const TIME = { last: 1 };
+function setTimeScale(v, quiet) {
+  if (photo.paused) { photo.paused = false; $('phPause').classList.remove('on'); }
+  if (v > 0) TIME.last = v;
+  world.timeScale = v;
+  for (const b of document.querySelectorAll('#timeCtl [data-ts]')) b.classList.toggle('on', +b.dataset.ts === v);
+  $('pausedTag').hidden = v !== 0;
+  if (!quiet) toast(v === 0 ? 'Time <b>paused</b> — the camera still moves' : `Time: <b>${v}×</b>`);
+}
+onTap($('timeCtl'), '[data-ts]', b => { sfx.init(); setTimeScale(+b.dataset.ts); });
+$('pausedTag').addEventListener('click', () => setTimeScale(TIME.last));
+addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input, textarea, select, button, a')) return;
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || photo.on) return;
+  if (e.key === ' ') { e.preventDefault(); setTimeScale(world.timeScale === 0 ? TIME.last : 0); }
+  else if (e.key.toLowerCase() === 't') { const seq = [1, 2, 5], i = seq.indexOf(world.timeScale); setTimeScale(seq[(i + 1) % 3]); }
+});
+
+/* ---------- winter festival: festive lights in the rigging, a wreath on the cabin, a tree on the roof ---------- */
+const FEST = { winter: false, summer: null, twinkle: 0 };
+const festive = new THREE.Group(); festive.visible = false; cabinRoom.add(festive);
+{
+  const fir = std(0x2f5a3a, { roughness: 0.9 }), red = std(0xc0302a, { roughness: 0.5 }), gold = std(0xe9c25a, { roughness: 0.3, metalness: 0.7 });
+  // wreath beside the door on the aft wall
+  const w = new THREE.Group(); w.position.set(CABIN.x0 - 0.035, CABIN.dy + 0.48, -0.3); w.rotation.y = Math.PI / 2; festive.add(w);
+  mk(new THREE.TorusGeometry(0.11, 0.035, 6, 18), fir, w, 0, 0, 0);
+  for (let k = 0; k < 9; k++) { const a = k / 9 * TAU; mk(new THREE.SphereGeometry(0.014, 6, 4), k % 3 ? red : gold, w, Math.cos(a) * 0.12, Math.sin(a) * 0.12, 0.03); }
+  mk(new THREE.BoxGeometry(0.06, 0.04, 0.02), red, w, 0, -0.12, 0.035); for (const s of [-1, 1]) mk(new THREE.BoxGeometry(0.02, 0.07, 0.015), red, w, s * 0.02, -0.165, 0.035, 0, 0, s * 0.3);
+  // a little tree lashed on the cabin roof
+  const tr = new THREE.Group(); tr.position.set(-0.2, CABIN.dy + CABIN.h + 0.12, -0.34); festive.add(tr);
+  mk(new THREE.CylinderGeometry(0.06, 0.07, 0.07, 10), std(0x8a5632), tr, 0, 0.035, 0);
+  for (let k = 0; k < 3; k++) mk(new THREE.ConeGeometry(0.16 - k * 0.04, 0.18, 9), fir, tr, 0, 0.13 + k * 0.1, 0);
+  for (let k = 0; k < 8; k++) { const a = k * 2.3, h = 0.11 + (k % 4) * 0.07, r = 0.13 - (k % 4) * 0.025; mk(new THREE.SphereGeometry(0.016, 6, 4), [red, gold][k % 2], tr, Math.cos(a) * r, h, Math.sin(a) * r); }
+  mk(new THREE.OctahedronGeometry(0.03), gold, tr, 0, 0.45, 0);
+  festive.traverse(o => { if (o.isMesh) o.castShadow = true; });
+}
+const FEST_COLS = ['#ff4a3d', '#3fd16b', '#ffd23f', '#ffffff', '#ff4a3d', '#3fd16b'].map(C);
+
+/* ---------- summer lantern festival: paper lanterns on the water around harbour islands at dusk ---------- */
+const lanternGeo = new THREE.BoxGeometry(0.32, 0.36, 0.32), lanternMat = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
+const LANT_COLS = ['#ffb347', '#ff7a59', '#ffd27a', '#ff9ec7', '#ffe9a8'].map(c => C(c).multiplyScalar(1.6));
+function lanternsFor(I) {
+  if (I.lanterns) return I.lanterns;
+  const N = 70, SKY = 18, im = new THREE.InstancedMesh(lanternGeo, lanternMat, N + SKY), rnd = mulberry(I.name.length * 977 + 3), data = [];
+  for (let i = 0; i < N + SKY; i++) {
+    const sky = i >= N, a = rnd() * TAU, r = sky ? rnd() * 8 : ISL.R2 + 1.5 + rnd() * 12;
+    const onJetty = !sky && i < 14;   // a row bobbing either side of the jetty
+    const x = onJetty ? (i % 2 ? 1.9 : -1.9) : Math.cos(a) * r, z = onJetty ? -15 - (i >> 1) * 1.6 : Math.sin(a) * r;
+    data.push({ x, z, sky, ph: rnd() * TAU, y0: sky ? rnd() * 60 : 0, s: sky ? 0.8 + rnd() * 0.5 : 0.8 + rnd() * 0.4 });
+    im.setColorAt(i, LANT_COLS[i % LANT_COLS.length]);
+  }
+  im.frustumCulled = false; im.visible = false; I.m.add(im);
+  return (I.lanterns = { im, data });
+}
+const _lm = new THREE.Matrix4(), _lq = new THREE.Quaternion(), _lp = V3(), _ls = V3();
+system('holidays', (dt, t) => {
+  const si = seasonIdx();
+  // winter
+  const winter = si === 3;
+  if (winter !== FEST.winter) {
+    FEST.winter = winter; festive.visible = winter;
+    if (winter) { if (!world.discoveries.some(d => d.name === 'Winter Festival')) discover('Winter Festival', 'Midwinter at sea. The captain strung coloured lights through the rigging, hung a wreath by the cabin door and lashed a little fir to the roof.'); else toast('Winter: festive lights in the rigging'); }
+    applyLook(look);
+  }
+  if (winter && look.lights === 'off') {
+    LOOKS.bulbs.visible = true;
+    if ((FEST.twinkle -= dt) <= 0) {
+      FEST.twinkle = 0.35;
+      for (let k = 0; k < 14; k++) LOOKS.bulbs.setColorAt((Math.random() * bulbPts.length) | 0, pick(FEST_COLS));
+      LOOKS.bulbs.instanceColor.needsUpdate = true;
+    }
+  }
+  // summer
+  const dusk = 1 - world.day, show = si === 1 && dusk > 0.45;
+  for (const d of dests) {
+    if (!d.I || d.gone) continue;
+    const near = show && Math.abs(d.x) < 260;
+    if (!near && !d.I.lanterns) continue;
+    const L = lanternsFor(d.I); L.im.visible = near;
+    if (!near) continue;
+    if (!FEST.summerSeen) { FEST.summerSeen = true; if (!world.discoveries.some(x => x.name === 'Lantern Festival')) discover('Lantern Festival', `Midsummer night at ${d.I.name}: the islanders set hundreds of paper lanterns on the water and sent more drifting up into the dark. Ghost watched them float past for an hour.`); }
+    L.data.forEach((q, i) => {
+      let y;
+      if (q.sky) { y = (q.y0 + t * 0.7) % 70 + 2; _lp.set(q.x + Math.sin(t * 0.1 + q.ph) * (y * 0.15), y, q.z + Math.cos(t * 0.08 + q.ph) * (y * 0.1)); }
+      else { q.x += Math.sin(t * 0.05 + q.ph) * dt * 0.05; _lp.set(q.x, 0.12 + Math.sin(t * 1.3 + q.ph) * 0.08, q.z); }
+      _lq.setFromAxisAngle(_up, q.ph + t * 0.1); _ls.setScalar(q.s * (0.9 + Math.sin(t * 7 + i) * 0.05));
+      L.im.setMatrixAt(i, _lm.compose(_lp, _lq, _ls));
+    });
+    L.im.instanceMatrix.needsUpdate = true;
+  }
+});
+
+/* ---------- beneath the waves ---------- */
+CAM_MODES.push('Underwater');
+const UW = { on: false, ang: 0.6, pitch: 0, t: 0, lurkT: 0, lurk: 0, lurking: false, saved: null, drag: null };
+const uw = new THREE.Group(); uw.visible = false; scene.add(uw);
+const UW_COL = C(0x0c5266);
+const causticTex = canvasTex(256, 256, (c, w, h) => {
+  c.fillStyle = '#000'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(190,255,255,.55)'; c.lineWidth = 3;
+  for (let i = 0; i < 70; i++) { const x = (i * 97) % w, y = (i * 61) % h, r = 10 + (i * 13) % 26; c.beginPath(); c.ellipse(x, y, r, r * 0.6, i, 0, TAU); c.stroke(); }
+}, true);
+causticTex.repeat.set(10, 10);
+// the surface seen from below, bright where the sky shows through
+const uwSurf = mk(new THREE.PlaneGeometry(900, 900), new THREE.MeshBasicMaterial({ color: 0x8fd8e6, transparent: true, opacity: 0.9, side: THREE.DoubleSide, map: causticTex, depthWrite: false }), uw, 0, 0.15, 0, Math.PI / 2, 0, 0);
+uwSurf.castShadow = false; uwSurf.renderOrder = -1;
+// the sea floor
+const SEABED_Y = -26, SEA_R = 150;
+mk(new THREE.CircleGeometry(400, 48), new THREE.MeshStandardMaterial({ color: 0xc9b98a, roughness: 1, emissive: 0x6fe0e0, emissiveMap: causticTex, emissiveIntensity: 0.18 }), uw, 0, SEABED_Y, 0, -Math.PI / 2, 0, 0).receiveShadow = false;
+const reef = [];
+{
+  const rnd = mulberry(4242), corals = [0xff6f61, 0xffb347, 0xc77dff, 0x4fd1c5, 0xff9ec7, 0xf6e05e];
+  for (let i = 0; i < 150; i++) {
+    const g = new THREE.Group(), kind = i % 5, x = (rnd() * 2 - 1) * SEA_R, z = (rnd() * 2 - 1) * SEA_R;
+    if (kind === 0) mk(new THREE.DodecahedronGeometry(1 + rnd() * 2.4, 0), std(0x6f6a60), g, 0, 0.4, 0, rnd(), rnd(), rnd());
+    else if (kind === 1 || kind === 2) { const cm = std(corals[i % corals.length], { roughness: 0.7 }); for (let k = 0; k < 5; k++) mk(new THREE.ConeGeometry(0.18 + rnd() * 0.2, 0.8 + rnd() * 1.3, 6), cm, g, (rnd() - 0.5) * 1.2, 0.5, (rnd() - 0.5) * 1.2, (rnd() - 0.5) * 0.6, 0, (rnd() - 0.5) * 0.6); }
+    else if (kind === 3) { const cm = std(corals[(i + 2) % corals.length], { roughness: 0.6 }); mk(new THREE.SphereGeometry(0.7 + rnd() * 0.8, 10, 7), cm, g, 0, 0.4, 0).scale.y = 0.7; }
+    else { // kelp
+      const km = std(0x3f7a3a, { roughness: 0.9, side: THREE.DoubleSide }), segs = [], H = 6 + rnd() * 10;
+      let parent = g; for (let k = 0; k < 6; k++) { const s = new THREE.Group(); s.position.y = k ? H / 6 : 0; parent.add(s); mk(new THREE.PlaneGeometry(0.5, H / 6), km, s, 0, H / 12, 0); segs.push(s); parent = s; }
+      g.userData.kelp = segs; g.userData.ph = rnd() * TAU;
+    }
+    g.position.set(x, SEABED_Y, z); uw.add(g); reef.push(g);
+  }
+}
+// god rays slanting down from the surface
+const rayTex = canvasTex(64, 256, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.fillRect(0, 0, w, h); const gx = c.createLinearGradient(0, 0, w, 0); gx.addColorStop(0, 'rgba(0,0,0,1)'); gx.addColorStop(0.5, 'rgba(0,0,0,0)'); gx.addColorStop(1, 'rgba(0,0,0,1)'); c.globalCompositeOperation = 'destination-out'; c.fillStyle = gx; c.fillRect(0, 0, w, h); });
+const rays = [];
+for (let i = 0; i < 9; i++) {
+  const m = mk(new THREE.PlaneGeometry(3 + i % 3, 34), new THREE.MeshBasicMaterial({ map: rayTex, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, color: 0xbff4ff }), uw, 0, -17, 0);
+  m.castShadow = false; m.userData.a = i / 9 * TAU; m.userData.r = 8 + (i * 7) % 18; rays.push(m);
+}
+// drifting specks
+const snowN = 500, snowPos = new Float32Array(snowN * 3);
+for (let i = 0; i < snowN; i++) snowPos.set([(Math.random() - 0.5) * 60, -Math.random() * 26, (Math.random() - 0.5) * 60], i * 3);
+const snowGeo = new THREE.BufferGeometry(); snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
+const snow = new THREE.Points(snowGeo, new THREE.PointsMaterial({ color: 0xd8f6ff, size: 0.09, transparent: true, opacity: 0.7, depthWrite: false })); snow.frustumCulled = false; uw.add(snow);
+// fish schools
+const fishGeo = (() => { const b = new THREE.SphereGeometry(0.12, 8, 6); b.scale(2.1, 1, 0.55); const tl = new THREE.ConeGeometry(0.11, 0.18, 4); tl.rotateZ(Math.PI / 2); tl.scale(1, 1, 0.3); tl.translate(-0.32, 0, 0); return mergeGeometries([b.toNonIndexed(), tl.toNonIndexed()]); })();
+const schools = [0x8fb3c9, 0xf6c14a, 0x5fa8d3, 0xff8a65].map((col, si) => {
+  const n = 16, im = new THREE.InstancedMesh(fishGeo, std(col, { roughness: 0.4, metalness: 0.3 }), n); im.frustumCulled = false; uw.add(im);
+  return { im, n, si, r: 9 + si * 4, y: -4 - si * 3.2, sp: (si % 2 ? -1 : 1) * (0.12 + si * 0.03), ph: si * 1.7, off: Array.from({ length: n }, () => [rand(-1.6, 1.6), rand(-0.8, 0.8), rand(-1.6, 1.6), rand(0, TAU)]) };
+});
+SWING.push((c, s) => { for (const g of reef) { const x = g.position.x, z = g.position.z; g.position.x = x * c + z * s; g.position.z = -x * s + z * c; } });
+function underwaterMode(on) {
+  if (on === UW.on) return;
+  UW.on = on; uw.visible = on;
+  if (on) {
+    UW.saved = { fogC: scene.fog.color.clone(), fogD: scene.fog.density, bg: scene.background, sky: sky.visible, stars: stars.visible, clouds: cloudIM.visible, deck: cloudDeck.visible };
+    sky.visible = stars.visible = cloudIM.visible = cloudDeck.visible = false;
+    scene.background = UW_COL.clone(); UW.lurkT = 0; UW.t = 0;
+    toast('Slipping beneath the waves…');
+  } else {
+    const S = UW.saved; if (S) { scene.fog.color.copy(S.fogC); scene.fog.density = S.fogD; scene.background = S.bg; sky.visible = S.sky; stars.visible = S.stars; cloudIM.visible = S.clouds; cloudDeck.visible = S.deck; }
+    if (UW.lurking && !KR.active && !ESC.on) KR.head.visible = false;
+    UW.lurking = false;
+  }
+}
+renderer.domElement.addEventListener('pointerdown', e => { if (camMode === 4) UW.drag = { x: e.clientX, y: e.clientY }; });
+addEventListener('pointermove', e => { if (camMode !== 4 || !UW.drag) return; UW.ang -= (e.clientX - UW.drag.x) * 0.005; UW.pitch = clamp(UW.pitch + (e.clientY - UW.drag.y) * 0.004, -0.6, 0.7); UW.drag = { x: e.clientX, y: e.clientY }; });
+addEventListener('pointerup', () => { UW.drag = null; });
+const _uc = V3(), _ut = V3();
+function updateUnderwater(dt, t) {
+  UW.t += dt;
+  const light = 0.35 + world.day * 0.65;
+  scene.fog.color.copy(UW_COL).multiplyScalar(light); scene.fog.density = 0.028 + world.w.waves * 0.006;
+  scene.background.copy(scene.fog.color);
+  uwSurf.material.color.setRGB(0.56 * light + 0.05, 0.85 * light + 0.05, 0.9 * light + 0.06);
+  causticTex.offset.set(t * 0.012, t * 0.008);
+  if (!UW.drag) UW.ang += dt * 0.05;
+  const r = 15 - UW.pitch * 3;
+  _uc.set(Math.cos(UW.ang) * r, -5.2 + UW.pitch * 3.5 + Math.sin(UW.t * 0.2) * 0.6, Math.sin(UW.ang) * r);
+  camera.position.lerp(_uc, 1 - Math.exp(-2 * dt));
+  _ut.set(0, -2.2 - UW.pitch * 4, 0);
+  camLookAt.lerp(_ut, 1 - Math.exp(-3 * dt)); camera.lookAt(camLookAt);
+  // the sea floor slides past at the boat's speed
+  const v = world.speed * dt;
+  for (const g of reef) {
+    g.position.x -= v; if (g.position.x < -SEA_R) g.position.x += SEA_R * 2;
+    const k = g.userData.kelp; if (k) k.forEach((s, i) => { s.rotation.z = Math.sin(t * 0.7 + g.userData.ph + i * 0.5) * 0.12; s.rotation.x = Math.sin(t * 0.5 + g.userData.ph) * 0.06; });
+  }
+  rays.forEach((m, i) => { const a = m.userData.a + t * 0.01; m.position.set(Math.cos(a) * m.userData.r, -15, Math.sin(a) * m.userData.r); m.rotation.set(0, -a, 0.35 * Math.sin(i)); m.material.opacity = 0.12 + 0.12 * world.day * (0.7 + Math.sin(t * 0.6 + i) * 0.3); });
+  const sp = snowGeo.attributes.position;
+  for (let i = 0; i < snowN; i++) { let x = sp.getX(i) - v * 0.6, y = sp.getY(i) - dt * 0.05; if (x < -30) x += 60; if (y < SEABED_Y) y = -0.5; sp.setX(i, x); sp.setY(i, y); }
+  sp.needsUpdate = true;
+  for (const S of schools) {
+    const a0 = t * S.sp + S.ph, cx = Math.cos(a0) * S.r, cz = Math.sin(a0) * S.r;
+    for (let i = 0; i < S.n; i++) {
+      const o = S.off[i], w = Math.sin(t * 3 + o[3]) * 0.2;
+      _lp.set(cx + o[0] + w, S.y + o[1] + Math.sin(t * 0.8 + o[3]) * 0.3, cz + o[2]);
+      _lq.setFromAxisAngle(_up, -a0 - Math.sign(S.sp) * Math.PI / 2 + Math.sin(t * 4 + o[3]) * 0.15); _ls.setScalar(1);
+      S.im.setMatrixAt(i, _lm.compose(_lp, _lq, _ls));
+    }
+    S.im.instanceMatrix.needsUpdate = true;
+  }
+  // and down in the dark, something watches
+  if (!KR.active && !ESC.on) {
+    UW.lurkT += dt;
+    if (!UW.lurking && UW.lurkT > 16) {
+      UW.lurking = true; UW.lurk = 0; UW.lurkA = rand(0, TAU);
+      KR.head.visible = true; toast(krFriendly() ? 'Our friend the kraken glides by far below…' : 'Something enormous watches from the deep…');
+    }
+    if (UW.lurking) {
+      UW.lurk += dt; const k = UW.lurk, up = sstep(0, 7, k) * (1 - sstep(20, 27, k));
+      const a = UW.lurkA + k * 0.02, x = Math.cos(a) * 28, z = Math.sin(a) * 28;
+      KR.head.position.set(x, lerp(-40, -17, up), z); KR.head.rotation.y = Math.atan2(-x, -z);
+      for (const l of KR.head.userData.lids) l.scale.y = damp(l.scale.y, (k % 4.1) < 0.2 ? 1 : 0.15, 18, dt);
+      if (k > 27) { UW.lurking = false; UW.lurkT = -40; KR.head.visible = false; }
+    }
+  } else UW.lurking = false;
+}
+
+/* =====================================================================
    HUD
    ===================================================================== */
 function toast(html) {
@@ -8163,7 +8390,7 @@ function pausedTick(dt) {
   updateHUD(dt);
 }
 renderer.setAnimationLoop(frame);
-window.__atsea = { hand, hireHand, setLook, cheerUp, taskJig, taskSulk, nav, UP, buildUpgrade, buyUpgrade, openMarket, openChart, startEscort, ESC, setTarget, renderChart, taskCrowsNest, capSalute, dogDinghyNap, sellFish, settings, applySettings, togglePhoto, photo, saveVoyage, loadVoyage, openOpts, SEASONS, setSeason: m => { world.seasonMode = m; }, season, spawnOrcas, spawnManta, spawnOtters, spawnSerpent, strike, sky2, rainbow, life, SERP, storm, choice, pickKraken, taskGalley, ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
+window.__atsea = { setTimeScale, underwaterMode, UW, FEST, hand, hireHand, setLook, cheerUp, taskJig, taskSulk, nav, UP, buildUpgrade, buyUpgrade, openMarket, openChart, startEscort, ESC, setTarget, renderChart, taskCrowsNest, capSalute, dogDinghyNap, sellFish, settings, applySettings, togglePhoto, photo, saveVoyage, loadVoyage, openOpts, SEASONS, setSeason: m => { world.seasonMode = m; }, season, spawnOrcas, spawnManta, spawnOtters, spawnSerpent, strike, sky2, rainbow, life, SERP, storm, choice, pickKraken, taskGalley, ff: (sec, step = 1 / 30) => { for (let k = 0; k < sec; k += step) tick(step); }, harbour, shore, ISL, islandH, makeVillage, setLook, applyLook, openYard, THEMES, DEFAULT_LOOK, getLook: () => look, enterPeek, exitPeek, peek, CABIN, cabin, spawnKraken, KR, simStep: dt => { world.time += dt; updateEnv(dt, world.time); updateBoat(dt, world.time); boat.updateMatrixWorld(true); }, waveHeight, hullTop, hullW, BOAT_S, boat, OBST, obstDist, deckHalf, PH, Raycaster: THREE.Raycaster, camera, controls, world, cap, dog, toggleDay, cycleWeather, fishButton, summonKraken, LAYERS, setCamMode, spawnDest, spawnWhale, spawnTurtle, dests, gulls, applyQuality, perf,
   PERCHES, tasks: { taskFetch, taskMug, taskBail, taskCoil, taskLogbook, taskCoat, capSleep, dogSteal, dogShake, dogHowl, taskSpotDest, taskBottle } };
 </script>
 </body>
