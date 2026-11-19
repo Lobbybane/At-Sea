@@ -168,6 +168,7 @@ body.peeking #bar,body.peeking #log,body.peeking #title,body.peeking #hint,body.
 .sw.custom{background:conic-gradient(#f55,#fd5,#5f8,#5df,#86f,#f5c,#f55);overflow:hidden}
 .sw.custom input{position:absolute;inset:-8px;width:44px;height:44px;opacity:0;cursor:pointer;border:0;padding:0}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip,.sw,.tg,.ytab,.theme{touch-action:manipulation}
 .chip{padding:7px 11px;border-radius:9px;border:1px solid var(--edge);background:rgba(246,236,217,.05);color:var(--ink);font:500 12.5px/1 var(--sans);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .chip:hover{border-color:var(--edge-hi)}
 .chip.on{border-color:var(--gold);background:rgba(233,184,102,.17);color:#fff3da}
@@ -5335,14 +5336,32 @@ function syncYard() {
   }
   for (const em of $('yardBody').querySelectorAll('em[data-name]')) { const k = em.dataset.name, o = (SWATCH_OPTS[k] || []).find(o => o[0] === look[k]); em.textContent = o ? o[1] : /^#/.test(look[k]) ? 'Custom' : ''; }
 }
-$('yardTabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; yardTab = +b.dataset.tab; renderYard(); $('yardBody').scrollTop = 0; });
-$('yardBody').addEventListener('click', e => {
-  const th = e.target.closest('[data-theme]');
-  if (th) { const T = THEMES[+th.dataset.theme]; look = { ...DEFAULT_LOOK, ...T.look }; applyLook(look); saveLook(); toast(`Refitted as <b>${T.name}</b>`); sfx.chime(); return; }
-  const b = e.target.closest('[data-k]'); if (!b || b.tagName === 'INPUT') return;
-  if (b.dataset.t === 'toggle') setLook({ [b.dataset.k]: !look[b.dataset.k] });
-  else if (b.dataset.v !== undefined) setLook({ [b.dataset.k]: b.dataset.v });
-  sfx.init(); sfx.plink && sfx.plink();
+/* Panel buttons act on the press itself (pointer up on the same button), with click kept for keyboards and
+   as a fallback; some hosts swallow the click that would normally follow a tap. */
+function onTap(root, sel, fn) {
+  let down = null, done = null;
+  root.addEventListener('pointerdown', e => { const b = e.target.closest(sel); down = b ? { b, x: e.clientX, y: e.clientY } : null; });
+  root.addEventListener('pointerup', e => {
+    const b = e.target.closest(sel);
+    if (!b || !down || down.b !== b || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 12) { down = null; return; }
+    down = null; done = { b, t: performance.now() }; fn(b, e);
+  });
+  root.addEventListener('click', e => {
+    const b = e.target.closest(sel); if (!b) return;
+    if (done && done.b === b && performance.now() - done.t < 800) { done = null; return; }
+    fn(b, e);
+  });
+}
+const OPT_LABEL = {}; for (const [, rows] of TABS) for (const [k, label] of rows) OPT_LABEL[k] = label;
+function optName(k, v) { const o = (SWATCH_OPTS[k] || CHOICES[k] || []).find(o => String(o[0]) === String(v)); return o ? o[1] : v; }
+onTap($('yardTabs'), '[data-tab]', b => { yardTab = +b.dataset.tab; renderYard(); $('yardBody').scrollTop = 0; });
+onTap($('yardBody'), '[data-theme], [data-k]:not(input)', b => {
+  sfx.init();
+  if (b.dataset.theme !== undefined) { const T = THEMES[+b.dataset.theme]; look = { ...DEFAULT_LOOK, ...T.look }; applyLook(look); saveLook(); toast(`Refitted as <b>${T.name}</b>`); sfx.chime(); return; }
+  const k = b.dataset.k;
+  if (b.dataset.t === 'toggle') { setLook({ [k]: !look[k] }); toast(`${OPT_LABEL[k]}: <b>${look[k] ? 'on' : 'off'}</b>`); }
+  else if (b.dataset.v !== undefined) { setLook({ [k]: b.dataset.v }); toast(`${OPT_LABEL[k]}: <b>${optName(k, b.dataset.v)}</b>`); }
+  sfx.plink && sfx.plink();
 });
 $('yardBody').addEventListener('input', e => { if (e.target.type === 'color') { Object.assign(look, { [e.target.dataset.k]: e.target.value }); applyLook(look); saveLook(); syncYard(); } });
 $('yardBody').addEventListener('change', e => { if (e.target.type === 'color') syncYard(); });
@@ -5352,8 +5371,8 @@ function openYard(on = $('yard').hidden) {
   if (on) { renderYard(); if (peek.on) exitPeek(); }
 }
 $('bYard').addEventListener('click', () => { sfx.init(); openYard(); });
-$('yardClose').addEventListener('click', () => openYard(false));
-$('yardRandom').addEventListener('click', () => {
+onTap($('yardClose'), '#yardClose', () => openYard(false));
+onTap($('yardRandom'), '#yardRandom', () => {
   const r = a => pick(a)[0];
   look = { ...look, hull: r(PAINT.hull), bottom: r(PAINT.bottom), stripe: r(PAINT.stripe), sheer: r(PAINT.sheer), rail: r(PAINT.rail), nameColor: r(PAINT.nameColor), nameFont: r(CHOICES.nameFont),
     deck: r(CHOICES.deck), cabin: r(PAINT.cabin), roof: r(PAINT.roof), trim: r(PAINT.trim), sail: r(PAINT.sail), pattern: r(CHOICES.pattern), patternColor: r(PAINT.accent), emblem: r(CHOICES.emblem),
@@ -5361,7 +5380,7 @@ $('yardRandom').addEventListener('click', () => {
     bunting: Math.random() < 0.4, flowers: Math.random() < 0.4, hullPorts: Math.random() < 0.5 };
   applyLook(look); saveLook(); renderYard(); toast('A fresh coat of paint!');
 });
-$('yardReset').addEventListener('click', () => { look = { ...DEFAULT_LOOK }; applyLook(look); saveLook(); renderYard(); toast('Back to the <b>Classic Wanderer</b>'); });
+onTap($('yardReset'), '#yardReset', () => { look = { ...DEFAULT_LOOK }; applyLook(look); saveLook(); renderYard(); toast('Back to the <b>Classic Wanderer</b>'); });
 applyLook(look);
 
 /* =====================================================================
@@ -6920,8 +6939,7 @@ function renderOpts() {
     return `<div class="yrow"><label>${label}</label><div class="chips">${opts.map(([val, name]) => `<button class="chip${String(val) === String(v) ? ' on' : ''}" data-k="${k}" data-v="${val}">${name}</button>`).join('')}</div></div>`;
   }).join('') + `<div class="yrow"><label>Voyage</label><p class="onote">Day ${world.dayNum} · ${world.discoveries.length} discoveries · ${world.treasure} chest${world.treasure === 1 ? '' : 's'} · saved in this browser</p></div>`;
 }
-$('optsBody').addEventListener('click', e => {
-  const b = e.target.closest('[data-k]'); if (!b || b.tagName === 'INPUT') return;
+onTap($('optsBody'), '[data-k]:not(input)', b => {
   const k = b.dataset.k;
   if (b.dataset.t === 'toggle') settings[k] = !settings[k];
   else if (k === 'quality') { if (b.dataset.v === 'auto') { perf.auto = true; perf.hist = []; } else { perf.auto = false; applyQuality(+b.dataset.v); } updatePerfChip(); }
