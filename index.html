@@ -133,6 +133,7 @@ canvas#c:active{cursor:grabbing}
 #perf i.mid{background:#e9b866}#perf i.low{background:#e6735c}
 #perf em{font-style:normal;color:var(--gold);text-transform:uppercase;letter-spacing:.16em;font-size:9.5px}
 #peek{position:fixed;inset:0;pointer-events:none;z-index:4;opacity:0}
+#peek.inside .frame{inset:0;width:auto;aspect-ratio:auto;translate:none;border-radius:0;box-shadow:inset 0 0 180px 70px rgba(8,5,2,.6)}
 #peek .frame{position:absolute;left:50%;top:50%;width:min(88vmin,780px);aspect-ratio:1;translate:-50% -50%;border-radius:50%;
   box-shadow:0 0 0 200vmax rgba(12,8,4,.95),inset 0 0 0 clamp(9px,2.2vmin,20px) #c49a4e,inset 0 0 0 clamp(13px,3.1vmin,28px) #7a5a28,inset 0 0 0 clamp(15px,3.5vmin,32px) #3a2810,inset 0 0 70px 34px rgba(0,0,0,.6)}
 #peek.rect .frame{width:min(94vw,1150px);aspect-ratio:1.8;border-radius:12px;box-shadow:0 0 0 200vmax rgba(14,9,5,.95),inset 0 0 0 clamp(10px,2.4vmin,22px) #5a351c,inset 0 0 0 clamp(13px,3vmin,27px) #3e2412,inset 0 0 70px 30px rgba(0,0,0,.55)}
@@ -364,7 +365,7 @@ body.photo #bar,body.photo #log,body.photo #title,body.photo #hint,body.photo #t
 <div id="flash"></div>
 <div id="photoBar" class="panel"><div class="chips" id="photoFilters"></div><div class="prow"><button id="phVig" class="chip">Vignette</button><button id="phPause" class="chip">Pause time</button><button id="phSnap" class="ybtn gold">Take photo</button><button id="phExit" class="ybtn">Done</button></div></div>
 <div id="shot" class="panel" hidden><img id="shotImg" alt="Your photo"><div class="prow"><a id="shotSave" class="ybtn gold" href="#" download="at-sea.png">Save photo</a><button id="shotClose" class="ybtn">Keep shooting</button></div><p class="onote">If saving is blocked here, right-click or long-press the picture to keep it.</p></div>
-<div id="peek" hidden><div class="frame"></div><div class="pbar panel"><button id="pkPrev" aria-label="Previous window">&#8249;</button><span id="pkName">Porthole</span><button id="pkNext" aria-label="Next window">&#8250;</button><button id="pkBack">Back on deck</button></div></div>
+<div id="peek" hidden><div class="frame"></div><div class="pbar panel"><span id="pkName">Inside the cabin</span><button id="pkBack">Back on deck</button></div></div>
 <div id="says"></div>
 <div id="choice" class="panel" hidden role="dialog" aria-label="The kraken rises">
   <p class="ct"><b>The kraken rises!</b> What should the captain do?</p>
@@ -1364,6 +1365,7 @@ function makeLantern(parent, x, y, z, light = true) {
 }
 const CABIN = { x0: -1.7, x1: 0.5, w: 0.66, dy: deckY(-0.6), h: 0.78, floor: 0.15, room: { x0: -1.67, x1: 0.47, z: 0.63 }, windows: [] };
 CABIN.ceil = CABIN.dy + CABIN.h - 0.005;
+CABIN.view = { pos: V3(0.4, 1.52, -0.52), look: V3(-1.25, 0.4, 0.3), fov: 80 };   // the one camera inside: up in the forward corner over the chart table, taking in the whole room
 MAT.cabinWall = std(0xb27b4a); MAT.cabinTrim = std(0x5a351c); MAT.roof = std(0x8a5632); MAT.door = std(0x5a351c);
 MAT.glass.transparent = true; MAT.glass.opacity = 0.32; MAT.glass.depthWrite = false;
 const cabin = {};
@@ -4931,7 +4933,7 @@ system('cabin', (dt, t) => {
 
 /* ---------- peeking in through a window ---------- */
 const peek = { on: false, k: 0, win: null, from: V3(), fromLook: V3(), fromFov: 42, look: V3() };
-const _pe = V3(), _pf = V3(), _pt = V3(), _pq = new THREE.Quaternion();
+const _pe = V3(), _pf = V3(), _pt = V3(), _pv = V3(), _pl = V3(), _pq = new THREE.Quaternion();
 const smooth = x => x * x * (3 - 2 * x);
 function windowAt(x, y) {
   _ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1);
@@ -4948,29 +4950,31 @@ function enterPeek(w) {
   if (peek.win) peek.win.glass.visible = true;
   peek.on = true; peek.win = w; controls.enabled = false; controls.autoRotate = false;
   document.body.classList.add('peeking');
-  $('peek').className = w.shape; $('pkName').textContent = w.name;
+  $('peek').className = 'inside';
   sfx.init(); sfx.creak(0.4);
 }
 function exitPeek() {
   if (!peek.on) return;
   peek.on = false; document.body.classList.remove('peeking');
 }
-function stepPeek(d) { const i = CABIN.windows.indexOf(peek.win); enterPeek(CABIN.windows[(i + d + CABIN.windows.length) % CABIN.windows.length]); peek.k = Math.min(peek.k, 0.62); }
 function updatePeek(dt) {
   peek.k = clamp(peek.k + (peek.on ? dt / 2.2 : -dt / 1.5), 0, 1);
   const w = peek.win, e = smooth(peek.k);
   Lcabin.localToWorld(_pe.copy(w.pos));                                              // eye at the glass
   Lcabin.localToWorld(_pf.copy(w.pos).addScaledVector(w.n, 1.5).add(_v1.set(0, 0.45, 0)));   // a step back from it
   Lcabin.localToWorld(_pt.copy(w.look));
-  const a = clamp(peek.k / 0.55, 0, 1), b = clamp((peek.k - 0.55) / 0.45, 0, 1);
-  if (peek.k < 0.55) { camera.position.lerpVectors(peek.from, _pf, smooth(a)); peek.look.lerpVectors(peek.fromLook, _pt, smooth(a)); }
-  else { camera.position.lerpVectors(_pf, _pe, smooth(b)); peek.look.copy(_pt); }
-  w.glass.visible = b < 0.6;
-  camera.fov = lerp(peek.fromFov, w.shape === 'round' ? 62 : 56, e); camera.updateProjectionMatrix();
+  // fly up to the window, through it, and settle in one corner of the cabin where the whole room is in view
+  Lcabin.localToWorld(_pv.copy(CABIN.view.pos)); Lcabin.localToWorld(_pl.copy(CABIN.view.look));
+  const a = clamp(peek.k / 0.45, 0, 1), b = clamp((peek.k - 0.45) / 0.22, 0, 1), c2 = clamp((peek.k - 0.67) / 0.33, 0, 1);
+  if (peek.k < 0.45) { camera.position.lerpVectors(peek.from, _pf, smooth(a)); peek.look.lerpVectors(peek.fromLook, _pt, smooth(a)); }
+  else if (peek.k < 0.67) { camera.position.lerpVectors(_pf, _pe, smooth(b)); peek.look.copy(_pt); }
+  else { camera.position.lerpVectors(_pe, _pv, smooth(c2)); peek.look.lerpVectors(_pt, _pl, smooth(c2)); }
+  w.glass.visible = !(peek.k > 0.55 && peek.k < 0.8);
+  camera.fov = lerp(peek.fromFov, CABIN.view.fov, e); camera.updateProjectionMatrix();
   camera.up.set(0, 1, 0).applyQuaternion(_pq.copy(_qI).slerp(boat.quaternion, e));
   camera.lookAt(peek.look); camera.up.set(0, 1, 0);
-  $('peek').style.opacity = sstep(0.72, 0.97, peek.k).toFixed(3);
-  $('peek').hidden = peek.k < 0.7;
+  $('peek').style.opacity = sstep(0.85, 1, peek.k).toFixed(3);
+  $('peek').hidden = peek.k < 0.85;
   if (!peek.on && peek.k <= 0) {
     w.glass.visible = true; peek.win = null;
     camera.fov = peek.fromFov; camera.updateProjectionMatrix();
@@ -4979,8 +4983,6 @@ function updatePeek(dt) {
   }
 }
 $('pkBack').addEventListener('click', e => { e.stopPropagation(); exitPeek(); });
-$('pkPrev').addEventListener('click', e => { e.stopPropagation(); stepPeek(-1); });
-$('pkNext').addEventListener('click', e => { e.stopPropagation(); stepPeek(1); });
 
 /* =====================================================================
    Shipwright — repaint and dress the boat. Choices are remembered in this browser.
@@ -7120,7 +7122,7 @@ addEventListener('keydown', e => {
   if (photo.on && e.key === ' ') { photo.capture = true; e.preventDefault(); return; }
   const k = e.key.toLowerCase();
   if (choice.open && (k === '1' || k === '2' || k === '3')) { pickKraken(['fish', 'horn', 'hide'][+k - 1]); e.preventDefault(); return; }
-  if (peek.on && (k === 'escape' || k === 'arrowleft' || k === 'arrowright')) { if (k === 'escape') exitPeek(); else stepPeek(k === 'arrowleft' ? -1 : 1); e.preventDefault(); return; }
+  if (peek.on && k === 'escape') { exitPeek(); e.preventDefault(); return; }
   if (ACTIONS[k]) { sfx.init(); pressFx(ACTIONS[k][0]); ACTIONS[k][1](); e.preventDefault(); }
   else if (k === 'm') toggleSound();
   else if (k === 'b') openYard();

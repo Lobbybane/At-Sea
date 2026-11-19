@@ -21,7 +21,7 @@ Open `index.html` in a modern browser (it loads three.js from unpkg, so it needs
 | Sound | `M` | Toggle all audio (music and effects) |
 | Quality | `Q` | Auto / High / Medium / Low graphics (the FPS chip shows the current rate) |
 
-Drag to orbit, scroll to zoom; the camera slowly auto-rotates when idle. Click the captain or Ghost to see what they're up to, or click any cabin window to peek inside (arrow keys move between windows, `Esc` steps back). Click the title card to collapse it. On touch screens, swipe left or right with two fingers to change camera, or up for photo mode.
+Drag to orbit, scroll to zoom; the camera slowly auto-rotates when idle. Click the captain or Ghost to see what they're up to, or click any cabin window to slip inside for a view of the whole cabin (`Esc` steps back). Click the title card to collapse it. On touch screens, swipe left or right with two fingers to change camera, or up for photo mode.
 
 Your voyage (day, catch, treasure, discoveries, log) and your boat's look are saved in the browser.
 
